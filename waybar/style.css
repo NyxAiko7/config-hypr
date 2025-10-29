@@ -1,0 +1,234 @@
+/* ===== Global ===== */
+
+@import "theme.css";
+
+* {
+    min-height: 0px;
+}
+
+/* ===== Waybar ===== */
+
+#waybar {
+    background: transparent;
+    color: @background;
+}
+
+/* ===== Workspaces ===== */
+
+#workspaces {
+    background: @background;
+    border: 2px solid @color1;
+
+    font-size: 18px;
+    border-radius: 20px;
+    margin: 0px 5px;
+}
+
+#workspaces button {
+    border: 2px solid @background;
+    color: @foreground;
+
+    border-radius: 20px;
+    padding: 0px 10px;
+}
+
+#workspaces button.active {
+    background: @color1;
+    color: @background;
+}
+
+/* ===== Clock ===== */
+
+#clock {
+    background: @background;
+    border: 2px solid @color1;
+    color: @foreground;
+
+    font-size: 16px;
+    border-radius: 20px;
+    padding: 0px 10px;
+}
+
+/* ===== Idle Inhibitor ===== */
+
+#idle_inhibitor {
+    background: @background;
+    border: 2px solid @color2;
+    color: @foreground;
+
+    font-size: 16px;
+    border-radius: 20px;
+    margin: 0px 10px;
+    padding: 0px 10px;
+}
+
+#idle_inhibitor:hover {
+    background: @color2;
+    color: @background;
+}
+
+#idle_inhibitor.activated {
+    background: @color2;
+    color: @background;
+}
+
+/* ===== Volume ===== */
+
+#pulseaudio {
+    background: @background;
+    border: 2px solid @color3;
+    color: @foreground;
+
+    font-size: 16px;
+    border-radius: 20px;
+    padding: 0px 10px;
+    margin: 0px 10px 0px 0px;
+}
+
+#pulseaudio.muted {
+    border: 2px solid @disconnected;
+}
+
+#pulseaudio:hover {
+    background: @background-focused;
+}
+
+/* ===== Network ===== */
+
+#network {
+    background: @background;
+    border: 2px solid @color4;
+    color: @foreground;
+
+    font-size: 16px;
+    border-radius: 20px;
+    padding: 0px 10px;
+    margin: 0px 10px 0px 0px;
+}
+
+#network.disconnected {
+    border: 2px solid @disconnected;
+}
+
+#network:hover {
+    background: @background-focused;
+}
+
+/* ===== Bluetooth ===== */
+
+#bluetooth {
+    background: @background;
+    border: 2px solid @color5;
+    color: @foreground;
+
+    font-size: 16px;
+    border-radius: 20px;
+    padding: 0px 10px;
+    margin: 0px 10px 0px 0px;
+}
+
+#bluetooth:hover {
+    background: @background-focused;
+}
+
+/* ===== System Monitor ===== */
+
+#cpu {
+    background: @background;
+    border-top: 2px solid @color1;
+    border-left: 2px solid @color1;
+    border-bottom: 2px solid @color1;
+    color: @foreground;
+
+    font-size: 16px;
+    border-radius: 20px 0px 0px 20px;
+    padding: 0px 5px 0px 10px;
+}
+
+#memory {
+    background: @background;
+    border-top: 2px solid @color1;
+    border-bottom: 2px solid @color1;
+    color: @foreground;
+
+    font-size: 16px;
+    padding: 0px 5px;
+}
+
+/* ===== CPU Temp ===== */
+
+#temperature {
+    background : @background;
+    border-top: 2px solid @color1;
+    border-bottom: 2px solid @color1;
+    color: @foreground;
+
+    font-size: 16px;
+    padding: 0px 5px;
+}
+
+/* ===== Power ===== */
+
+#power-profiles-daemon {
+    background: @background;
+    border-top: 2px solid @color1;
+    border-bottom: 2px solid @color1;
+    color: @foreground;
+
+    font-size: 16px;
+    padding: 0px 5px;
+}
+
+#power-profiles-daemon:hover {
+    background: @background-focused;
+}
+
+#battery {
+    background: @background;
+    border-top: 2px solid @color1;
+    border-right: 2px solid @color1;
+    border-bottom: 2px solid @color1;
+    color: @foreground;
+
+    font-size: 16px;
+    padding: 0px 10px 0px 5px;
+    border-radius: 0px 20px 20px 0px;
+    margin: 0px 10px 0px 0px;
+}
+
+#battery.critical {
+    background: @warn;
+    color: @foreground;
+}
+
+/* ===== Tray ===== */
+
+#tray {
+    background: @background;
+    border-top: 2px solid @color6;
+    border-left: 2px solid @color6;
+    border-bottom: 2px solid @color6;
+    
+    font-size: 16px;
+    border-radius: 20px 0px 0px 20px;
+    padding: 0px 5px 0px 10px;
+}
+
+#custom-power {
+    background: @background;
+    border-top: 2px solid @color6;
+    border-right: 2px solid @color6;
+    border-bottom: 2px solid @color6;
+    color: @foreground;
+
+    font-size: 22px;
+    border-radius: 0px 20px 20px 0px;
+    padding: 0px 0px 0px 5px;
+    margin: 0px 5px 0px 0px;
+}
+
+#custom-power:hover {
+    background: @warn;
+    color: @background;
+    box-shadow: inset -2px 2px @background-focused;
+}

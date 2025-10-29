@@ -1,0 +1,145 @@
+{
+    "modules-left": [
+        "hyprland/workspaces",
+    ],
+
+    "modules-center": [
+        "clock",
+    ],
+
+    "modules-right": [
+        "idle_inhibitor",
+        "pulseaudio",
+        "network",
+        "bluetooth",
+        "cpu",
+        "memory",
+        "temperature",
+        "power-profiles-daemon",
+        "battery",
+        "tray",
+        "custom/power",
+    ],
+
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "persistent-workspaces": {
+            "1": [],
+            "2": [],
+            "3": [],
+            "4": [],
+            "5": [],
+            "6": [],
+            "7": [],
+        },
+
+        "format-icons": {
+            "1": "",
+            "2": "",
+            "3": "",
+            "4": "",
+            "5": "",
+            "6": "",
+            "7": "",
+        },
+    },
+
+
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "",
+            "deactivated": ""
+        },
+        "tooltip": false,
+    },
+
+    "tray": {
+        "spacing": 10,
+    },
+
+    "clock": {
+        "tooltip": false,
+    },
+
+    "cpu": {
+        "format": "{usage}% ",
+        "tooltip": false,
+    },
+
+    "memory": {
+        "format": "{}% ",
+        "tooltip": false,
+    },
+
+    "temperature": {
+        "critical-threshold": 80,
+        "hwmon-path": "/sys/class/hwmon/hwmon4/temp1_input",
+        "format": "{temperatureC}°C {icon}",
+        "format-icons": ["", "", ""],
+        "tooltip": false,
+    },
+
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15,
+        },
+        "format": "{capacity}% {icon}",
+        "format-full": "{capacity}% {icon}",
+        "format-charging": "{capacity}% ",
+        "format-plugged": "{capacity}% ",
+        "format-icons": ["", "", "", "", ""],
+        "tooltip": false,
+    },
+
+    "power-profiles-daemon": {
+      "format": "{icon}",
+      "format-icons": {
+        "default": "",
+        "performance": "",
+        "balanced": "",
+        "power-saver": "",
+      },
+      "tooltip": false,
+    },
+
+    "network": {
+        "format-wifi": "{signalStrength}% ",
+        "format-ethernet": "",
+        "format-disconnected": "Disconnected ⚠",
+        "on-click": "nm-connection-editor",
+        "tooltip": false,
+    },
+
+    "bluetooth": {
+        "format": "",
+        "format-disabled": "!",
+        "on-click": "blueman-manager",
+        "tooltip": false,
+    },
+
+    "pulseaudio": {
+        "format": "{volume}% {icon} {format_source}",
+        "format-bluetooth": "{volume}% {icon} {format_source}",
+        "format-bluetooth-muted": " {icon} {format_source}",
+        "format-muted": " {format_source}",
+        "format-source": "{volume}% ",
+        "format-source-muted": "",
+        "format-icons": {
+            "headphone": "",
+	    "hands-free": "",
+            "headset": "",
+            "phone": "",
+            "portable": "",
+            "default": ["", "", ""],
+        },
+        "on-click": "pavucontrol",
+    },
+
+    "custom/power": {
+        "format" : "⏻ ",
+            "on-clock": "systemctl suspend",
+            "tooltip": false,
+    },
+},
