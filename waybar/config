@@ -5,8 +5,8 @@
         "custom/launcher",
         "hyprland/workspaces",
         "cpu",
-        "memory"
-
+        "memory",
+	"custom/cava"
     ],
     "modules-center": [
         "hyprland/window"
@@ -18,21 +18,23 @@
         "wireplumber",
         "network",
         "backlight",
+        "keyboard-state",
         "clock",
         "battery",
         "custom/power"
     ],
     "backlight": {
-    "device": "intel_backlight",
-    "format": "{percent}% {icon}",
-    "format-icons": ["", ""]
+        "device": "intel_backlight",
+        "format": "{percent}% {icon}",
+        "format-icons": ["", ""]
     },
     "hyprland/workspaces": {
         "format": "{name}",
         "persistent-workspaces": {
             "1": [],
             "2": [],
-            "3": []
+            "3": [],
+	"4": []		
         }
     },
     "hyprland/window": {
@@ -156,5 +158,16 @@
             "󰂂",
             "󰁹"
         ]
+    },
+    "keyboard-state": {
+        "numlock": true,
+        "capslock": true,
+        "format": "{name} {icon}",
+        "format-icons": {
+            "locked": "",
+            "unlocked": ""
+        }
     }
+
 }
+

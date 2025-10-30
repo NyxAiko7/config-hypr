@@ -166,3 +166,29 @@ window#waybar.empty #window {
     padding: 8px;
     margin: 4px 0;
 }
+
+#custom-cava {
+    color: #89b4fa;
+    background-color: transparent;
+    padding: 0 8px;
+    margin: 0 2px;
+    border-radius: 4px;
+    font-family: "Monospace", "JetBrains Mono";
+    min-width: 60px;
+}
+
+#keyboard-state {
+    background-color: #202020;
+    border-radius: 2px;
+    padding: 8px 12px 8px 12px;
+    margin: 4px 0;
+    color: #cba6f7;
+}
+
+#keyboard-state.locked {
+    color: #f38ba8;
+}
+
+#keyboard-state.unlocked {
+    color: #a6e3a1;
+}
