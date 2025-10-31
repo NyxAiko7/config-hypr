@@ -1,4 +1,4 @@
 # hyprland
-![](./ssss.png)
+![](./s.png)
 
 It's better to hang yourself than make a config for hyprland
