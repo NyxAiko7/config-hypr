@@ -16,6 +16,7 @@
         "tray",
         "network#spd",
         "wireplumber",
+	"bluetooth",
         "network",
         "backlight",
         "keyboard-state",
@@ -167,5 +168,14 @@
             "locked": "",
             "unlocked": ""
         }
+    },
+    "bluetooth": {
+        "format": " {status}", 
+        "format-connected": " {device_alias}", 
+        "format-connected-headset": " {device_alias}", 
+        "format-disabled": "", 
+        "tooltip": true,
+        "tooltip-format": "{controller_alias}\n{device_alias}"
     }
 }
+

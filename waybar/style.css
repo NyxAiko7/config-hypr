@@ -29,6 +29,8 @@ window > box {
 #battery,
 #backlight,
 #keyboard-state,
+#bluetooth,
+
 
 #window {
     background-color: #242129; 
@@ -188,3 +190,13 @@ window#waybar.empty #window {
     padding: 8px 12px 8px 8px;
     border: none;
 }
+
+#bluetooth {
+    color: #AAAAAA; 
+    padding: 0 10px;
+}
+
+#bluetooth.connected {
+    color: #FFD700; 
+}
+
