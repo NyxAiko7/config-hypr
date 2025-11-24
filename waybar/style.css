@@ -13,7 +13,14 @@ window#waybar {
 	margin: 2px 10px;
 }
 
-
+/* window > box { */
+/* 	margin-top: 10px; */
+/* 	margin-right: 10px; */
+/* 	margin-left: 10px; */
+/* 	margin-bottom: 0; */
+/* 	border-radius: 8px; */
+/*     padding: 0; */
+/* } */
 
 .modules-left,
 .modules-right {
@@ -37,21 +44,24 @@ window#waybar {
 /*     margin: 2px; */
 /* } */
 
-
+/* 5. Переопределение цвета рамки для Workspaces */
 #workspaces {
     border-color: #6d83a6;
 }
 
-
+/* 6. Кнопки Workspaces */
 #workspaces button {
     min-height: 0;
     padding: 0 7px;
+    /* margin-right: 2px; - Если вы хотите, чтобы кнопки слились, удалите этот отступ: */
+    /* margin-right: 0; */
     color: #6a6e8c;
 }
 
-
+/* 7. Стиль конкретного модуля (переопределяет цвет текста из общего блока) */
 #backlight {
     color: #f2c866;
+    margin: 4px;
 }
 
 
