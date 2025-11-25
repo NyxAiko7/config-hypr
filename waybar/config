@@ -5,18 +5,19 @@
 		"hyprland/workspaces",
 		"custom/power",
 		"battery",
-		"network",
 		"hyprland/language",
 	],
 	"modules-center": [
 		"hyprland/window",
 		"clock",
 		"custom/notification",
+		"network",
 		
 	],
 	"spacing": 4,
 	"modules-right": [
 		"tray",
+		"wireplumber",
 		"backlight",
 		"cpu",
 		"memory",
@@ -91,5 +92,37 @@
 	    "on-click": "sleep 0.1 && swaync-client -t -sw", 
 	    "on-click-right": "sleep 0.1 && swaync-client -d -sw" 
 	},
+
+	"wireplumber": {
+	        "scroll-step": 10,
+	        "format": "{volume}% {icon}  ",
+	        "format-bluetooth": "{icon} {volume}%",
+	        "format-muted": "muted ",
+	        "on-click": "pavucontrol",
+	        "format-icons": {
+	            "headphones": "",
+	            "handsfree": "",
+	            "headset": "",
+	            "default": [
+	                "",
+	                "󰓃"
+	            ]
+	        }
+	    },
+
+
+	"network": {
+	        "format": "󰤭 Disabled",
+	        "format-wifi": " ",
+	        "format-ethernet": " 󰈀 ",
+	        "format-disconnected": "⚠",
+	        "tooltip": true,
+	        "tooltip-format": "{ifname}\n{ipaddr}",
+	        "tooltip-format-wifi": "{essid} {ifname}\n{ipaddr}\nstrength: {signalStrength}%",
+	        "on-click": "networkmanager_dmenu"
+	
+	    },
+
+
  
 }

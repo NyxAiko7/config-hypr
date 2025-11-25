@@ -9,7 +9,7 @@
 window#waybar {
 	padding: 4px;
     background-color: #242129;
-	border-radius: 10;    
+	border-radius: 10px;    
 	margin: 2px 10px;
 }
 
@@ -34,6 +34,10 @@ window#waybar {
 #network,
 #battery,
 #memory,
+#wireplumber,
+#network,
+
+
 /*  */
 /* #window { */
 /*     background-color: #242129; */
@@ -44,21 +48,35 @@ window#waybar {
 /*     margin: 2px; */
 /* } */
 
-/* 5. Переопределение цвета рамки для Workspaces */
 #workspaces {
     border-color: #6d83a6;
 }
 
-/* 6. Кнопки Workspaces */
 #workspaces button {
     min-height: 0;
     padding: 0 7px;
-    /* margin-right: 2px; - Если вы хотите, чтобы кнопки слились, удалите этот отступ: */
-    /* margin-right: 0; */
     color: #6a6e8c;
 }
 
-/* 7. Стиль конкретного модуля (переопределяет цвет текста из общего блока) */
+#workspaces button.empty {
+    color: #6a6e8c;
+}
+
+#workspaces button.active {
+    color: #f2c866; 
+}
+
+
+#workspaces button.urgent {
+    color: #ffffff;
+    background-color: #b11e31; 
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
 #backlight {
     color: #f2c866;
     margin: 4px;
@@ -89,4 +107,21 @@ window#waybar {
 	color: #2E8B57
 }
 
+#wireplumber {
+	color: #44944A;
+}
 
+#wireplumber.muted {
+	border-color: #E32636;
+	color: #78DBE2;	
+}
+
+
+#network {
+    color: #6d83a6; 
+}
+
+#network.disabled {
+    color: #b11e31; 
+    border-color: #b11e31;
+}

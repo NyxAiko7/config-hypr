@@ -1,5 +1,5 @@
 # hyprland
-![](./TTT.png)
+![](./ee.png)
 
 It's better to hang yourself than make a config for hyprland
 
