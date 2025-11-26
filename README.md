@@ -1,5 +1,7 @@
 # hyprland
-![](./eee.png)
+
+
+<video src="Hypride.mp4" width="" height="" controls></video>
 
 It's better to hang yourself than make a config for hyprland
 
