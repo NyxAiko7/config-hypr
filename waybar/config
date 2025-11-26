@@ -6,6 +6,8 @@
 		"custom/power",
 		"battery",
 		"hyprland/language",
+		"custom/media",
+		"custom/cava",
 	],
 	"modules-center": [
 		"hyprland/window",
@@ -55,6 +57,7 @@
 
 	
 	"clock": {
+	"interval": 1,
 	"format": "{:%H:%M:%S}",
 	"format-alt": "{:%Y-%m-%d}",
 
@@ -94,35 +97,76 @@
 	},
 
 	"wireplumber": {
+	
 	        "scroll-step": 10,
+	
 	        "format": "{volume}% {icon}  ",
+	
 	        "format-bluetooth": "{icon} {volume}%",
+	
 	        "format-muted": "muted ",
+	
 	        "on-click": "pavucontrol",
+	
 	        "format-icons": {
+	
 	            "headphones": "",
+	
 	            "handsfree": "",
+	
 	            "headset": "",
+	
 	            "default": [
+	
 	                "",
+	
 	                "󰓃"
+	
 	            ]
+	
 	        }
+	
 	    },
 
 
 	"network": {
+	
 	        "format": "󰤭 Disabled",
+	
 	        "format-wifi": " ",
+	
 	        "format-ethernet": " 󰈀 ",
+	
 	        "format-disconnected": "⚠",
+	
 	        "tooltip": true,
+	
 	        "tooltip-format": "{ifname}\n{ipaddr}",
+	
 	        "tooltip-format-wifi": "{essid} {ifname}\n{ipaddr}\nstrength: {signalStrength}%",
+	
 	        "on-click": "networkmanager_dmenu"
 	
 	    },
+	    
+	"custom/media": {
+	    "format": "{}",
+	    "escape": true,
+	    "exec": "/home/aiko/.config/waybar/waybar-media.sh", 
+	    "exec-if": "playerctl status 2>/dev/null",
+	    "on-click": "playerctl play-pause",
+	    "on-scroll-up": "playerctl next",
+	    "on-scroll-down": "playerctl previous",
+	    "interval": 1, 
+	    "max-length": 40,
+	    "tooltip": false
+	},
 
+	"custom/cava":{
+		"format": "{}",
+		"exec": "/home/aiko/.config/waybar/cava.sh",
+        "tooltip": false,
+	},
 
  
 }

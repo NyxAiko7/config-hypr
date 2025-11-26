@@ -1,5 +1,5 @@
 # hyprland
-![](./ee.png)
+![](./eee.png)
 
 It's better to hang yourself than make a config for hyprland
 
@@ -7,7 +7,7 @@ It's better to hang yourself than make a config for hyprland
 ## Installation
 #### step 1
 ~~~bash
-sudo pacman -S rofi waybar swyanc swww thunar kitty fish ttf-firacode-nerd noto-fonts ttf-jetbrains-mono-nerd ttf-font-awesome
+sudo pacman -S rofi waybar swaync swww thunar kitty fish bc cava ttf-firacode-nerd noto-fonts ttf-jetbrains-mono-nerd ttf-font-awesome
 ~~~
 #### step 2
 ~~~bash
@@ -19,7 +19,6 @@ cd config-hypr
 cp -r hypr ~/.config
 cp -r waybar ~/.config
 cp -r kitty ~/.config
-cp -r dunst ~/.config
 ~~~
 
 ## Warning
