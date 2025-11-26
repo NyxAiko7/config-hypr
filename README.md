@@ -1,7 +1,7 @@
 # hyprland
+[![Watch the video](https://img.youtube.com/vi/FEcAtCBmq2s/maxresdefault.jpg)](https://youtu.be/FEcAtCBmq2s)
 
 
-<video src="Hypride.mp4" width="" height="" controls></video>
 
 It's better to hang yourself than make a config for hyprland
 
