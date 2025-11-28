@@ -17,6 +17,10 @@ echo "
 [general]
 bars = 12
 
+[input]
+method = pulse
+source = alsa_output.pci-0000_01_00.1.hdmi-stereo-extra3.monitor
+
 [output]
 method = raw
 raw_target = /dev/stdout

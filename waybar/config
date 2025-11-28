@@ -2,23 +2,35 @@
 	"layer": "top",
 	"position": "top",
 	"modules-left": [
+		"custom/launcher",
 		"hyprland/workspaces",
 		"custom/power",
 		"battery",
 		"hyprland/language",
 		"custom/media",
+		"custom/prev",        
+		"custom/play-pause",  
+		"custom/next",
+		"custom/separator",
 		"custom/cava",
 	],
 	"modules-center": [
 		"hyprland/window",
+		"custom/separator",
 		"clock",
+		"custom/separator",
+		"custom/weather",
 		"custom/notification",
 		"network",
+		"custom/separator",
+		"disk",
+		"custom/uptime",
 		
 	],
 	"spacing": 4,
 	"modules-right": [
 		"tray",
+		"custom/clipboard",
 		"wireplumber",
 		"backlight",
 		"cpu",
@@ -43,6 +55,7 @@
 		"icon": true,
 		"separate-outputs": false,
 		"format": "{}"
+		
 	},
 
 	"cpu": {
@@ -60,7 +73,6 @@
 	"interval": 1,
 	"format": "{:%H:%M:%S}",
 	"format-alt": "{:%Y-%m-%d}",
-
  },
 
  "memory": {
@@ -154,9 +166,6 @@
 	    "escape": true,
 	    "exec": "/home/aiko/.config/waybar/waybar-media.sh", 
 	    "exec-if": "playerctl status 2>/dev/null",
-	    "on-click": "playerctl play-pause",
-	    "on-scroll-up": "playerctl next",
-	    "on-scroll-down": "playerctl previous",
 	    "interval": 1, 
 	    "max-length": 40,
 	    "tooltip": false
@@ -168,5 +177,76 @@
         "tooltip": false,
 	},
 
- 
+	"custom/prev": {
+	        "format": "⏮", 
+	        "exec": "playerctl metadata title 2>/dev/null", 
+	        "exec-if": "playerctl status 2>/dev/null",
+	        "on-click": "playerctl previous",
+	        "interval": 2,
+	        "class": "media-control",
+	    },
+	    "custom/play-pause": {
+	        "format": "{}",
+	        "exec": "playerctl status --format '{{ status }}'",
+	        "exec-if": "playerctl status 2>/dev/null",
+	        "format-icons": {
+	            "Playing": "⏸", 
+	            "Paused": "▶",  
+	            "Stopped": "▶"
+	        },
+	        "on-click": "playerctl play-pause",
+	        "interval": 1,
+	        "class": "media-control",
+	    },
+	    "custom/next": {
+	        "format": "⏭", 
+	        "exec": "playerctl metadata title 2>/dev/null", 
+	        "exec-if": "playerctl status 2>/dev/null",
+	        "on-click": "playerctl next",
+	        "interval": 2,
+	        "class": "media-control",
+	    },
+
+	"disk": {
+	    "format": "Disk: {percentage_used}%",
+	    "path": "/home",
+	    "interval": 30
+	},
+
+	"custom/weather": {
+	        "format": "{}",
+	        "exec": "~/.config/waybar/weather.sh",
+	        "exec-if": "which curl", 
+	        "interval": 300, 
+	        "tooltip": true,
+	        "class": "weather"
+	    },
+
+
+	"custom/separator": {
+	    "format": "|",
+	    "tooltip": false
+	},
+
+
+	"custom/launcher": {
+	    "format": "", 
+	    "tooltip": "Запуск меню приложений",
+	    "on-click": "rofi -show drun",
+	    "class": "custom/launcher"
+	},
+
+
+	"custom/uptime": {
+	    "format": "Up: {}",
+	    "exec": "uptime -p | sed 's/up //'", 
+	    "interval": 60,
+	    "tooltip": false
+	},
+
+
+	"custom/clipboard": {
+	    "on-click": "~/.config/waybar/clipboard_history.sh",
+	},
+	 
 }

@@ -1,5 +1,5 @@
 * {
-    font-family: "Iosevka Nerd Front";
+    font-family: "Iosevka Nerd Front", "Font Awesome 6 Free", "Noto Sans";
     font-weight: bold;
     font-size: 13px;
 }
@@ -36,6 +36,12 @@ window#waybar {
 #memory,
 #wireplumber,
 #network,
+#custom-play-pause,
+.media-control,
+#custom-media,
+#media-control,
+#custom-weather,
+
 
 
 /*  */
@@ -59,22 +65,34 @@ window#waybar {
 }
 
 #workspaces button.empty {
+
     color: #6a6e8c;
+
 }
 
 #workspaces button.active {
+
     color: #f2c866; 
+
 }
 
 
 #workspaces button.urgent {
+
     color: #ffffff;
+
     background-color: #b11e31; 
+
     animation-name: blink;
+
     animation-duration: 0.5s;
+
     animation-timing-function: linear;
+
     animation-iteration-count: infinite;
+
     animation-direction: alternate;
+
 }
 
 #backlight {
@@ -118,11 +136,54 @@ window#waybar {
 
 
 #network {
+
     color: #6d83a6; 
+
 }
 
 #network.disabled {
+
     color: #b11e31; 
+
     border-color: #b11e31;
 
 }
+
+
+
+#custom-weather {
+    color: #56B6C2; 
+   /*  //padding: 0 10px; */
+   /*  margin: 0 5px; */
+   /* //  border-radius: 4px; */
+   /*  background-color: #282C34; */
+}
+
+
+
+#custom-play-pause {
+    color: #FFD700; 
+}
+
+
+
+#custom-prev
+#custom-next
+#custom-play-pause {
+    /* background-color: #4B5263; */
+    color: #9932CC; 
+}
+
+
+
+#custom-media {
+    color: #C678DD; 
+    padding: 0 10px; 
+    font-weight: bold;
+    background-color: #282C34;
+    border-radius: 4px;
+    margin-right: 4px; 
+}
+
+
+
