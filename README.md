@@ -21,6 +21,7 @@ cd config-hypr
 cp -r hypr ~/.config
 cp -r waybar ~/.config
 cp -r kitty ~/.config
+cp -r swaync ~/.config
 ~~~
 
 ## Warning
