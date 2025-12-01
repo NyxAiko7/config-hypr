@@ -1,5 +1,5 @@
 # hyprland
-![Watch the video](./photo_2025-11-28_22-19-33.jpg)
+![](./image_2025-12-01_23-25-55.png)
 
 
 
@@ -9,7 +9,7 @@ It's better to hang yourself than make a config for hyprland
 ## Installation
 #### step 1
 ~~~bash
-sudo pacman -S rofi waybar swaync swww nautilus kitty fish bc cava ttf-firacode-nerd noto-fonts ttf-jetbrains-mono-nerd ttf-font-awesome
+sudo pacman -S rofi waybar swaync swww nautilus kitty fish bc cava ttf-firacode-nerd noto-fonts ttf-jetbrains-mono-nerd ttf-font-awesome noto-fonts-emoji
 ~~~
 #### step 2
 ~~~bash

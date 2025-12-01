@@ -1,19 +1,19 @@
 #!/bin/sh
 
-
+# Убедимся, что установлена утилита bc для расчетов времени
 if ! command -v bc &> /dev/null; then
     echo "ERROR: bc is not installed."
     exit 1
 fi
 
-
+# --- ФУНКЦИЯ ФОРМАТИРОВАНИЯ ВРЕМЕНИ (MM:SS) ---
 format_time() {
     INPUT=$1
     if [ "$INPUT" -gt 10000000 ] 2>/dev/null; then
-       
+        # Микросекунды -> Секунды
         secs=$(echo "$INPUT / 1000000" | bc)
     else
-        
+        # Секунды (округляем)
         secs=$(echo "$INPUT / 1" | bc) 
     fi
     
@@ -29,17 +29,17 @@ format_time() {
 }
 # -----------------------------------------------
 
-
+# --- ОБЛОЖКА АЛЬБОМА (ДОБАВЛЕНО) ---
 ART_FILE="/tmp/waybar_album_art.png"
 ART_TAG=""
 
 if [ -s "$ART_FILE" ]; then
-    
+    # Создаем HTML-тег <img>. Класс 'album-art-icon' используем для стилизации.
     ART_TAG="<img src='file://${ART_FILE}' class='album-art-icon'>"
 fi
 # -----------------------------------
 
-
+# Проверяем статус медиаплеера
 status=$(playerctl status 2>/dev/null)
 
 if [ "$status" = "Playing" ] || [ "$status" = "Paused" ]; then
@@ -61,7 +61,7 @@ if [ "$status" = "Playing" ] || [ "$status" = "Paused" ]; then
         time_info="[LIVE]"
         PROGRESS_BAR=""
     else
-        
+        # Расчет прогресс-бара
         BAR_LENGTH=10
         progress_percent=$(echo "scale=0; ($position_s * 100) / $length_s" | bc)
         FILLED_CHARS=$(echo "scale=0; ($progress_percent * $BAR_LENGTH) / 100" | bc)
@@ -71,22 +71,23 @@ if [ "$status" = "Playing" ] || [ "$status" = "Paused" ]; then
         for i in $(seq 1 $FILLED_CHARS); do PROGRESS_BAR="${PROGRESS_BAR}■"; done
         for i in $(seq 1 $EMPTY_CHARS); do PROGRESS_BAR="${PROGRESS_BAR}□"; done
         
-        
+        # Форматируем время
         position_formatted=$(format_time "$position_s")
         length_formatted=$(format_time "$length_us")
         time_info="[${position_formatted}/${length_formatted}]"
     fi
 
-    
+    # Определяем иконку статуса
     if [ "$status" = "Playing" ]; then
         status_icon="▶"
     else
         status_icon="⏸"
     fi
     
-    
+    # --- ФИНАЛЬНЫЙ ВЫВОД С ОБЛОЖКОЙ ---
+    # Формат: [Обложка] Иконка  [Статус] [Время] Артист - Название [Прогресс]
     echo "${ART_TAG}  ${status_icon} ${time_info} ${artist} - ${title} ${PROGRESS_BAR}"
 else
-    
+    # Если плеер не активен
     echo "No player"
 fi

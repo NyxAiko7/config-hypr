@@ -3,8 +3,8 @@
 	"position": "top",
 	"modules-left": [
 		"custom/launcher",
-		"hyprland/workspaces",
 		"custom/power",
+		"hyprland/workspaces",
 		"battery",
 		"hyprland/language",
 		"custom/media",
@@ -30,7 +30,8 @@
 	"spacing": 4,
 	"modules-right": [
 		"tray",
-		"custom/clipboard",
+		"keyboard-state",
+		"bluetooth",
 		"wireplumber",
 		"backlight",
 		"cpu",
@@ -54,15 +55,14 @@
 	"hyprland/window": {
 		"icon": true,
 		"separate-outputs": false,
-		"format": "{}"
-		
+		"format": "{}",
 	},
 
 	"cpu": {
-		"interval": 1,
-		"format": "CPU: {usage}%",
-		"on-click": "kitty -e btop",
-	},
+	        "format": "🖥️ {usage}%",
+	        "interval": 5,
+	        "on-click": "kitty -e btop",
+	    },
 
 	"battery": {
 		"format": "Battery: {capacity}%",
@@ -70,16 +70,20 @@
 
 	
 	"clock": {
-	"interval": 1,
-	"format": "{:%H:%M:%S}",
-	"format-alt": "{:%Y-%m-%d}",
- },
+	    "interval": 1,
+	    "format": "{:%m-%d %H:%M:%S}",
+	    "tooltip-format": "<tt>{calendar}</tt>",
+	    "actions": {
+	        "on-click": "calendar",
+	        "on-click-right": "tzmenu"
+	    }
+	},
 
- "memory": {
- 	"interval": 30,
- 	"format": "Memory: {used:0.1f}G/{total:0.1f}G",
- 	"on-click": "kitty -e btop",
- },
+ 	"memory": {
+ 	        "format": "🧠 {percentage}%",
+ 	        "interval": 5
+ 	    },
+ 	    
 	"hyprland/language": {
 		"format": "{short}",
 		"rewrite": {
@@ -244,9 +248,27 @@
 	    "tooltip": false
 	},
 
+	"bluetooth": {
+	        "format": " {status}", 
+	        "format-connected": " {device_alias}", 
+	        "format-connected-headset": " {device_alias}", 
+	        "format-disabled": "", 
+	        "tooltip": true,
+	        "tooltip-format": "{controller_alias}\n{device_alias}",
+	        "on-click": "blueman-manager",
+	    },
 
-	"custom/clipboard": {
-	    "on-click": "~/.config/waybar/clipboard_history.sh",
-	},
+	"keyboard-state": {
+	        "numlock": true,
+	        "capslock": false,
+	        "format": "{icon}{name}",
+	        "format-icons": {
+	            "locked": " ",
+	            "unlocked": " "
+	        }
+	    },
+
+	
+
 	 
 }

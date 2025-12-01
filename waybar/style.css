@@ -41,6 +41,10 @@ window#waybar {
 #custom-media,
 #media-control,
 #custom-weather,
+#bluetooth,
+#keyboard-state,
+
+
 
 
 
@@ -162,28 +166,68 @@ window#waybar {
 
 
 #custom-play-pause {
-    color: #FFD700; 
+    color: #FFD700; /* Золотой/желтый цвет, как вы указали */
 }
 
 
-
+/* Эффект при наведении на все кнопки управления */
 #custom-prev
 #custom-next
 #custom-play-pause {
     /* background-color: #4B5263; */
-    color: #9932CC; 
+    color: #9932CC; /* Фиолетовый цвет при наведении (как вы указали) */
 }
 
 
-
+/* Модуль информации о треке (медиа-текст) */
 #custom-media {
     color: #C678DD; 
-    padding: 0 10px; 
+    padding: 0 10px; /* Отступы для выделения блока */
     font-weight: bold;
     background-color: #282C34;
     border-radius: 4px;
-    margin-right: 4px; 
+    margin-right: 4px; /* Отступ справа от кнопок */
 }
 
+#bluetooth {
+	color: #8B008B;
+}
 
+#bluetooth.connected {
+	color: #BA55D3;
+}
 
+#bluetooth.disabled {
+	color: #FA8072;
+}
+
+#tray {
+	color: #C71585;
+	background-color: #282C34;
+	border-radius: 6px;
+	padding: 0 5px;
+	margin-right: 4px;
+	
+}
+
+#keyboard-state {
+
+    color: #e0c9c3;
+
+    padding: 0px 5px;
+
+}
+
+#keyboard-state.locked {
+
+    color: #b11e31;
+
+    border-color: #b11e31;
+
+}
+
+#keyboard-state.unlocked {
+
+    color: #e0c9c3;
+
+}
