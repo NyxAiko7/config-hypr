@@ -98,19 +98,19 @@
 	},
 
 	"custom/notification": {
-	    "tooltip": false,
-	    "format": "{icon}",
-	    "format-icons": {
-	        "notification": " <span foreground='red'><small><sup>⬤</sup></small></span>", 
-	        "none": "  ", 
-	        "dnd-notification": " 🔕 ", 
-	        "dnd-none": " 🔔 "
-	    },
-	    "return-type": "json", 
-	    "exec": "swaync-client -swb", 
-	    "on-click": "sleep 0.1 && swaync-client -t -sw", 
-	    "on-click-right": "sleep 0.1 && swaync-client -d -sw" 
-	},
+		    "tooltip": false,
+		    "format": "{icon}",
+		    "format-icons": {
+		        "notification": " <span foreground='red'><small><sup>⬤</sup></small></span>", 
+		        "none": "  ", 
+		        "dnd-notification": " 🔕 ", 
+		        "dnd-none": " 🔔 "
+		    },
+		    "return-type": "json", 
+		    "exec": "swaync-client -swb", 
+		    "on-click": "sleep 0.1 && swaync-client -t -sw", 
+		    "on-click-right": "sleep 0.1 && swaync-client -d -sw" 
+		},
 
 	"wireplumber": {
 	

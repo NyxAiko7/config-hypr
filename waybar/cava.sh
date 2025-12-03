@@ -13,7 +13,7 @@ done
 config_file="/tmp/polybar_cava_config"
 echo "
 [general]
-bars = 16
+bars = 12
 [input]
 method = pulse
 source = alsa_output.pci-0000_01_00.1.hdmi-stereo-extra3.monitor
