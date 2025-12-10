@@ -1,27 +1,27 @@
 /* ── 1. Palette & Globals (Using @define-color) ──────────────────── */
 
 /* Адаптировано под Waybar: */
-@define-color theme_fg #e0c9c3; /* Primary Text (Светлый цвет, как в keyboard-state) */
-@define-color theme_fg_secondary #a9b3c4; /* Secondary Text (Чуть светлее, чем основной цвет Waybar) */
-@define-color theme_bg rgba(36, 33, 41, 0.9); /* Panel/Background (Как Waybar, но с небольшой прозрачностью) */
-@define-color popup_bg rgba(36, 33, 41, 0.98); /* Floating Notification Background (Почти непрозрачный, как Waybar) */
-@define-color module_bg rgba(72, 61, 139, 0.3); /* Default Module Background (На основе #483D8B - сине-фиолетовый, с прозрачностью) */
-@define-color module_hover_bg rgba(109, 131, 166, 0.4); /* Module Hover (На основе #6d83a6) */
-@define-color button_bg rgba(106, 110, 140, 0.35); /* Button Default (На основе #6a6e8c) */
-@define-color button_hover_bg rgba(147, 112, 219, 0.45); /* Button Hover (На основе #9370DB) */
-@define-color accent_color #f2c866; /* Accent Active (Золотисто-желтый, как активный workspace/backlight) */
-@define-color accent_color_hover #FFD700; /* Accent Hover (Ярче, как custom-play-pause) */
-@define-color border_light rgba(242, 200, 102, 0.25); /* Светлая граница (На основе accent_color) */
+@define-color theme_fg #e0c9c3; 
+@define-color theme_fg_secondary #a9b3c4; 
+@define-color theme_bg rgba(36, 33, 41, 0.9);
+@define-color popup_bg rgba(36, 33, 41, 0.98); 
+@define-color module_bg rgba(72, 61, 139, 0.3); 
+@define-color module_hover_bg rgba(109, 131, 166, 0.4); 
+@define-color button_bg rgba(106, 110, 140, 0.35);
+@define-color button_hover_bg rgba(147, 112, 219, 0.45); 
+@define-color accent_color #FF69B4; 
+@define-color accent_color_hover #FFD700; 
+@define-color border_light rgba(242, 200, 102, 0.25); 
 @define-color border_dark rgba(36, 33, 41, 0.0);
-@define-color border_medium rgba(147, 112, 219, 0.2); /* Средняя граница (На основе #9370DB) */
+@define-color border_medium rgba(147, 112, 219, 0.2);
 @define-color icon_primary @theme_fg;
 @define-color icon_secondary @theme_fg_secondary;
 @define-color slider_trough_bg rgba(106, 110, 140, 0.4);
 @define-color slider_thumb_bg white;
-@define-color close_button_bg rgba(177, 30, 49, 0.6); /* На основе Urgent/Disabled Red */
+@define-color close_button_bg rgba(177, 30, 49, 0.6); 
 @define-color close_button_hover_bg #b11e31;
-@define-color mpris_player_bg rgba(40, 44, 52, 0.7); /* На основе custom-media background #282C34 */
-@define-color critical_color #b11e31; /* На основе Urgent/Disabled Red */
+@define-color mpris_player_bg rgba(40, 44, 52, 0.7); 
+@define-color critical_color #b11e31; 
 
 
 /* ── Base Reset ───────────────────────────────────────────────────── */
@@ -45,7 +45,7 @@
   border: 1px solid @border_medium;
   border-top-color: @border_light;
   border-bottom-color: @border_dark;
-  border-radius: 10px; /* Соответствует Waybar */
+  border-radius: 10px; 
   padding: 28px 12px;
   min-width: 300px;
 }
@@ -58,7 +58,7 @@
 .widget-buttons-grid,
 .control-center-list > box > *:not(.widget-title) {
   background-color: @module_bg;
-  border-radius: 8px; /* Более плотное скругление, как у модулей Waybar */
+  border-radius: 8px; 
   padding: 18px;
   margin-bottom: 14px;
   border: 1px solid @border_medium;
@@ -68,7 +68,7 @@
   padding: 14px 18px;
 }
 .widget-buttons-grid {
-  padding: 10px; /* Уменьшаем padding, чтобы сетка была компактнее */
+  padding: 10px; 
 }
 .control-center > box > *:last-child {
   margin-bottom: 0;
@@ -108,11 +108,11 @@
 .widget-mpris {
   padding: 0;
   border: none;
-  border-radius: 10px; /* Соответствует Waybar */
+  border-radius: 10px; 
   background: transparent;
 }
 .widget-mpris .widget-mpris-player {
-  background-color: @mpris_player_bg; /* На основе фона медиа Waybar */
+  background-color: @mpris_player_bg; 
   border-radius: 8px;
   border: 1px solid @border_medium;
   padding: 16px;
@@ -121,7 +121,7 @@
   background: none;
   min-width: 50px;
   min-height: 50px;
-  border-radius: 8px; /* Снижаем радиус */
+  border-radius: 8px; 
   margin-right: 12px;
 }
 .widget-mpris .widget-mpris-title {
@@ -202,9 +202,9 @@ scale slider {
   background: none;
 }
 .widget-buttons-grid > flowbox > flowboxchild > button {
-  background-color: @button_bg; /* Используем общие цвета кнопок */
-  border-radius: 8px; /* Меньше, как у Waybar */
-  padding: 10px; /* Уменьшаем padding */
+  background-color: @button_bg; 
+  border-radius: 8px; 
+  padding: 10px; 
   min-width: 20px;
   min-height: 20px;
   color: @icon_secondary;
@@ -236,7 +236,7 @@ scale slider {
   background-color: @module_bg;
   border: 1px solid @border_medium;
   padding: 16px;
-  border-radius: 8px; /* Снижаем радиус */
+  border-radius: 8px; 
   transition: background-color 0.15s ease;
 }
 
@@ -311,9 +311,9 @@ scale slider {
   margin-bottom: 12px;
 }
 .floating-notifications .notification-background {
-  background-color: @popup_bg; /* Почти непрозрачный темный фон */
+  background-color: @popup_bg; 
   border: 1px solid @border_light;
-  border-radius: 10px; /* Соответствует Waybar */
+  border-radius: 10px; 
   padding: 18px;
   margin: 8px 14px;
   transition: background-color 0.15s ease;
@@ -337,7 +337,7 @@ scale slider {
   min-width: 48px;
   min-height: 48px;
   margin-right: 14px;
-  border-radius: 8px; /* Снижаем радиус */
+  border-radius: 8px;
 }
 .floating-notifications .close-button {
   background-color: @close_button_bg;
@@ -362,7 +362,7 @@ scale slider {
   font-size: 16px;
   color: @theme_fg;
   background-color: @button_bg;
-  border-radius: 8px; /* Снижаем радиус */
+  border-radius: 8px; 
   padding: 8px 18px;
   transition: background-color 0.15s ease;
   margin-bottom: 8px;

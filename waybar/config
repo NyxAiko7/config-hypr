@@ -23,6 +23,7 @@
 		"custom/notification",
 		"network",
 		"custom/wallpaper_menu",
+		"custom/song_menu",
 		"custom/separator",
 		"disk",
 		"custom/uptime",
@@ -275,6 +276,13 @@
 		"tooltip": true,
 		"interval": "once"
 	},
+
+	"custom/song_menu": {
+		"format": "♫",
+		"on-click": "kitty -e ~/.config/waybar/command/player",
+		"tooltip": true,
+		"interval": "once"
+	}
 
 	 
 }
