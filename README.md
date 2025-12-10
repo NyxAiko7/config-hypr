@@ -22,6 +22,7 @@ cp -r hypr ~/.config
 cp -r waybar ~/.config
 cp -r kitty ~/.config
 cp -r swaync ~/.config
+cp -r rofi ~/.config
 ~~~
 
 ## Warning

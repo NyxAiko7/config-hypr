@@ -22,6 +22,7 @@
 		"custom/weather",
 		"custom/notification",
 		"network",
+		"custom/wallpaper_menu",
 		"custom/separator",
 		"disk",
 		"custom/uptime",
@@ -168,7 +169,7 @@
 	"custom/media": {
 	    "format": "{}",
 	    "escape": true,
-	    "exec": "/home/aiko/.config/waybar/waybar-media.sh", 
+	    "exec": "/home/aiko/.config/waybar/command/waybar-media.sh", 
 	    "exec-if": "playerctl status 2>/dev/null",
 	    "interval": 1, 
 	    "max-length": 40,
@@ -177,7 +178,7 @@
 
 	"custom/cava":{
 		"format": "{}",
-		"exec": "/home/aiko/.config/waybar/cava.sh",
+		"exec": "/home/aiko/.config/waybar/command/cava.sh",
         "tooltip": false,
 	},
 
@@ -219,7 +220,7 @@
 
 	"custom/weather": {
 	        "format": "{}",
-	        "exec": "~/.config/waybar/weather.sh",
+	        "exec": "~/.config/waybar/command/weather.sh",
 	        "exec-if": "which curl", 
 	        "interval": 300, 
 	        "tooltip": true,
@@ -268,7 +269,12 @@
 	        }
 	    },
 
-	
+	"custom/wallpaper_menu": {
+		"format": "🖼️",	
+		"on-click": "kitty -e ~/.config/waybar/command/img",
+		"tooltip": true,
+		"interval": "once"
+	},
 
 	 
 }
