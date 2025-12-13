@@ -95,7 +95,7 @@
   color: @theme_fg;
   background-color: @button_bg;
   border: none;
-  border-radius: 8px; /* Соответствует модулям */
+  border-radius: 8px; 
   padding: 7px 16px;
   transition: background-color 0.15s ease;
 }
