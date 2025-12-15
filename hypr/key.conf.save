@@ -16,15 +16,18 @@ bind = SUPER, L, exec, hyprlock
 bind = SUPER, K, exec, hyprpicker
 
 bind = SUPER_SHIFT, T, togglefloating
-
+windowrulev2 = opacity 0.9 0.9, class:^(firefox)$
+windowrulev2 = opacity 0.9 0.9, class:^(org.gnome.Nautilus)$
+windowrulev2 = opacity 0.9 0.9, class:^(org.telegram.desktop)$
+windowrulev2 = opacity 0.9 0.9, class:^(vesktop)$
+windowrulev2 = opacity 0.9 0.9, class:^(steam)$
 
 
 bind = SUPER_SHIFT, 1, movetoworkspace, 1
 bind = SUPER_SHIFT, 2, movetoworkspace, 2
 bind = SUPER_SHIFT, 3, movetoworkspace, 3
 bind = SUPER_SHIFT, 4, movetoworkspace, 4
-bind = SUPER_SHIFT, 5, movetoworkspace, 5
-bind = SUPER_SHIFT, 6, movetoworkspace, 6
+bind = SUPER_SHIFT, 5, movetoworkspace, bind = SUPER_SHIFT, 6, movetoworkspace, 6
 bind = SUPER_SHIFT, 7, movetoworkspace, 7
 bind = SUPER_SHIFT, 8, movetoworkspace, 8
 bind = SUPER_SHIFT, 9, movetoworkspace, 9
