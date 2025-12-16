@@ -73,7 +73,7 @@
 	
 	"clock": {
 	    "interval": 1,
-	    "format": "{:%m-%d %H:%M:%S}",
+	    "format": "{:%I:%M %p, %d/%m}",
 	    "tooltip-format": "<tt>{calendar}</tt>",
 	    "actions": {
 	        "on-click": "calendar",
@@ -279,7 +279,7 @@
 
 	"custom/song_menu": {
 		"format": "♫",
-		"on-click": "kitty -e ~/.config/waybar/command/player",
+		"on-click": "kitty -e kew",
 		"tooltip": true,
 		"interval": "once"
 	}
