@@ -180,7 +180,7 @@
 	"custom/cava":{
 		"format": "{}",
 		"exec": "/home/aiko/.config/waybar/command/cava.sh",
-        "tooltip": false,
+        "restart-interval": 1
 	},
 
 	"custom/prev": {

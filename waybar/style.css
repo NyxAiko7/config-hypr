@@ -125,3 +125,8 @@ window#waybar {
 #bluetooth.connected {
     color: @color6;
 }
+
+#custom-cava {
+    font-size: 12px; /* Настрой размер полосок под себя */
+    color: @color4
+}
