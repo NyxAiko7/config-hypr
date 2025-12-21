@@ -1,234 +1,127 @@
+@import url("../../.cache/wal/colors-waybar.css");
+
 * {
-    font-family: "Iosevka Nerd Front", "Font Awesome 6 Free", "Noto Sans";
+    font-family: "Iosevka Nerd Font", "Font Awesome 6 Free", "Noto Sans";
     font-weight: bold;
     font-size: 13px;
 }
 
-/* transparent  */
-
 window#waybar {
-	padding: 4px;
-   /* background-color: #242129;*/
-   background-color: rgba(30, 30, 46, 0.8);
-	border-radius: 10px;    
-	margin: 2px 10px;
+    padding: 4px;
+    /* Используем цвет фона из pywal с прозрачностью 0.8 */
+    background-color: alpha(@background, 0.8);
+    border-radius: 10px;    
+    margin: 2px 10px;
+    border-bottom: 2px solid @color2; /* Добавил тонкую линию снизу для стиля */
 }
-
-/* window > box { */
-/* 	margin-top: 10px; */
-/* 	margin-right: 10px; */
-/* 	margin-left: 10px; */
-/* 	margin-bottom: 0; */
-/* 	border-radius: 8px; */
-/*     padding: 0; */
-/* } */
 
 .modules-left,
 .modules-right {
     padding: 2px;
 }
 
-#workspaces,
-#backlight,
-#clock,
-#cpu,
-#network,
-#battery,
-#memory,
-#wireplumber,
-#network,
-#custom-play-pause,
-.media-control,
-#custom-media,
-#media-control,
-#custom-weather,
-#bluetooth,
-#keyboard-state,
-
-
-
-
-
-/*  */
-/* #window { */
-/*     background-color: #242129; */
-/*     border: 1px solid #483D8B; */
-/*     border-radius: 10; */
-/*     padding: 8px 12px; */
-/*     color: #483D8B; */
-/*     margin: 2px; */
-/* } */
-
+/* --- ВОРКСПЕЙСЫ --- */
 #workspaces {
-    border-color: #6d83a6;
+    border-color: @color4;
 }
 
 #workspaces button {
     min-height: 0;
     padding: 0 7px;
-    color: #6a6e8c;
+    color: @color7; /* Светлый цвет из палитры */
 }
 
 #workspaces button.empty {
-
-    color: #6a6e8c;
-
+    color: @color8; /* Тусклый цвет для пустых */
 }
 
 #workspaces button.active {
-
-    color: #f2c866; 
-
+    color: @color2; /* Акцентный цвет из обоев */
 }
-
 
 #workspaces button.urgent {
-
-    color: #ffffff;
-
-    background-color: #b11e31; 
-
+    color: @foreground;
+    background-color: @color1; 
     animation-name: blink;
-
     animation-duration: 0.5s;
-
     animation-timing-function: linear;
-
     animation-iteration-count: infinite;
-
     animation-direction: alternate;
-
 }
 
+/* --- МОДУЛИ --- */
 #backlight {
-    color: #f2c866;
+    color: @color3;
     margin: 4px;
 }
 
-
 #clock {
-	color: #6d83a6;
+    color: @color5;
 }
 
-#cpu {
-	color: #6d83a6;
+#cpu, #memory, #disk {
+    color: @color6;
 }
 
 #network {
-	color: #6d83a6;
+    color: @color4; 
 }
+
 #network.disabled {
-	color: #b11e31;
-	border-color: #b11e31;
+    color: @color1; 
 }
 
 #battery {
-	color: #9370DB
-}
-
-#memory {
-	color: #2E8B57
+    color: @color2;
 }
 
 #wireplumber {
-	color: #44944A;
+    color: @color4;
 }
 
 #wireplumber.muted {
-	border-color: #E32636;
-	color: #78DBE2;	
+    color: @color8;    
 }
-
-
-#network {
-
-    color: #6d83a6; 
-
-}
-
-#network.disabled {
-
-    color: #b11e31; 
-
-    border-color: #b11e31;
-
-}
-
-
 
 #custom-weather {
-    color: #56B6C2; 
-   /*  //padding: 0 10px; */
-   /*  margin: 0 5px; */
-   /* //  border-radius: 4px; */
-   /*  background-color: #282C34; */
+    color: @color6; 
 }
 
-
-
+/* --- МЕДИА --- */
 #custom-play-pause {
-    color: #FFD700; /* Золотой/желтый цвет, как вы указали */
+    color: @color3;
 }
 
-
-/* Эффект при наведении на все кнопки управления */
-#custom-prev
-#custom-next
-#custom-play-pause {
-    /* background-color: #4B5263; */
-    color: #9932CC; /* Фиолетовый цвет при наведении (как вы указали) */
-}
-
-
-/* Модуль информации о треке (медиа-текст) */
 #custom-media {
-    color: #C678DD; 
-    padding: 0 10px; /* Отступы для выделения блока */
-    font-weight: bold;
-    background-color: #282C34;
+    color: @foreground; 
+    padding: 0 10px;
+    background-color: alpha(@color0, 0.5); /* Темный фон из палитры */
     border-radius: 4px;
-    margin-right: 4px; /* Отступ справа от кнопок */
+    margin-right: 4px;
 }
 
-#bluetooth {
-	color: #8B008B;
-}
-
-#bluetooth.connected {
-	color: #BA55D3;
-}
-
-#bluetooth.disabled {
-	color: #FA8072;
-}
-
+/* --- СИСТЕМНЫЙ ТРЕЙ И КЛАВИАТУРА --- */
 #tray {
-	color: #C71585;
-	background-color: #282C34;
-	border-radius: 6px;
-	padding: 0 5px;
-	margin-right: 4px;
-	
+    color: @color5;
+    background-color: alpha(@color0, 0.5);
+    border-radius: 6px;
+    padding: 0 5px;
+    margin-right: 4px;
 }
 
 #keyboard-state {
-
-    color: #e0c9c3;
-
+    color: @foreground;
     padding: 0px 5px;
-
 }
 
 #keyboard-state.locked {
-
-    color: #b11e31;
-
-    border-color: #b11e31;
-
+    color: @color1;
 }
 
-#keyboard-state.unlocked {
+#bluetooth {
+    color: @color4;
+}
 
-    color: #e0c9c3;
-
+#bluetooth.connected {
+    color: @color6;
 }

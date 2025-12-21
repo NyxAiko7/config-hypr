@@ -26,7 +26,7 @@
 		"custom/song_menu",
 		"custom/separator",
 		"disk",
-		"custom/uptime",
+		
 		
 	],
 	"spacing": 4,
@@ -243,12 +243,6 @@
 	},
 
 
-	"custom/uptime": {
-	    "format": "Up: {}",
-	    "exec": "uptime -p | sed 's/up //'", 
-	    "interval": 60,
-	    "tooltip": false
-	},
 
 	"bluetooth": {
 	        "format": " {status}", 
