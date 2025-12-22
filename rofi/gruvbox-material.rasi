@@ -112,4 +112,3 @@ element-text, element-icon {
 element-text .active, element-text .urgent {
     text-color: @bg0;
 }
-

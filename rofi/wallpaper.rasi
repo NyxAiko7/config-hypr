@@ -1,0 +1,72 @@
+/* Импортируем динамические цвета Pywal */
+@import "~/.cache/wal/colors-rofi-dark.rasi"
+
+* {
+    /* Исправляем ошибки "failed to resolve" из скриншотов */
+    bg0: @background;
+    bg1: @color0;
+    grey0: @color8;
+    fg0: @foreground;
+
+    blue: @color4;
+    red: @color1;
+    orange: @color3;
+    green: @color2;
+    
+    /* Явно задаем переменную для рамки */
+    bgStatusline3: @color1; 
+
+    background-color: transparent;
+    text-color: @fg0;
+}
+
+window {
+    height: 600;
+    width: 600;
+    /* Устанавливаем прозрачность 80% (0.8) для основного фона */
+    /*background-color: alpha(@bg0, 0.8); */
+    border: 2;
+    border-radius: 10;
+    border-color: "@bgStatusline3";
+}
+
+mainbox {
+    spacing: 0;
+    children: [inputbar, message, listview];
+}
+
+inputbar {
+    color: @fg0;
+    padding: 14;
+    /* Оставляем прозрачным, чтобы видеть фон окна */
+    background-color: transparent;
+    children: [prompt, entry];
+}
+
+message {
+    padding: 10;
+    background-color: "@grey0";
+}
+
+listview {
+    padding: 8;
+    background-color: transparent;
+    border: 0;
+}
+
+element {
+    padding: 8;
+    border-radius: 8;
+    background-color: transparent;
+}
+
+element.selected.normal {
+    /* Делаем выделение пункта чуть прозрачнее */
+    /*background-color: alpha(@grey0, 0.6);*/
+    text-color: @fg0;
+}
+
+element-text, element-icon {
+    background-color: inherit;
+    text-color: inherit;
+}

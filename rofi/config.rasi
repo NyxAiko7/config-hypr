@@ -13,4 +13,7 @@ configuration {
     dpi: 120;
 }
 
-@theme "~/.config/rofi/gruvbox-material.rasi"
+
+
+@theme "~/.config/rofi/wallpaper.rasi"
+@import "~/.cache/wal/colors-rofi-dark.rasi"
