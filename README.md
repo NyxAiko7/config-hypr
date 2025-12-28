@@ -17,13 +17,20 @@ wal -i Let's go to the wallpaper
 git clone https://github.com/NyxAiko7/config-hypr.git
 cd config-hypr
 ~~~
+### step 2.5
+
+~~~bash
+wal -i Let's go to the wallpaper
+~~~
+
 #### step 3
 ~~~bash
-cp -r hypr ~/.config
-cp -r waybar ~/.config
-cp -r kitty ~/.config
-cp -r swaync ~/.config
-cp -r rofi ~/.config
+sudo cp -r colors-fuzzel.ini  ~/.config/wal/templates/
+sudo cp -r hypr ~/.config
+sudo cp -r waybar ~/.config
+sudo cp -r kitty ~/.config
+sudo cp -r swaync ~/.config
+sudo cp -r fuzzel ~/.config
 ~~~
 
 ## Warning
