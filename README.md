@@ -13,7 +13,6 @@ sudo pacman -S swayosd fuzzel waybar swaync swww nautilus kitty fish bc cava ttf
 ~~~
 #### step 2
 ~~~bash
-wal -i Let's go to the wallpaper
 git clone https://github.com/NyxAiko7/config-hypr.git
 cd config-hypr
 ~~~
