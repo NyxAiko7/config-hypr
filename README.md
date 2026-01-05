@@ -9,7 +9,7 @@ It's better to hang yourself than make a config for hyprland
 ## Installation
 #### step 1
 ~~~bash
-sudo pacman -S fuzzel waybar swaync swww nautilus kitty fish bc cava ttf-firacode-nerd noto-fonts ttf-jetbrains-mono-nerd ttf-font-awesome noto-fonts-emoji python-pywal
+sudo pacman -S swayosd fuzzel waybar swaync swww nautilus kitty fish bc cava ttf-firacode-nerd noto-fonts ttf-jetbrains-mono-nerd ttf-font-awesome noto-fonts-emoji python-pywal
 ~~~
 #### step 2
 ~~~bash
@@ -25,7 +25,7 @@ wal -i Let's go to the wallpaper
 
 #### step 3
 ~~~bash
-sudo cp -r colors-fuzzel.ini  ~/.config/wal/templates/
+sudo cp -r wal ~/.config
 sudo cp -r hypr ~/.config
 sudo cp -r waybar ~/.config
 sudo cp -r kitty ~/.config

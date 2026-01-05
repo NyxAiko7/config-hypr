@@ -1,0 +1,50 @@
+@import url("file:///home/aiko/.cache/wal/colors.css");
+
+window {
+    /* Используем цвет фона из Pywal (переменная @background) */
+    background: rgba(20, 20, 20, 0.7); 
+    border-radius: 20px;
+    border: 2px solid @color1; /* Рамка цвета твоих обоев */
+}
+
+#container {
+    margin: 16px;
+}
+
+progress {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    min-height: 10px;
+}
+
+progress highlight {
+    /* Полоска прогресса будет основного акцентного цвета обоев */
+    background: @color1; 
+    border-radius: 10px;
+}
+
+label {
+    color: @foreground;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+image {
+    color: @color1; /* Иконка цвета обоев */
+}
+
+/* Настройка для всех индикаторов (Caps, Num, Scroll) */
+#caps-lock, #num-lock {
+    padding: 10px;
+}
+
+/* Если хочешь, чтобы текст был виден всегда */
+label {
+    opacity: 1;
+    color: var(--foreground);
+}
+
+/* Настройка иконки для этих уведомлений */
+#caps-lock image, #input-layout image {
+    color: var(--color2); /* Используем другой цвет из палитры Pywal для разнообразия */
+}

@@ -3,9 +3,9 @@
 /* Адаптировано под Waybar: */
 @define-color theme_fg @foreground; 
 @define-color theme_fg_secondary @color7; 
-@define-color theme_bg alpha(@background, 0.9);
-@define-color popup_bg alpha(@background, 0.98); 
-@define-color module_bg alpha(@color0, 0.3); 
+@define-color theme_bg alpha(@background, 0.6);
+@define-color popup_bg alpha(@background, 0.5); 
+@define-color module_bg alpha(@color0, 0.2); 
 @define-color module_hover_bg alpha(@color2, 0.4); 
 @define-color button_bg alpha(@color1, 0.35);
 @define-color button_hover_bg alpha(@color4, 0.45); 
@@ -20,13 +20,13 @@
 @define-color slider_thumb_bg white;
 @define-color close_button_bg alpha(@color1, 0.6); 
 @define-color close_button_hover_bg @color1;
-@define-color mpris_player_bg alpha(@color0, 0.7); 
+@define-color mpris_player_bg alpha(@color0, 0.4); 
 @define-color critical_color @color1;
 
 
 /* ── Base Reset ───────────────────────────────────────────────────── */
 * {
-  font-family: "Inter", "SF Pro Text", sans-serif;
+  font-family: "Inter", "JetBrainsMono Nerd Font", "Noto Sans CJK JP", sans-serif;
   font-size: 17px;
   color: @theme_fg;
   border: none;
@@ -82,7 +82,7 @@
   margin-bottom: 8px;
 }
 .widget-title label {
-  font-family: "Noto Sans";
+  font-family: "Noto Sans", "Noto Sans CJK JP", sans-serif;
   font-size: 18px;
   font-weight: 500;
   color: @theme_fg_secondary;
@@ -106,18 +106,21 @@
 
 /* ── 4. MPRIS Widget ────────────────────────────────────────────── */
 .widget-mpris {
+  font-family: "Noto Sans", "Noto Sans CJK JP", sans-serif;
   padding: 0;
   border: none;
   border-radius: 10px; /* Соответствует Waybar */
   background: transparent;
 }
 .widget-mpris .widget-mpris-player {
+  font-family: "Noto Sans", "Noto Sans CJK JP", sans-serif;
   background-color: @mpris_player_bg; /* На основе фона медиа Waybar */
   border-radius: 8px;
   border: 1px solid @border_medium;
   padding: 16px;
 }
 .widget-mpris .widget-mpris-album-art {
+  font-family: "Noto Sans", "Noto Sans CJK JP", sans-serif;
   background: none;
   min-width: 50px;
   min-height: 50px;
@@ -126,6 +129,7 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 .widget-mpris .widget-mpris-title {
+  font-family: "Inter", "Noto Sans CJK JP", sans-serif;
   font-size: 20px;
   font-weight: 600;
   color: @theme_fg;
@@ -133,11 +137,13 @@
   background: none;
 }
 .widget-mpris .widget-mpris-subtitle {
+  font-family: "Noto Sans", "Noto Sans CJK JP", sans-serif;
   font-size: 16px;
   color: @theme_fg_secondary;
   background: none;
 }
 .widget-mpris .widget-mpris-player button {
+  font-family: "Noto Sans", "Noto Sans CJK JP", sans-serif;
   all: unset;
   background: transparent;
   border-radius: 50%;
