@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=img
+Comment=Download and view waifus
+# Важно: терминальные программы должны запускаться через эмулятор
+Exec=kitty -e img
+Icon=image
+Terminal=true
+Categories=Utility;
