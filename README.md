@@ -9,7 +9,7 @@ It's better to hang yourself than make a config for hyprland
 ## Installation
 #### step 1
 ~~~bash
-sudo pacman -S swayosd fuzzel waybar swaync swww nemo alacritty  fish bc cava ttf-firacode-nerd noto-fonts ttf-jetbrains-mono-nerd ttf-font-awesome noto-fonts-emoji python-pywal
+sudo pacman -S viu swayosd fuzzel waybar swaync swww nemo alacritty  fish bc cava ttf-firacode-nerd noto-fonts ttf-jetbrains-mono-nerd ttf-font-awesome noto-fonts-emoji python-pywal
 yay -s wpgtk
 ~~~
 #### step 2
