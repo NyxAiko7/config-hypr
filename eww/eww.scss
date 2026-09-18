@@ -1,0 +1,85 @@
+/* Основной контейнер всплывающего окна */
+.control-panel-box {
+  background-color: $background;
+  border-radius: 16px;          /* Скругление внешнего окна */
+  border: 2px solid $color1;    /* Акцентная рамка */
+  padding: 16px;
+}
+
+.bar-inner {
+  background-color: $background;
+  color: $foreground;
+  padding: 4px 12px;
+  
+  /* Добавляем скругление углов и рамку */
+  border-radius: 12px;
+  border: 2px solid $color1; /* Необязательно: акцентная рамка под цвет обоев */
+  
+  /* Отступ от краев экрана, чтобы скругление было видно */
+  margin: 6px 8px 0px 8px;
+}
+
+/* Карточка пользователя */
+.user-card {
+  background-color: $color0;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+/* Карточки мониторинга (CPU / RAM) */
+.stat-card {
+  background-color: $color0;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+/* Быстрые действия (Кнопки Wi-Fi, Звук и т.д.) */
+.action-btn {
+  background-color: $color0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  
+  &:hover {
+    background-color: $color1;
+    color: $background;
+  }
+}
+
+/* Кнопки питания */
+.power-card {
+  border-radius: 10px;
+  padding: 8px;
+  
+  &.off {
+    background-color: $color1;
+  }
+  &.reboot {
+    background-color: $color3;
+  }
+}
+
+/* Скругление полосы и бегунка ползунков */
+scale trough {
+  background-color: $color0;
+  border-radius: 8px;           /* Скругление подложки */
+  min-height: 12px;
+}
+
+scale highlight {
+  background-color: $color1;
+  border-radius: 8px;           /* Скругление заполненной части */
+}
+
+scale slider {
+  border-radius: 50%;           /* Полностью круглый бегунок */
+  min-width: 16px;
+  min-height: 16px;
+}
+
+.control-panel-box {
+  /* Берем цвет фона из Pywal ($background) и задаем ему 80% прозрачности */
+  background-color: rgba($background, 0.8);
+  border-radius: 16px;
+  border: 1px solid $color1;
+  padding: 16px;
+}
