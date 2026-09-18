@@ -28,6 +28,12 @@ hl.monitor({
     scale    = "1.2",
 })
 
+hl.config({
+    xwayland = {
+        force_zero_scaling = true,
+    },
+})
+
 
 ---------------------
 ---- MY PROGRAMS ----
@@ -58,8 +64,7 @@ hl.on("hyprland.start", function ()
 	hl.exec_cmd("pipewire &")
 	hl.exec_cmd("pipewire-pulse &")
 	hl.exec_cmd("wireplumber &")
-	hl.exec_cmd("eww daemon &")
-	hl.exec_cmd("eww open bar")
+	hl.exec_cmd("ags run .config/ags/maybar.tsx")
 	hl.exec_cmd("awww-daemon")
 	hl.exec_cmd("swaync &")
 end)
@@ -270,7 +275,7 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
-
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
 hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
