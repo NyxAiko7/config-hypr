@@ -1,0 +1,170 @@
+
+@import '/home/aiko/.cache/wal/colors.css';
+
+* {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 13px;
+    color: var(--foreground, #e0def4);
+}
+
+.control-center {
+    background-color: rgba(25, 23, 36, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+
+.notification-row {
+    outline: none;
+    margin: 6px;
+}
+
+.notification {
+    background-color: rgba(25, 23, 36, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.notification-content {
+    margin: 2px;
+}
+
+.summary {
+    font-weight: bold;
+    font-size: 13px;
+    color: var(--color3, #ebbcba);
+}
+
+.body {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+
+.close-button {
+    background: transparent;
+    border-radius: 6px;
+    color: var(--foreground, #e0def4);
+    padding: 4px;
+}
+
+.close-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+
+.widget-title {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.widget-title > button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 11px;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.widget-title > button:hover {
+    background: var(--color2, #31748f);
+    color: #ffffff;
+}
+
+
+.widget-dnd, .widget-inhibitor {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 6px 12px;
+    margin-bottom: 8px;
+}
+
+
+.widget-mpris {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 10px;
+    margin-top: 8px;
+}
+
+.widget-mpris player {
+    padding: 4px;
+}
+
+.widget-mpris-title {
+    font-weight: bold;
+    color: var(--color3, #ebbcba);
+}
+
+.widget-mpris-subtitle {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+
+.widget-volume, .widget-backlight {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-top: 8px;
+}
+
+scale trough {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    min-height: 5px;
+}
+
+scale highlight {
+    background: var(--color2, #31748f);
+    border-radius: 6px;
+}
+
+scale slider {
+    background: var(--foreground, #e0def4);
+    border-radius: 50%;
+    min-width: 10px;
+    min-height: 10px;
+}
+
+
+.widget-buttons-grid {
+    margin-top: 8px;
+    padding: 2px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+}
+
+.widget-buttons-grid flowboxchild button {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 10px;
+    margin: 3px;
+    font-size: 15px;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.widget-buttons-grid flowboxchild button:hover {
+    background: var(--color2, #31748f);
+    color: #ffffff;
+}
+
+
+.widget-cpu, .widget-memory {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 6px 12px;
+    margin-bottom: 8px;
+}

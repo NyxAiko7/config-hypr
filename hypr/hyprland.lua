@@ -67,6 +67,7 @@ hl.on("hyprland.start", function ()
 	hl.exec_cmd("ags run .config/ags/maybar.tsx")
 	hl.exec_cmd("awww-daemon")
 	hl.exec_cmd("swaync &")
+    hl.exec_cmd("swayosd-server -s ~/.config/swayosd/style.css")
 end)
 
 -------------------------------
@@ -276,6 +277,7 @@ hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + " .. "F", hl.dsp.window.fullscreen({ mode = 0 }))
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
 hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))

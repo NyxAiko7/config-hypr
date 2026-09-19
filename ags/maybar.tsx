@@ -29,6 +29,13 @@ function QuickSettingsPopover() {
 
   const btState = createPoll(false, 3000, "sh -c 'bluetoothctl show 2>/dev/null | grep \"Powered: yes\"' || true", out => out.trim().length > 5)
 
+  
+  const mediaTrack = createPoll("Нет музыки", 2000, "sh -c 'playerctl metadata --format \"{{artist}} - {{title}}\" 2>/dev/null' || true", out => {
+    const track = out.trim()
+    if (!track || track.includes("--")) return "Нет музыки"
+    return track.length > 30 ? `${track.slice(0, 30)}...` : track
+  })
+
   const getVol = () => {
     const out = execSync("wpctl get-volume @DEFAULT_AUDIO_SINK@")
     const v = out.split(" ")[1]
@@ -96,6 +103,22 @@ function QuickSettingsPopover() {
         </button>
       </box>
 
+      {/* Блок управления медиаплеером */}
+      <box orientation={Gtk.Orientation.VERTICAL} spacing={6} cssClasses={["qs-sliders"]}>
+        <label label={mediaTrack} cssClasses={["media-popup-title"]} xalign={0} />
+        <box spacing={6} homogeneous={true}>
+          <button cssClasses={["qs-action-btn"]} onClicked={() => exec("playerctl previous")}>
+            <label label="󰒮 Назад" />
+          </button>
+          <button cssClasses={["qs-action-btn"]} onClicked={() => exec("playerctl play-pause")}>
+            <label label="󰐎 Пауза" />
+          </button>
+          <button cssClasses={["qs-action-btn"]} onClicked={() => exec("playerctl next")}>
+            <label label="󰒭 Вперед" />
+          </button>
+        </box>
+      </box>
+
       <box orientation={Gtk.Orientation.VERTICAL} spacing={8} cssClasses={["qs-sliders"]}>
         <box spacing={8}>
           <button cssClasses={["qs-icon-btn"]} onClicked={() => exec("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")}>
@@ -128,9 +151,9 @@ function QuickSettingsPopover() {
         </button>
       </box>
     </box>
-  ) as Gtk.Widget
+  )
 
-  popover.set_child(content)
+  popover.set_child(content as unknown as Gtk.Widget)
 
   const wifiDisplay = wifiState(ssid => ssid !== "Offline" ? `󰤨 ${ssid}` : "󰤭 Offline")
 
@@ -141,6 +164,9 @@ function QuickSettingsPopover() {
         volAdj.set_value(getVol())
         micAdj.set_value(getMic())
         brightAdj.set_value(getBright())
+        if (popover.get_parent()) {
+          popover.unparent()
+        }
         popover.set_parent(self)
         popover.popup()
       }}>
@@ -179,16 +205,17 @@ function Media() {
   )
 }
 
+
 function Workspaces() {
   const activeWs = createPoll(1, 200, "sh -c 'hyprctl activeworkspace -j 2>/dev/null' || true", out => {
     try { return JSON.parse(out).id || 1 } catch { return 1 }
   })
 
   return (
-    <box cssClasses={["workspaces"]} spacing={4}>
+    <box cssClasses={["workspaces"]} spacing={2}>
       {[1, 2, 3, 4, 5].map(id => (
         <button
-          cssClasses={activeWs(active => active === id ? ["active"] : [])}
+          cssClasses={activeWs(active => active === id ? ["workspace-btn", "active"] : ["workspace-btn"])}
           onClicked={() => exec(`hyprctl dispatch workspace ${id}`)}>
           <label label={String(id)} />
         </button>
@@ -224,14 +251,17 @@ function PowerMenu() {
         <label label="󰿅 Выйти" />
       </button>
     </box>
-  ) as Gtk.Widget
+  )
 
-  popover.set_child(popoverContent)
+  popover.set_child(popoverContent as unknown as Gtk.Widget)
 
   return (
     <button
       cssClasses={["power-btn"]}
       onClicked={(self) => {
+        if (popover.get_parent()) {
+          popover.unparent()
+        }
         popover.set_parent(self)
         popover.popup()
       }}>
