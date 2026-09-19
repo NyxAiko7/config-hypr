@@ -1,17 +1,14 @@
 @import '/home/aiko/.cache/wal/colors.css';
 
-window#maybar {
+window#maybar,
+window#ags-bar {
     background-color: transparent;
 }
 
 .bar-inner {
-    background-color: var(--background, #191724);
-    color: var(--foreground, #e0def4);
-    padding: 4px 12px;
+    background-color: transparent;
+    padding: 0;
     margin: 8px 12px 0 12px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
     font-family: "JetBrains Mono", "Fira Code", monospace;
     font-size: 13px;
     font-weight: bold;
@@ -22,6 +19,9 @@ button {
     border: none;
     padding: 0;
     margin: 0;
+    background-image: none;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 button,
@@ -30,27 +30,107 @@ button,
 .qs-action-btn,
 .qs-icon-btn,
 .control-center-btn,
-.media,
+.media-container,
+.media-main-btn,
 .clipboard-btn,
 .weather-btn,
 .notification-btn,
 .clock-btn,
 .power-btn,
 .language,
-.power-item {
+.sys-cpu-btn,
+.sys-ram-btn,
+.power-item,
+.battery {
     transition: background-color 0.22s cubic-bezier(0.25, 1, 0.5, 1),
+                border-color 0.22s cubic-bezier(0.25, 1, 0.5, 1),
                 color 0.22s cubic-bezier(0.25, 1, 0.5, 1),
-                opacity 0.15s ease;
+                opacity 0.15s ease,
+                transform 0.15s ease;
 }
 
 button:active {
     opacity: 0.8;
+    transform: scale(0.97);
+}
+
+.workspaces,
+.media-container,
+.control-center-btn,
+.power-btn,
+.battery,
+.battery-bar,
+.sys-group,
+.status-group,
+.datetime-group {
+    background-color: var(--background, #14121a);
+    color: var(--foreground, #e0def4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.battery,
+.battery-bar {
+    padding: 4px 10px;
+    color: var(--color1, #eb6f92);
+}
+
+.control-center-btn,
+.power-btn {
+    padding: 4px 10px;
+}
+
+.control-center-btn:hover {
+    background-color: var(--color0, #2a283e);
+    border-color: var(--color6, #9ccfd8);
+}
+
+.power-btn:hover {
+    background-color: var(--color0, #2a283e);
+    border-color: var(--color1, #eb6f92);
+}
+
+.sys-group,
+.status-group,
+.datetime-group {
+    padding: 2px 4px;
+}
+
+.sys-group button,
+.sys-group .sys-cpu-btn,
+.sys-group .sys-ram-btn,
+.status-group button,
+.status-group .language,
+.status-group .clipboard-btn,
+.status-group .notification-btn,
+.datetime-group button,
+.datetime-group .clock-btn,
+.datetime-group .weather-btn {
+    padding: 3px 8px;
+    border-radius: 8px;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.sys-group .sys-cpu-btn,
+.status-group .language,
+.status-group .clipboard-btn,
+.datetime-group .clock-btn {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.sys-group button:hover,
+.status-group button:hover,
+.datetime-group button:hover {
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 .workspaces {
-    background-color: rgba(0, 0, 0, 0.2);
     padding: 3px;
-    border-radius: 10px;
 }
 
 .workspace-btn {
@@ -66,55 +146,71 @@ button:active {
 }
 
 .workspace-btn:hover {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.18);
     color: var(--foreground, #e0def4);
 }
 
 .workspace-btn.active {
     background-color: var(--color2, #ebbcba);
-    color: var(--background, #191724);
+    color: var(--background, #14121a);
     min-width: 30px;
 }
 
+.media-container {
+    padding: 2px 4px;
+}
+
+.media-container:hover {
+    background-color: var(--color0, #2a283e);
+    border-color: var(--color2, #ebbcba);
+}
+
+.media-main-btn {
+    padding: 2px 6px;
+    border-radius: 6px;
+    background-color: transparent;
+}
+
+.media-cover {
+    min-width: 24px;
+    min-height: 24px;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.media-icon { color: var(--color2, #ebbcba); font-size: 12px; }
+.media-text { color: var(--foreground, #e0def4); font-size: 12px; font-weight: bold; }
+
 popover {
     background-color: transparent;
-    animation: menu-appear 0.28s cubic-bezier(0.1, 1, 0.1, 1) forwards;
 }
 
 popover > contents {
-    background-color: var(--background, #191724);
+    background-color: var(--background, #14121a);
     color: var(--foreground, #e0def4);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 14px;
     padding: 0;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    animation: menu-appear 0.22s cubic-bezier(0.1, 1, 0.1, 1) forwards;
 }
 
 @keyframes menu-appear {
     from {
         opacity: 0;
-        margin-top: 14px;
+        transform: translateY(-8px) scale(0.96);
     }
     to {
         opacity: 1;
-        margin-top: 6px;
+        transform: translateY(0) scale(1);
     }
-}
-
-.control-center-btn {
-    padding: 4px 10px;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.08);
-}
-
-.control-center-btn:hover {
-    background-color: rgba(255, 255, 255, 0.15);
 }
 
 .control-center {
     padding: 12px;
     min-width: 260px;
-    background-color: var(--background, #191724);
+    background-color: var(--background, #14121a);
     color: var(--foreground, #e0def4);
     border-radius: 14px;
 }
@@ -132,7 +228,7 @@ popover > contents {
 }
 
 .qs-toggle.active {
-    background-color: var(--color2, #31748f);
+    background-color: var(--color6, #31748f);
     color: #ffffff;
 }
 
@@ -147,6 +243,11 @@ popover > contents {
     background-color: rgba(255, 255, 255, 0.15);
 }
 
+.qs-action-btn.active {
+    background-color: var(--color6, #31748f);
+    color: #ffffff;
+}
+
 scale trough {
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 6px;
@@ -154,7 +255,7 @@ scale trough {
 }
 
 scale highlight {
-    background-color: var(--color2, #31748f);
+    background-color: var(--color2, #ebbcba);
     border-radius: 6px;
 }
 
@@ -164,117 +265,28 @@ scale slider {
     min-width: 14px;
     min-height: 14px;
     margin: -3px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
 }
 
-.media {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 2px 6px;
-    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-}
+scale slider:hover { transform: scale(1.15); }
 
-.media:hover {
-    background-color: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.15);
-}
+.media-popup { padding: 14px; min-width: 240px; }
+.media-popup-cover { min-width: 80px; min-height: 80px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+.media-popup-title { font-size: 13px; font-weight: bold; color: var(--foreground, #e0def4); }
+.media-popup-artist { font-size: 11px; color: var(--color4, #c4a7e7); }
 
-.media.playing {
-    border-color: var(--color3, #ebbcba);
-}
+.power-popup { padding: 8px; min-width: 150px; }
+.power-item { padding: 8px 12px; border-radius: 6px; background-color: rgba(255, 255, 255, 0.05); color: var(--foreground, #e0def4); }
+.power-item:hover { background-color: var(--color1, #eb6f92); color: var(--background, #14121a); }
 
-.media-cover {
-    min-width: 24px;
-    min-height: 24px;
-    max-width: 24px;
-    max-height: 24px;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-    margin-right: 2px;
-}
-
-.media-title-btn {
-    padding: 2px 4px;
-    border-radius: 6px;
-}
-
-.media-icon {
-    color: var(--color3, #ebbcba);
-    font-size: 12px;
-}
-
-.media-text {
-    color: var(--foreground, #e0def4);
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.media-controls {
-    opacity: 0.6;
-    transition: opacity 0.2s ease;
-}
-
-.media:hover .media-controls {
-    opacity: 1;
-}
-
-.media-ctrl-btn {
-    padding: 2px 4px;
-    border-radius: 4px;
-    color: var(--foreground, #e0def4);
-    font-size: 11px;
-}
-
-.media-ctrl-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: var(--color3, #ebbcba);
-}
-
-.power-popup {
-    padding: 8px;
-    min-width: 150px;
-}
-
-.power-item {
-    padding: 8px 12px;
-    border-radius: 6px;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--foreground, #e0def4);
-}
-
-.power-item:hover {
-    background-color: var(--color1, #eb6f92);
-    color: var(--background, #191724);
-}
-
-.clipboard-btn,
-.weather-btn,
-.notification-btn,
-.clock-btn,
-.power-btn,
-.language {
-    padding: 4px 8px;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.clipboard-btn:hover,
-.weather-btn:hover,
-.notification-btn:hover,
-.clock-btn:hover,
-.power-btn:hover,
-.language:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-}
-
+.dim-text { font-size: 12px; opacity: 0.5; padding: 8px 0; }
 .clock { color: var(--color4, #c4a7e7); }
-.weather { color: var(--color3, #ebbcba); }
-.network { color: var(--color2, #31748f); }
+.weather { color: var(--color2, #ebbcba); }
 .language { color: var(--color5, #9ccfd8); }
-.brightness { color: var(--color6, #f6c177); }
-.volume { color: var(--color5, #9ccfd8); }
 .battery { color: var(--color1, #eb6f92); }
-.ram { color: var(--color6, #f6c177); }
+.sys-cpu-btn { color: var(--color3, #f6c177); }
+.sys-ram-btn { color: var(--color3, #f6c177); }
 .clipboard-btn { color: var(--color4, #c4a7e7); }
-.notification-btn { color: var(--color3, #ebbcba); }
+.notification-btn { color: var(--color2, #ebbcba); }
 .power-btn { color: var(--color1, #eb6f92); }

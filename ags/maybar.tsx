@@ -3,6 +3,7 @@ import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { createPoll } from "ags/time"
 import Mpris from "gi://AstalMpris"
 import GLib from "gi://GLib"
+import Gio from "gi://Gio"
 
 const exec = (cmd: string) => {
   try {
@@ -12,13 +13,86 @@ const exec = (cmd: string) => {
   }
 }
 
-function QuickSettingsPopover() {
-  const wifiState = createPoll("Offline", 4000, "sh -c \"nmcli -t -f active,ssid dev wifi 2>/dev/null | grep '^yes' | cut -d: -f2\" || echo 'Offline'", out => {
-    const ssid = out.trim()
-    return (ssid && ssid !== "" && ssid !== "--") ? ssid : "Offline"
-  })
+const decodeBytes = (bytes: Uint8Array | null): string => {
+  if (!bytes) return ""
+  return new TextDecoder("utf-8").decode(bytes).trim()
+}
 
-  const btState = createPoll(false, 4000, "sh -c 'bluetoothctl show 2>/dev/null | grep \"Powered: yes\"' || true", out => out.trim().length > 5)
+const resolveCoverPath = (uri: string): string => {
+  if (!uri) return ""
+
+  if (uri.startsWith("http://") || uri.startsWith("https://")) {
+    return uri
+  }
+
+  if (uri.startsWith("file://")) {
+    const localPath = GLib.uri_get_local_path(uri)
+    if (localPath) return localPath
+    return GLib.uri_unescape_string(uri.replace(/^file:\/\//, ""), null) || ""
+  }
+
+  return uri
+}
+
+function CpuMonitor() {
+  const cpuUsage = createPoll(
+    "󰍛 0%",
+    2000,
+    "sh -c \"top -bn1 | grep 'Cpu(s)' | awk '{print $2 + $4}'\" || echo 0",
+    out => {
+      const val = parseFloat(out.replace(",", ".")) || 0
+      return `󰍛 ${Math.round(val)}%`
+    }
+  )
+
+  return (
+    <button
+      cssClasses={["sys-cpu-btn"]}
+      tooltipText="Открыть монитор ресурсов (btop)"
+      onClicked={() => exec("kitty -e btop || alacritty -e btop || foot -e btop")}>
+      <label label={cpuUsage} />
+    </button>
+  )
+}
+
+function RamMonitor() {
+  const ramUsage = createPoll(
+    "󰘚 0%",
+    2000,
+    "sh -c \"free -m | awk '/Mem:/ {printf \\\"%.0f\\\", $3/$2*100}'\" || echo 0",
+    out => {
+      const val = parseInt(out.trim(), 10) || 0
+      return `󰘚 ${val}%`
+    }
+  )
+
+  return (
+    <button
+      cssClasses={["sys-ram-btn"]}
+      tooltipText="Открыть монитор ресурсов (btop)"
+      onClicked={() => exec("kitty -e btop || alacritty -e btop || foot -e btop")}>
+      <label label={ramUsage} />
+    </button>
+  )
+}
+
+function QuickSettingsPopover() {
+  const wifiState = createPoll(
+    "Offline",
+    4000,
+    "sh -c \"nmcli -t -f active,ssid dev wifi 2>/dev/null | grep '^yes' | cut -d: -f2\" || echo 'Offline'",
+    out => {
+      const ssid = out.trim()
+      return ssid && ssid !== "" && ssid !== "--" ? ssid : "Offline"
+    }
+  )
+
+  const btState = createPoll(
+    "off",
+    4000,
+    "sh -c 'bluetoothctl show 2>/dev/null | grep -q \"Powered: yes\" && echo on || echo off'",
+    out => out.trim()
+  )
 
   const volVal = createPoll("50%", 1500, "sh -c 'wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null' || true", out => {
     if (out.includes("[MUTED]")) return "Muted"
@@ -41,20 +115,20 @@ function QuickSettingsPopover() {
   const micAdj = new Gtk.Adjustment({ value: 50, lower: 0, upper: 100, stepIncrement: 1, pageIncrement: 10 })
   const brightAdj = new Gtk.Adjustment({ value: 100, lower: 5, upper: 100, stepIncrement: 1, pageIncrement: 10 })
 
-  let isUpdating = false
+  let isUpdatingUI = false
 
-  volAdj.connect("value-changed", (adj) => {
-    if (isUpdating) return
-    exec(`wpctl set-volume @DEFAULT_AUDIO_SINK@ ${adj.value / 100}`)
+  volAdj.connect("value-changed", adj => {
+    if (isUpdatingUI) return
+    exec(`wpctl set-volume @DEFAULT_AUDIO_SINK@ ${(adj.value / 100).toFixed(2)}`)
   })
 
-  micAdj.connect("value-changed", (adj) => {
-    if (isUpdating) return
-    exec(`wpctl set-volume @DEFAULT_AUDIO_SOURCE@ ${adj.value / 100}`)
+  micAdj.connect("value-changed", adj => {
+    if (isUpdatingUI) return
+    exec(`wpctl set-volume @DEFAULT_AUDIO_SOURCE@ ${(adj.value / 100).toFixed(2)}`)
   })
 
-  brightAdj.connect("value-changed", (adj) => {
-    if (isUpdating) return
+  brightAdj.connect("value-changed", adj => {
+    if (isUpdatingUI) return
     exec(`brightnessctl set ${Math.round(adj.value)}%`)
   })
 
@@ -70,36 +144,38 @@ function QuickSettingsPopover() {
         <button
           cssClasses={wifiState(ssid => ["qs-toggle", ssid !== "Offline" ? "active" : ""])}
           onClicked={() => exec("sh -c 'nmcli radio wifi $(nmcli radio wifi | grep -q enabled && echo off || echo on)'")}>
-          <label label={wifiState(ssid => ssid !== "Offline" ? `󰤨  ${ssid}` : "󰤭  Wi-Fi Off")} />
+          <label label={wifiState(ssid => (ssid !== "Offline" ? `󰤨 ${ssid}` : "󰤭 Wi-Fi Off"))} />
         </button>
 
         <button
-          cssClasses={btState(on => ["qs-toggle", on ? "active" : ""])}
-          onClicked={() => exec("sh -c 'bluetoothctl show | grep -q \"Powered: yes\" && bluetoothctl power off || bluetoothctl power on'")}>
-          <label label={btState(on => on ? "󰂯  Bluetooth On" : "󰂲  Bluetooth Off")} />
+          cssClasses={btState(st => ["qs-toggle", st !== "off" ? "active" : ""])}
+          onClicked={() =>
+            exec("sh -c 'bluetoothctl show | grep -q \"Powered: yes\" && bluetoothctl power off || bluetoothctl power on'")
+          }>
+          <label label={btState(st => (st !== "off" ? "󰂯 Bluetooth On" : "󰂲 Bluetooth Off"))} />
         </button>
       </box>
 
       <box orientation={Gtk.Orientation.VERTICAL} spacing={8} cssClasses={["qs-card"]}>
         <box spacing={8}>
           <button cssClasses={["qs-icon-btn"]} onClicked={() => exec("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")}>
-            <label label={volVal(v => v === "Muted" ? "󰝟" : "󰕾")} />
+            <label label={volVal(v => (v === "Muted" ? "󰝟" : "󰕾"))} />
           </button>
-          {volScale}
+          {volScale as unknown as Gtk.Widget}
         </box>
 
         <box spacing={8}>
           <button cssClasses={["qs-icon-btn"]} onClicked={() => exec("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle")}>
-            <label label={micVal(v => v === "Muted" ? "󰍭" : "󰍬")} />
+            <label label={micVal(v => (v === "Muted" ? "󰍭" : "󰍬"))} />
           </button>
-          {micScale}
+          {micScale as unknown as Gtk.Widget}
         </box>
 
         <box spacing={8}>
           <button cssClasses={["qs-icon-btn"]} onClicked={() => exec("brightnessctl set 50%")}>
             <label label="󰃠" />
           </button>
-          {brightScale}
+          {brightScale as unknown as Gtk.Widget}
         </box>
       </box>
 
@@ -116,14 +192,15 @@ function QuickSettingsPopover() {
 
   popover.set_child(content as unknown as Gtk.Widget)
 
-  const wifiDisplay = wifiState(ssid => ssid !== "Offline" ? `󰤨 ${ssid}` : "󰤭 Offline")
-  const volDisplay = volVal(v => v === "Muted" ? "󰝟 Mute" : `󰕾 ${v}`)
+  const wifiDisplay = wifiState(ssid => (ssid !== "Offline" ? `󰤨 ${ssid}` : "󰤭 Offline"))
+  const btDisplay = btState(st => (st !== "off" ? "󰂯" : "󰂲"))
+  const volDisplay = volVal(v => (v === "Muted" ? "󰝟 Mute" : `󰕾 ${v}`))
 
   return (
     <button
       cssClasses={["control-center-btn"]}
-      onClicked={(self) => {
-        isUpdating = true
+      onClicked={self => {
+        isUpdatingUI = true
 
         const currentVol = volVal.get()
         const currentMic = micVal.get()
@@ -134,10 +211,10 @@ function QuickSettingsPopover() {
         const bNum = parseFloat(currentBright)
 
         volAdj.set_value(isNaN(vNum) ? 50 : vNum)
-        micAdj.set_value(isNaN(mNum) ? 50 : mNum)
+        micAdj.set_value(isNaN(mNum) ? 0 : mNum)
         brightAdj.set_value(isNaN(bNum) ? 100 : bNum)
 
-        isUpdating = false
+        isUpdatingUI = false
 
         if (popover.get_parent()) popover.unparent()
         popover.set_parent(self)
@@ -145,6 +222,7 @@ function QuickSettingsPopover() {
       }}>
       <box spacing={10}>
         <label label={wifiDisplay} />
+        <label label={btDisplay} />
         <label label={volDisplay} />
         <label label={brightVal(b => `󰃠 ${b}`)} />
       </box>
@@ -153,8 +231,13 @@ function QuickSettingsPopover() {
 }
 
 function Workspaces() {
-  const activeWs = createPoll(1, 300, "sh -c 'hyprctl activeworkspace -j 2>/dev/null | grep -oP \"(?<=\\\"id\\\": )\\\\d+\"' || echo 1", out => {
-    return parseInt(out.trim()) || 1
+  const activeWs = createPoll(1, 200, "sh -c 'hyprctl activeworkspace -j 2>/dev/null' || echo '{}'", out => {
+    try {
+      const parsed = JSON.parse(out)
+      return parsed.id || 1
+    } catch {
+      return 1
+    }
   })
 
   const kanjiMap: Record<number, string> = {
@@ -198,120 +281,200 @@ function Media() {
     visible: false,
   })
 
+  const popupCover = new Gtk.Picture({
+    cssClasses: ["media-popup-cover"],
+    contentFit: Gtk.ContentFit.COVER,
+    widthRequest: 100,
+    heightRequest: 100,
+    visible: false,
+  })
+
+  const titleLabel = new Gtk.Label({ cssClasses: ["media-text"], label: "Нет музыки" })
+  const statusIcon = new Gtk.Label({ cssClasses: ["media-icon"], label: "󰐊" })
+  const popTitle = new Gtk.Label({ cssClasses: ["media-popup-title"], wrap: true, maxWidthChars: 22, xalign: 0, label: "Нет музыки" })
+  const popArtist = new Gtk.Label({ cssClasses: ["media-popup-artist"], wrap: true, maxWidthChars: 22, xalign: 0, label: "" })
+
+  const mainBox = new Gtk.Box({ cssClasses: ["media"], spacing: 6, valign: Gtk.Align.CENTER })
+
   let currentLoadedPath = ""
   let lastCoverUrl = ""
+  let checkTimeoutId: number | null = null
 
   const updateTexture = (path: string) => {
-    if (currentLoadedPath === path) return
+    if (currentLoadedPath === path && path !== TEMP_COVER_PATH) return
     currentLoadedPath = path
 
     if (!path || !GLib.file_test(path, GLib.FileTest.EXISTS)) {
       coverPicture.set_paintable(null)
       coverPicture.set_visible(false)
+      popupCover.set_paintable(null)
+      popupCover.set_visible(false)
       return
     }
 
     try {
-      const file = GLib.File.new_for_path(path)
+      const file = Gio.File.new_for_path(path)
       const texture = Gdk.Texture.new_for_file(file)
       coverPicture.set_paintable(texture)
       coverPicture.set_visible(true)
+      popupCover.set_paintable(texture)
+      popupCover.set_visible(true)
     } catch (err) {
-      console.error("Failed to load cover texture:", err)
+      console.error(`Ошибка загрузки обложки: ${err}`)
       coverPicture.set_paintable(null)
       coverPicture.set_visible(false)
+      popupCover.set_paintable(null)
+      popupCover.set_visible(false)
     }
   }
 
-  const mediaInfo = createPoll(
-    { title: "Нет музыки", cover: "", isPlaying: false, hasPlayer: false },
-    1000,
-    () => {
-      const players = mpris.get_players()
-      if (!players || players.length === 0) {
-        return { title: "Нет музыки", cover: "", isPlaying: false, hasPlayer: false }
-      }
+  const popover = new Gtk.Popover({ autohide: true, position: Gtk.PositionType.BOTTOM })
 
-      const player = players.find(p => p.playbackStatus === Mpris.PlaybackStatus.PLAYING) || players[0]
-      const title = player?.title || "Неизвестный трек"
-      const artist = player?.artist ? `${player.artist} — ` : ""
-      const fullTitle = `${artist}${title}`
-      const formatted = fullTitle.length > 22 ? `${fullTitle.slice(0, 22)}...` : fullTitle
-
-      let rawCover = player?.coverArt || ""
-
-      if (rawCover) {
-        let unescaped = GLib.uri_unescape_string(rawCover, null) || rawCover
-
-        if (unescaped.startsWith("file://")) {
-          rawCover = unescaped.replace(/^file:\/\//, "")
-        } else if (unescaped.startsWith("http://") || unescaped.startsWith("https://")) {
-          if (unescaped !== lastCoverUrl) {
-            lastCoverUrl = unescaped
-            GLib.spawn_command_line_async(`sh -c 'curl -s "${unescaped}" -o ${TEMP_COVER_PATH}'`)
-          }
-          rawCover = TEMP_COVER_PATH
-        } else {
-          rawCover = unescaped
-        }
-      }
-
-      return {
-        title: formatted,
-        cover: rawCover.trim(),
-        isPlaying: player?.playbackStatus === Mpris.PlaybackStatus.PLAYING,
-        hasPlayer: true,
-      }
-    }
-  )
-
-  mediaInfo(m => {
-    updateTexture(m.cover)
-  })
-
-  return (
-    <box cssClasses={mediaInfo(m => ["media", m.isPlaying ? "playing" : "paused"])} spacing={6} valign={Gtk.Align.CENTER}>
-      {coverPicture as unknown as Gtk.Widget}
-
-      <button
-        cssClasses={["media-title-btn"]}
-        onClicked={() => {
-          const players = mpris.get_players()
-          if (players && players[0]) players[0].play_pause()
-        }}>
-        <box spacing={6} valign={Gtk.Align.CENTER}>
-          <label
-            cssClasses={["media-icon"]}
-            label={mediaInfo(m => m.isPlaying ? "󰏤" : "󰐊")}
-          />
-          <label
-            cssClasses={["media-text"]}
-            label={mediaInfo(m => m.title)}
-          />
+  const popoverContent = (
+    <box cssClasses={["media-popup"]} orientation={Gtk.Orientation.VERTICAL} spacing={12}>
+      <box spacing={12} valign={Gtk.Align.CENTER}>
+        {popupCover as unknown as Gtk.Widget}
+        <box orientation={Gtk.Orientation.VERTICAL} spacing={4} valign={Gtk.Align.CENTER}>
+          {popTitle as unknown as Gtk.Widget}
+          {popArtist as unknown as Gtk.Widget}
         </box>
-      </button>
-
-      <box cssClasses={["media-controls"]} spacing={2}>
+      </box>
+      <box cssClasses={["media-popup-controls"]} spacing={8} halign={Gtk.Align.CENTER}>
         <button
           cssClasses={["media-ctrl-btn"]}
           tooltipText="Предыдущий трек"
           onClicked={() => {
-            const players = mpris.get_players()
-            if (players && players[0]) players[0].previous()
+            const player = mpris.get_players()[0]
+            if (player) player.previous()
           }}>
           <label label="󰒮" />
         </button>
-
+        <button
+          cssClasses={["media-ctrl-btn"]}
+          tooltipText="Воспроизведение / Пауза"
+          onClicked={() => {
+            const player = mpris.get_players()[0]
+            if (player) player.play_pause()
+          }}>
+          <label label="󰐊" />
+        </button>
         <button
           cssClasses={["media-ctrl-btn"]}
           tooltipText="Следующий трек"
           onClicked={() => {
-            const players = mpris.get_players()
-            if (players && players[0]) players[0].next()
+            const player = mpris.get_players()[0]
+            if (player) player.next()
           }}>
           <label label="󰒭" />
         </button>
       </box>
+    </box>
+  )
+
+  popover.set_child(popoverContent as unknown as Gtk.Widget)
+
+  const syncPlayerState = () => {
+    const players = mpris.get_players()
+    if (!players || players.length === 0) {
+      mainBox.remove_css_class("playing")
+      mainBox.add_css_class("paused")
+      titleLabel.set_label("Нет музыки")
+      popTitle.set_label("Нет музыки")
+      popArtist.set_label("")
+      statusIcon.set_label("󰐊")
+      updateTexture("")
+      return
+    }
+
+    const player = players.find(p => p.playbackStatus === Mpris.PlaybackStatus.PLAYING) || players[0]
+    const title = player.title || "Неизвестный трек"
+    const artist = player.artist || ""
+    const isPlaying = player.playbackStatus === Mpris.PlaybackStatus.PLAYING
+
+    if (isPlaying) {
+      mainBox.add_css_class("playing")
+      mainBox.remove_css_class("paused")
+      statusIcon.set_label("󰏤")
+    } else {
+      mainBox.add_css_class("paused")
+      mainBox.remove_css_class("playing")
+      statusIcon.set_label("󰐊")
+    }
+
+    const fullTitle = artist ? `${artist} — ${title}` : title
+    const shortTitle = fullTitle.length > 22 ? `${fullTitle.slice(0, 22)}...` : fullTitle
+    titleLabel.set_label(shortTitle)
+
+    popTitle.set_label(title)
+    popArtist.set_label(artist)
+
+    const rawCover = player.coverArt || ""
+    if (rawCover) {
+      const resolved = resolveCoverPath(rawCover)
+
+      if (resolved.startsWith("http://") || resolved.startsWith("https://")) {
+        if (resolved !== lastCoverUrl) {
+          lastCoverUrl = resolved
+          if (checkTimeoutId) {
+            GLib.source_remove(checkTimeoutId)
+            checkTimeoutId = null
+          }
+          GLib.spawn_command_line_async(
+            `sh -c 'curl -sL "${resolved}" -o ${TEMP_COVER_PATH} && touch ${TEMP_COVER_PATH}.ready'`
+          )
+        }
+
+        let checks = 0
+        checkTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
+          if (GLib.file_test(`${TEMP_COVER_PATH}.ready`, GLib.FileTest.EXISTS)) {
+            GLib.unlink(`${TEMP_COVER_PATH}.ready`)
+            updateTexture(TEMP_COVER_PATH)
+            checkTimeoutId = null
+            return GLib.SOURCE_REMOVE
+          }
+          checks++
+          if (checks > 15) {
+            checkTimeoutId = null
+            return GLib.SOURCE_REMOVE
+          }
+          return GLib.SOURCE_CONTINUE
+        })
+      } else {
+        updateTexture(resolved)
+      }
+    } else {
+      updateTexture("")
+    }
+  }
+
+  mpris.connect("player-added", (_, player) => {
+    player.connect("notify::cover-art", syncPlayerState)
+    player.connect("notify::title", syncPlayerState)
+    syncPlayerState()
+  })
+
+  mpris.connect("player-closed", syncPlayerState)
+
+  GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => {
+    syncPlayerState()
+    return GLib.SOURCE_CONTINUE
+  })
+
+  return (
+    <box cssClasses={["media-container"]} valign={Gtk.Align.CENTER}>
+      <button
+        cssClasses={["media-main-btn"]}
+        onClicked={self => {
+          if (popover.get_parent()) popover.unparent()
+          popover.set_parent(self)
+          popover.popup()
+        }}>
+        <box spacing={6} valign={Gtk.Align.CENTER}>
+          {coverPicture as unknown as Gtk.Widget}
+          {statusIcon as unknown as Gtk.Widget}
+          {titleLabel as unknown as Gtk.Widget}
+        </box>
+      </button>
     </box>
   )
 }
@@ -342,10 +505,7 @@ function Weather() {
 
 function NotificationCenter() {
   return (
-    <button
-      cssClasses={["notification-btn"]}
-      tooltipText="Центр уведомлений"
-      onClicked={() => exec("swaync-client -t -sw")}>
+    <button cssClasses={["notification-btn"]} tooltipText="Центр уведомлений" onClicked={() => exec("swaync-client -t -sw")}>
       <label label="󰂚" />
     </button>
   )
@@ -361,7 +521,7 @@ function Clock() {
   return (
     <button
       cssClasses={["clock-btn"]}
-      onClicked={(self) => {
+      onClicked={self => {
         if (popover.get_parent()) popover.unparent()
         popover.set_parent(self)
         popover.popup()
@@ -415,7 +575,7 @@ function PowerMenu() {
   return (
     <button
       cssClasses={["power-btn"]}
-      onClicked={(self) => {
+      onClicked={self => {
         if (popover.get_parent()) popover.unparent()
         popover.set_parent(self)
         popover.popup()
@@ -430,21 +590,26 @@ app.start({
   main() {
     const { TOP, LEFT, RIGHT } = Astal.WindowAnchor
 
-    const bat = createPoll("󰂄 100%", 5000, "sh -c 'cat /sys/class/power_supply/BAT0/capacity 2>/dev/null; echo \";\"; cat /sys/class/power_supply/BAT0/status 2>/dev/null' || echo '100;Discharging'", out => {
-      const parts = out.split(";").map(s => s.trim())
-      const cap = parts[0] || "100"
-      const status = parts[1] || "Discharging"
+    const bat = createPoll(
+      "󰂄 100%",
+      5000,
+      "sh -c 'cat /sys/class/power_supply/BAT0/capacity 2>/dev/null; echo \";\"; cat /sys/class/power_supply/BAT0/status 2>/dev/null' || echo '100;Discharging'",
+      out => {
+        const parts = out.split(";").map(s => s.trim())
+        const cap = parts[0] || "100"
+        const status = parts[1] || "Discharging"
 
-      const isCharging = status === "Charging"
-      const val = parseInt(cap) || 100
-      let icon = "󰁹"
-      if (isCharging) icon = "󰂄"
-      else if (val < 20) icon = "󰂎"
-      else if (val < 50) icon = "󰁽"
-      else if (val < 80) icon = "󰂀"
+        const isCharging = status === "Charging"
+        const val = parseInt(cap) || 100
+        let icon = "󰁹"
+        if (isCharging) icon = "󰂄"
+        else if (val < 20) icon = "󰂎"
+        else if (val < 50) icon = "󰁽"
+        else if (val < 80) icon = "󰂀"
 
-      return `${icon} ${val}%`
-    })
+        return `${icon} ${val}%`
+      }
+    )
 
     return (
       <window
@@ -457,18 +622,33 @@ app.start({
         <centerbox cssClasses={["bar-inner"]} hexpand>
           <box $type="start" halign={Gtk.Align.START} spacing={8}>
             <Workspaces />
-            <Clipboard />
             <Media />
           </box>
+
           <box $type="center" spacing={12}>
-            <Weather />
-            <Clock />
+            <box cssClasses={["datetime-group"]}>
+              <Clock />
+              <Weather />
+            </box>
           </box>
+
           <box $type="end" halign={Gtk.Align.END} spacing={8}>
-            <Language />
-            <label cssClasses={["battery"]} label={bat} />
+            <box cssClasses={["sys-group"]}>
+              <CpuMonitor />
+              <RamMonitor />
+            </box>
+
+            <box cssClasses={["status-group"]}>
+              <Language />
+              <Clipboard />
+              <NotificationCenter />
+            </box>
+
+            <button cssClasses={["battery"]}>
+              <label label={bat} />
+            </button>
+
             <QuickSettingsPopover />
-            <NotificationCenter />
             <PowerMenu />
           </box>
         </centerbox>

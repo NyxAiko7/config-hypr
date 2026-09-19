@@ -1,5 +1,5 @@
 # hyprland
-![](./image_2026-09-19_12-27-52.png)
+![](./image_2026-09-19_15-33-15.png)
 
 # Installation
 
