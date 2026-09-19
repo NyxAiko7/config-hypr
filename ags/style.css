@@ -1,4 +1,3 @@
-/* Pywal Palette GTK4 */
 @import '/home/aiko/.cache/wal/colors.css';
 
 window#maybar {
@@ -6,15 +5,18 @@ window#maybar {
 }
 
 .bar-inner {
-    background-color: var(--background, #191724); 
+    background-color: var(--background, #191724);
     color: var(--foreground, #e0def4);
     padding: 4px 12px;
+    margin: 8px 12px 0 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
     font-family: "JetBrains Mono", "Fira Code", monospace;
     font-size: 13px;
     font-weight: bold;
 }
 
-/* Interactive elements */
 button {
     background: transparent;
     border: none;
@@ -22,33 +24,39 @@ button {
     margin: 0;
 }
 
-
-button, 
-.workspace-btn, 
-.qs-toggle, 
-.qs-action-btn, 
+button,
+.workspace-btn,
+.qs-toggle,
+.qs-action-btn,
 .qs-icon-btn,
 .control-center-btn,
-.media-btn {
+.media,
+.clipboard-btn,
+.weather-btn,
+.notification-btn,
+.clock-btn,
+.power-btn,
+.language,
+.power-item {
     transition: background-color 0.22s cubic-bezier(0.25, 1, 0.5, 1),
-                color 0.22s cubic-bezier(0.25, 1, 0.5, 1);
+                color 0.22s cubic-bezier(0.25, 1, 0.5, 1),
+                opacity 0.15s ease;
 }
 
 button:active {
     opacity: 0.8;
 }
 
-
 .workspaces {
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: rgba(0, 0, 0, 0.2);
     padding: 3px;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
 .workspace-btn {
     background-color: rgba(255, 255, 255, 0.05);
     color: var(--foreground, #e0def4);
-    border-radius: 5px;
+    border-radius: 6px;
     min-width: 22px;
     min-height: 20px;
     padding: 0 4px;
@@ -65,44 +73,36 @@ button:active {
 .workspace-btn.active {
     background-color: var(--color2, #ebbcba);
     color: var(--background, #191724);
-    min-width: 32px; 
+    min-width: 30px;
 }
 
 popover {
+    background-color: transparent;
     animation: menu-appear 0.28s cubic-bezier(0.1, 1, 0.1, 1) forwards;
+}
+
+popover > contents {
+    background-color: var(--background, #191724);
+    color: var(--foreground, #e0def4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes menu-appear {
     from {
         opacity: 0;
-        margin-top: 14px; 
+        margin-top: 14px;
     }
     to {
         opacity: 1;
-        margin-top: 6px; 
-}
-
-.media-popup {
-    padding: 8px 12px;
-}
-
-.media-popup-title {
-    color: var(--color3, #ebbcba);
-    font-size: 12px;
-}
-
-.media-btn {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    padding: 4px 8px;
-}
-
-.media-btn:hover {
-    background-color: var(--color1, #31748f);
+        margin-top: 6px;
+    }
 }
 
 .control-center-btn {
-    padding: 4px 8px;
+    padding: 4px 10px;
     border-radius: 8px;
     background-color: rgba(255, 255, 255, 0.08);
 }
@@ -113,9 +113,16 @@ popover {
 
 .control-center {
     padding: 12px;
-    min-width: 240px;
+    min-width: 260px;
     background-color: var(--background, #191724);
     color: var(--foreground, #e0def4);
+    border-radius: 14px;
+}
+
+.qs-card {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 10px;
 }
 
 .qs-toggle {
@@ -129,23 +136,137 @@ popover {
     color: #ffffff;
 }
 
-.qs-sliders {
-    background-color: rgba(0, 0, 0, 0.15);
-    padding: 8px;
-    border-radius: 8px;
-}
-
 .qs-icon-btn, .qs-action-btn {
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 6px;
     background-color: rgba(255, 255, 255, 0.08);
+    color: var(--foreground, #e0def4);
 }
 
-.qs-action-btn:hover {
+.qs-action-btn:hover, .qs-icon-btn:hover {
     background-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Modules */
+scale trough {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    min-height: 8px;
+}
+
+scale highlight {
+    background-color: var(--color2, #31748f);
+    border-radius: 6px;
+}
+
+scale slider {
+    background-color: var(--foreground, #e0def4);
+    border-radius: 50%;
+    min-width: 14px;
+    min-height: 14px;
+    margin: -3px;
+}
+
+.media {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 2px 6px;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.media:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.media.playing {
+    border-color: var(--color3, #ebbcba);
+}
+
+.media-cover {
+    min-width: 24px;
+    min-height: 24px;
+    max-width: 24px;
+    max-height: 24px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    margin-right: 2px;
+}
+
+.media-title-btn {
+    padding: 2px 4px;
+    border-radius: 6px;
+}
+
+.media-icon {
+    color: var(--color3, #ebbcba);
+    font-size: 12px;
+}
+
+.media-text {
+    color: var(--foreground, #e0def4);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.media-controls {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.media:hover .media-controls {
+    opacity: 1;
+}
+
+.media-ctrl-btn {
+    padding: 2px 4px;
+    border-radius: 4px;
+    color: var(--foreground, #e0def4);
+    font-size: 11px;
+}
+
+.media-ctrl-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: var(--color3, #ebbcba);
+}
+
+.power-popup {
+    padding: 8px;
+    min-width: 150px;
+}
+
+.power-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--foreground, #e0def4);
+}
+
+.power-item:hover {
+    background-color: var(--color1, #eb6f92);
+    color: var(--background, #191724);
+}
+
+.clipboard-btn,
+.weather-btn,
+.notification-btn,
+.clock-btn,
+.power-btn,
+.language {
+    padding: 4px 8px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.clipboard-btn:hover,
+.weather-btn:hover,
+.notification-btn:hover,
+.clock-btn:hover,
+.power-btn:hover,
+.language:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
 .clock { color: var(--color4, #c4a7e7); }
 .weather { color: var(--color3, #ebbcba); }
 .network { color: var(--color2, #31748f); }
@@ -153,5 +274,7 @@ popover {
 .brightness { color: var(--color6, #f6c177); }
 .volume { color: var(--color5, #9ccfd8); }
 .battery { color: var(--color1, #eb6f92); }
-.media { color: var(--color3, #ebbcba); }
 .ram { color: var(--color6, #f6c177); }
+.clipboard-btn { color: var(--color4, #c4a7e7); }
+.notification-btn { color: var(--color3, #ebbcba); }
+.power-btn { color: var(--color1, #eb6f92); }
