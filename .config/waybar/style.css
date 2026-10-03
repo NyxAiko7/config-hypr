@@ -1,0 +1,201 @@
+@import url("file:///home/aiko/.cache/wal/colors-waybar.css");
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "JetBrainsMono Nerd Font", "Inter", sans-serif;
+    font-weight: bold;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @foreground;
+}
+
+/* Единые сплошные блоки для левой, центральной и правой частей */
+.modules-left,
+.modules-center,
+.modules-right {
+    background-color: @background;
+    border: 1px solid @color8;
+    border-radius: 12px;
+    padding: 2px 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Стили отдельных элементов внутри полосы */
+#custom-launcher,
+#workspaces,
+#mpris,
+#window,
+#clock,
+#custom-weather,
+#cpu,
+#memory,
+#disk,
+#backlight,
+#pulseaudio,
+#network,
+#language,
+#battery,
+#custom-notification,
+#custom-tools-icon,
+#tray,
+#custom-power {
+    padding: 2px 6px;
+    background-color: transparent;
+    transition: all 0.2s ease;
+}
+
+/* Разделители */
+#custom-sep {
+    color: @color8;
+    padding: 0 4px;
+    opacity: 0.6;
+}
+
+/* Эффект подсвечивания при наведении */
+#custom-launcher:hover,
+#mpris:hover,
+#clock:hover,
+#custom-weather:hover,
+#cpu:hover,
+#memory:hover,
+#disk:hover,
+#backlight:hover,
+#pulseaudio:hover,
+#network:hover,
+#language:hover,
+#battery:hover,
+#custom-notification:hover,
+#custom-tools-icon:hover,
+#custom-power:hover {
+    background-color: @color8;
+    border-radius: 6px;
+}
+
+/* Меню */
+#custom-launcher {
+    color: @color4;
+    font-size: 15px;
+    padding: 0 6px;
+}
+
+/* Воркспейсы */
+#workspaces button {
+    padding: 0 5px;
+    color: @color8;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+#workspaces button.active {
+    color: @color5;
+}
+
+#workspaces button:hover {
+    background-color: @color8;
+    color: @foreground;
+}
+
+#workspaces button.urgent {
+    color: @color1;
+}
+
+/* Плеер и Активное окно */
+#mpris {
+    color: @color7;
+}
+
+#window {
+    color: @color7;
+}
+
+/* Часы и Погода */
+#clock {
+    color: @color3;
+}
+
+#custom-weather {
+    color: @color6;
+}
+
+/* Мониторинг ресурсов */
+#cpu {
+    color: @color6;
+}
+
+#memory {
+    color: @color5;
+}
+
+#disk {
+    color: @color3;
+}
+
+/* Статусы устройств */
+#backlight {
+    color: @color3;
+}
+
+#pulseaudio {
+    color: @color2;
+}
+
+#pulseaudio.muted {
+    color: @color1;
+}
+
+#network {
+    color: @color6;
+}
+
+#language {
+    color: @color5;
+}
+
+#battery {
+    color: @color2;
+}
+
+#battery.warning {
+    color: @color3;
+}
+
+#battery.critical:not(.charging) {
+    color: @color1;
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+/* Уведомления и Дравер */
+#custom-notification {
+    color: @color3;
+}
+
+#custom-tools-icon {
+    color: @color4;
+}
+
+/* Кнопка питания */
+#custom-power {
+    color: @color1;
+    border-radius: 6px;
+}
+
+#custom-power:hover {
+    background-color: @color1;
+    color: @background;
+}
+
+@keyframes blink {
+    to {
+        background-color: @color1;
+        color: @background;
+    }
+}
