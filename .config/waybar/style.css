@@ -4,9 +4,11 @@
     border: none;
     border-radius: 0;
     font-family: "JetBrainsMono Nerd Font", "Inter", sans-serif;
-    font-weight: bold;
+    font-weight: 600;
     font-size: 13px;
     min-height: 0;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 window#waybar {
@@ -14,24 +16,41 @@ window#waybar {
     color: @foreground;
 }
 
-/* Единые сплошные блоки для левой, центральной и правой частей */
-.modules-left,
-.modules-center,
-.modules-right {
-    background-color: @background;
-    border: 1px solid @color8;
+
+tooltip {
+    background: alpha(@background, 0.95);
+    border: 1px solid alpha(@color8, 0.8);
     border-radius: 12px;
-    padding: 2px 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Стили отдельных элементов внутри полосы */
+tooltip label {
+    color: @foreground;
+    padding: 2px 4px;
+}
+
+
 #custom-launcher,
 #workspaces,
 #mpris,
 #window,
 #clock,
 #custom-weather,
+#hw,
+#controls,
+#status,
+#custom-notification,
+#tools,
+#custom-power {
+    background-color: alpha(@background, 0.82);
+    border: 1px solid alpha(@color8, 0.55);
+    border-radius: 14px;
+    padding: 0 6px;
+    margin: 0 3px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+
 #cpu,
 #memory,
 #disk,
@@ -40,27 +59,35 @@ window#waybar {
 #network,
 #language,
 #battery,
-#custom-notification,
 #custom-tools-icon,
-#tray,
-#custom-power {
-    padding: 2px 6px;
+#tray {
     background-color: transparent;
-    transition: all 0.2s ease;
+    padding: 0 8px;
+    margin: 4px 1px;
+    border-radius: 9px;
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Разделители */
-#custom-sep {
-    color: @color8;
-    padding: 0 4px;
-    opacity: 0.6;
+
+#mpris,
+#window,
+#clock,
+#custom-weather,
+#custom-notification,
+#custom-power {
+    padding: 0 14px;
 }
 
-/* Эффект подсвечивания при наведении */
+
 #custom-launcher:hover,
 #mpris:hover,
 #clock:hover,
 #custom-weather:hover,
+#custom-notification:hover {
+    background-color: alpha(@color8, 0.5);
+    border-color: alpha(@color4, 0.8);
+}
+
 #cpu:hover,
 #memory:hover,
 #disk:hover,
@@ -69,127 +96,143 @@ window#waybar {
 #network:hover,
 #language:hover,
 #battery:hover,
-#custom-notification:hover,
-#custom-tools-icon:hover,
-#custom-power:hover {
-    background-color: @color8;
-    border-radius: 6px;
+#custom-tools-icon:hover {
+    background-color: alpha(@color8, 0.6);
 }
 
-/* Меню */
+
 #custom-launcher {
     color: @color4;
-    font-size: 15px;
-    padding: 0 6px;
+    font-size: 18px;
+    padding: 0 14px 0 12px;
 }
 
-/* Воркспейсы */
+
+#workspaces {
+    padding: 0 4px;
+}
+
 #workspaces button {
-    padding: 0 5px;
-    color: @color8;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-
-#workspaces button.active {
-    color: @color5;
+    padding: 0 9px;
+    margin: 5px 2px;
+    color: alpha(@foreground, 0.45);
+    background-color: transparent;
+    background-image: none;
+    border-radius: 10px;
+    transition: all 0.25s ease;
 }
 
 #workspaces button:hover {
-    background-color: @color8;
+    background-color: alpha(@color8, 0.7);
     color: @foreground;
 }
 
-#workspaces button.urgent {
-    color: @color1;
+#workspaces button.active {
+    background-image: linear-gradient(135deg, @color4, @color5);
+    color: @background;
+    padding: 0 15px;
 }
 
-/* Плеер и Активное окно */
+#workspaces button.urgent {
+    background-color: @color1;
+    background-image: none;
+    color: @background;
+}
+
+
 #mpris {
-    color: @color7;
+    color: @color5;
+}
+
+#mpris.paused {
+    color: alpha(@foreground, 0.5);
 }
 
 #window {
     color: @color7;
 }
 
-/* Часы и Погода */
+window#waybar.empty #window {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+
 #clock {
     color: @color3;
+    font-size: 14px;
 }
 
 #custom-weather {
     color: @color6;
 }
 
-/* Мониторинг ресурсов */
-#cpu {
-    color: @color6;
-}
 
-#memory {
-    color: @color5;
-}
+#cpu { color: @color6; }
+#memory { color: @color5; }
+#disk { color: @color3; }
 
-#disk {
+#cpu.warning,
+#memory.warning {
     color: @color3;
 }
 
-/* Статусы устройств */
-#backlight {
-    color: @color3;
-}
-
-#pulseaudio {
-    color: @color2;
-}
-
-#pulseaudio.muted {
+#cpu.critical,
+#memory.critical {
     color: @color1;
 }
 
-#network {
-    color: @color6;
-}
 
-#language {
-    color: @color5;
-}
+#backlight { color: @color3; }
 
-#battery {
-    color: @color2;
-}
+#pulseaudio { color: @color2; }
+#pulseaudio.muted { color: @color1; }
 
-#battery.warning {
-    color: @color3;
-}
+#network { color: @color6; }
+#network.disconnected { color: @color1; }
+
+
+#language { color: @color5; }
+
+#battery { color: @color2; }
+#battery.charging,
+#battery.plugged { color: @color2; }
+#battery.warning:not(.charging) { color: @color3; }
 
 #battery.critical:not(.charging) {
     color: @color1;
     animation-name: blink;
-    animation-duration: 0.5s;
+    animation-duration: 0.6s;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
     animation-direction: alternate;
 }
 
-/* Уведомления и Дравер */
+
 #custom-notification {
     color: @color3;
+    font-size: 15px;
 }
 
 #custom-tools-icon {
     color: @color4;
+    font-size: 15px;
 }
 
-/* Кнопка питания */
+#tools {
+    padding: 0 4px;
+}
+
+
 #custom-power {
     color: @color1;
-    border-radius: 6px;
+    font-size: 15px;
 }
 
 #custom-power:hover {
     background-color: @color1;
+    border-color: @color1;
     color: @background;
 }
 
