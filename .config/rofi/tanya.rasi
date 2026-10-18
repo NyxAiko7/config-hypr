@@ -1,0 +1,222 @@
+/**
+ * Tanya Degurechaff — rofi theme (modern / mystic)
+ * Void-black glass, arcane violet, Type-95 orb gold, cold-blue eyes.
+ *
+ * Install:
+ *   mkdir -p ~/.config/rofi && cp tanya.rasi ~/.config/rofi/
+ *   rofi -show drun -theme tanya
+ *
+ * Needs: A Nerd Font (JetBrainsMono Nerd Font) and an icon theme (papirus-icon-theme).
+ * Transparency needs a compositor (picom, Hyprland, KWin, etc.).
+ */
+
+configuration {
+    modi:                 "drun,run,window,filebrowser,ssh";
+    show-icons:           true;
+    icon-theme:           "Papirus-Dark";
+    matching:             "fuzzy";
+    sort:                 true;
+    sorting-method:       "fzf";
+    cycle:                true;
+    scroll-method:        1;
+    hover-select:         true;
+    me-select-entry:      "";
+    me-accept-entry:      "MousePrimary";
+    drun-display-format:  "{name}";
+    window-format:        "{w} · {c} · {t}";
+    display-drun:         "✦  Apps";
+    display-run:          "⌘  Run";
+    display-window:       "◈  Windows";
+    display-filebrowser:  "☾  Files";
+    display-ssh:          "⚚  SSH";
+    kb-mode-next:         "Shift+Right,Control+Tab,Alt+l";
+    kb-mode-previous:     "Shift+Left,Control+ISO_Left_Tab,Alt+h";
+    kb-row-up:            "Up,Control+k,Control+p";
+    kb-row-down:          "Down,Control+j,Control+n";
+    
+    /* Исправление конфликта горячих клавиш */
+    kb-accept-entry:      "Control+m,Return,KP_Enter";
+    kb-remove-to-eol:     "";
+}
+
+* {
+    void:       #0b0912;
+    glass:      #0b0912e6;
+    surface:    #15121f;
+    surface-hi: #1e1a2e;
+    violet:     #8b6cf0;
+    violet-dim: #8b6cf040;
+    cyan:       #6ccbff;
+    gold:       #f0d98a;
+    blood:      #d6455d;
+    text:       #e9e6f2;
+    muted:      #7d7893;
+
+    font: "JetBrainsMono Nerd Font 11";
+    background-color: transparent;
+    text-color: @text;
+    margin: 0;
+    padding: 0;
+    spacing: 0;
+}
+
+window {
+    location:         center;
+    anchor:           center;
+    width:            620px;
+    background-color: @glass;
+    border:           1px;
+    border-color:     @violet-dim;
+    border-radius:    16px;
+    /* Optional art on the side (uncomment and set a path):
+    background-image: url("~/.config/rofi/tanya.png", height); */
+}
+
+mainbox {
+    padding:  18px;
+    spacing:  14px;
+    children: [ inputbar, message, listview, mode-switcher ];
+}
+
+/* ── input ─────────────────────────────── */
+
+inputbar {
+    background-color: @surface;
+    border:           0px 0px 2px 0px;
+    border-color:     @violet;
+    border-radius:    10px;
+    padding:          12px 16px;
+    spacing:          12px;
+    children:         [ prompt, entry, num-filtered-rows, textbox-num-sep, num-rows ];
+}
+
+prompt {
+    text-color: @gold;
+    font:       "JetBrainsMono Nerd Font Bold 11";
+}
+
+entry {
+    placeholder:       "Speak, and it shall be opened…";
+    placeholder-color: @muted;
+    cursor-color:      @cyan;
+    text-color:        @text;
+}
+
+num-filtered-rows, num-rows {
+    text-color:     @muted;
+    expand:         false;
+    vertical-align: 0.5;
+}
+
+textbox-num-sep {
+    expand:         false;
+    str:            "/";
+    text-color:     @muted;
+    vertical-align: 0.5;
+}
+
+/* ── message ───────────────────────────── */
+
+message {
+    background-color: @surface;
+    border:           0px 0px 0px 3px;
+    border-color:     @blood;
+    border-radius:    8px;
+    padding:          10px 14px;
+}
+
+textbox {
+    text-color: @muted;
+}
+
+/* ── list ──────────────────────────────── */
+
+listview {
+    lines:        8;
+    columns:      1;
+    fixed-height: true;
+    dynamic:      true;
+    spacing:      4px;
+    scrollbar:    true;
+}
+
+scrollbar {
+    width:        3px;
+    handle-width: 3px;
+    handle-color: @violet;
+    background-color: transparent;
+    border-radius: 2px;
+    margin:       0 0 0 10px;
+}
+
+element {
+    padding:       9px 14px;
+    spacing:       14px;
+    border-radius: 10px;
+    border:        0px 0px 0px 3px;
+    border-color:  transparent;
+}
+
+element normal.normal,
+element alternate.normal {
+    background-color: transparent;
+    text-color:       @text;
+}
+
+element selected.normal {
+    background-color: @surface-hi;
+    text-color:       @gold;
+    border-color:     @violet;
+}
+
+element normal.active,
+element alternate.active {
+    text-color: @cyan;
+}
+
+element selected.active {
+    background-color: @surface-hi;
+    text-color:       @cyan;
+    border-color:     @cyan;
+}
+
+element normal.urgent,
+element alternate.urgent {
+    text-color: @blood;
+}
+
+element selected.urgent {
+    background-color: @surface-hi;
+    text-color:       @blood;
+    border-color:     @blood;
+}
+
+element-icon {
+    size:           1.6em;
+    vertical-align: 0.5;
+}
+
+element-text {
+    text-color:     inherit;
+    vertical-align: 0.5;
+    highlight:      bold #6ccbff;
+}
+
+/* ── modes ─────────────────────────────── */
+
+mode-switcher {
+    spacing: 8px;
+}
+
+button {
+    padding:          8px 10px;
+    background-color: @surface;
+    text-color:       @muted;
+    border-radius:    999px;
+    horizontal-align: 0.5;
+}
+
+button selected {
+    background-color: @violet;
+    text-color:       @void;
+}

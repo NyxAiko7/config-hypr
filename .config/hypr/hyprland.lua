@@ -54,10 +54,13 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("pipewire &")
     hl.exec_cmd("pipewire-pulse &")
     hl.exec_cmd("wireplumber &")
-    hl.exec_cmd("ags run .config/ags/maybar.tsx")
+    hl.exec_cmd("quickshell")
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("swaync &")
     hl.exec_cmd("astal-tray -d")
+    hl.exec_cmd("/usr/lib/xdg-desktop-portal-hyprland")
+    hl.exec_cmd("/usr/lib/xdg-desktop-portal")
+    hl.exec_cmd("/usr/lib/hyprpolkitagent")
 end)
 
 -------------------------------
@@ -66,9 +69,8 @@ end)
 
 -- See https://wiki.hypr.land/Configuring/Advanced-and-Cool/Environment-variables/
 
-hl.env("XCURSOR_SIZE", "24")
+hl.env("HYPRCURSOR_THEME", "march-7th-honkai-cursors")
 hl.env("HYPRCURSOR_SIZE", "24")
-
 
 -----------------------
 ----- PERMISSIONS -----
@@ -131,28 +133,32 @@ hl.config({
 ---- ANIMATIONS ----
 --------------------
 
--- Плавные Beziers и Spring настройки
-hl.curve("fluentDecel",  { type = "bezier", points = { {0.1, 1}, {0, 1} } })
+--------------------
+---- ANIMATIONS ----
+--------------------
+
+-- Плавные Beziers и Spring кривые
+hl.curve("fluentDecel",  { type = "bezier", points = { {0.05, 0.9}, {0.1, 1.05} } })
 hl.curve("easeOutCirc",  { type = "bezier", points = { {0, 0.55}, {0.45, 1} } })
 hl.curve("softEase",     { type = "bezier", points = { {0.25, 1}, {0.5, 1} } })
-hl.curve("smoothSpring", { type = "spring", mass = 1, stiffness = 160, dampening = 22 })
+hl.curve("smoothSpring", { type = "spring", mass = 1, stiffness = 180, dampening = 20 })
 
+-- Применение анимаций
 hl.animation({ leaf = "global",        enabled = true,  speed = 6,    bezier = "softEase" })
-hl.animation({ leaf = "border",        enabled = true,  speed = 5.39, bezier = "softEase" })
-hl.animation({ leaf = "windows",       enabled = true,  speed = 5,    spring = "smoothSpring" })
-hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 4.5,  spring = "smoothSpring", style = "popin 90%" })
-hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 3.5,  bezier = "fluentDecel",  style = "popin 90%" })
+hl.animation({ leaf = "border",        enabled = true,  speed = 5,    bezier = "softEase" })
+hl.animation({ leaf = "windows",       enabled = true,  speed = 4.5,  bezier = "softEase" })
+hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 4.5,  spring = "smoothSpring", style = "popin 85%" })
+hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 3.5,  bezier = "fluentDecel",  style = "popin 85%" })
 hl.animation({ leaf = "fadeIn",        enabled = true,  speed = 3,    bezier = "easeOutCirc" })
 hl.animation({ leaf = "fadeOut",       enabled = true,  speed = 2.5,  bezier = "easeOutCirc" })
 hl.animation({ leaf = "fade",          enabled = true,  speed = 3,    bezier = "softEase" })
-hl.animation({ leaf = "layers",        enabled = true,  speed = 3.81, bezier = "softEase" })
+hl.animation({ leaf = "layers",        enabled = true,  speed = 3.8,  bezier = "softEase" })
 hl.animation({ leaf = "layersIn",      enabled = true,  speed = 4,    bezier = "softEase",     style = "fade" })
-hl.animation({ leaf = "layersOut",     enabled = true,  speed = 1.5,  bezier = "fluentDecel",  style = "fade" })
-hl.animation({ leaf = "workspaces",    enabled = true,  speed = 4,    bezier = "fluentDecel",  style = "slide" })
-hl.animation({ leaf = "workspacesIn",  enabled = true,  speed = 4,    bezier = "fluentDecel",  style = "slide" })
-hl.animation({ leaf = "workspacesOut", enabled = true,  speed = 4,    bezier = "fluentDecel",  style = "slide" })
+hl.animation({ leaf = "layersOut",     enabled = true,  speed = 2,    bezier = "fluentDecel",  style = "fade" })
+hl.animation({ leaf = "workspaces",    enabled = true,  speed = 3.5,  bezier = "fluentDecel",  style = "slide" })
+hl.animation({ leaf = "workspacesIn",  enabled = true,  speed = 3.5,  bezier = "fluentDecel",  style = "slide" })
+hl.animation({ leaf = "workspacesOut", enabled = true,  speed = 3.5,  bezier = "fluentDecel",  style = "slide" })
 hl.animation({ leaf = "zoomFactor",    enabled = true,  speed = 7,    bezier = "softEase" })
-
 
 -- See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
 hl.config({
@@ -228,7 +234,7 @@ hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
-hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("hyprshot -m region"))
+hl.bind(mainMod .. " + o", hl.dsp.exec_cmd("hyprshot -m region"))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 0 }))
 
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
