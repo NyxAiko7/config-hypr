@@ -23,22 +23,18 @@ PanelWindow {
     property var btAdapter: Bluetooth.defaultAdapter
     readonly property int btConnected: Bluetooth.devices.values.filter(d => d.connected).length
 
-    property var player: {
-        const list = Mpris.players.values
-        for (let i = 0; i < list.length; i++)
-            if (list[i].playbackState === MprisPlaybackState.Playing) return list[i]
-        return list.length > 0 ? list[0] : null
-    }
+    property var player: Media.player
 
     PwObjectTracker { objects: [bar.sink] }
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
     MusicPopup    { id: musicPopup;    barWindow: bar; anchorItem: musicPill; player: bar.player }
     CalendarPopup { id: calendarPopup; barWindow: bar; anchorItem: clockPill }
+    WeatherPopup  { id: weatherPopup;  barWindow: bar; anchorItem: weatherPill }
     ControlCenter { id: controlCenter; barWindow: bar; anchorItem: statusPill }
 
     function volIcon() {
-        if (!sink || !sink.audio || sink.audio.muted) return "\uf6a9"
+        if (!sink || !sink.audio || sink.audio.muted) return "\uf026"
         const v = sink.audio.volume
         return v < 0.01 ? "\uf026" : (v < 0.5 ? "\uf027" : "\uf028")
     }
@@ -143,22 +139,159 @@ PanelWindow {
         }
     }
 
-    // ───────── Центральный остров: часы ─────────
-    Island {
+    // ───────── Центральный остров: часы · погода · динамические события ─────────
+    Rectangle {
+        id: centerIsland
         anchors.centerIn: parent
+        height: Theme.barHeight
+        width: (UI.eventActive ? eventRow.implicitWidth : clockGroup.implicitWidth) + 24
+        radius: Theme.islandRadius
+        color: Theme.bg
+        clip: true
+        border.width: 1
+        border.color: UI.eventActive
+            ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.4)
+            : Theme.hairline
 
-        Pill {
-            id: clockPill
-            interactive: true
-            onClicked: calendarPopup.toggle()
-            Lbl {
-                text: Qt.formatDateTime(clock.date, "HH:mm")
-                font.bold: true
+        Behavior on width { NumberAnimation { duration: 340; easing.type: Easing.OutBack; easing.overshoot: 0.9 } }
+        Behavior on border.color { ColorAnimation { duration: 250 } }
+
+        // обычный режим
+        RowLayout {
+            id: clockGroup
+            anchors.centerIn: parent
+            spacing: 2
+            opacity: UI.eventActive ? 0 : 1
+            visible: opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: 180 } }
+
+            Pill {
+                id: clockPill
+                interactive: true
+                onClicked: calendarPopup.toggle()
+                Lbl {
+                    text: Qt.formatDateTime(clock.date, "HH:mm")
+                    font.bold: true
+                }
+                Lbl {
+                    text: Qt.formatDateTime(clock.date, "ddd, d MMM")
+                    color: Theme.muted
+                }
             }
-            Lbl {
-                text: Qt.formatDateTime(clock.date, "ddd, d MMM")
-                color: Theme.muted
+            Pill {
+                id: weatherPill
+                interactive: true
+                visible: Weather.ready
+                onClicked: weatherPopup.toggle()
+                Lbl { text: Weather.icon; color: Theme.accent2; font.pixelSize: 14 }
+                Lbl { text: Weather.temp + "°" }
             }
+        }
+
+        // режим события
+        RowLayout {
+            id: eventRow
+            anchors.centerIn: parent
+            spacing: 10
+            opacity: UI.eventActive ? 1 : 0
+            visible: opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: 220 } }
+
+            Item {
+                Layout.preferredWidth: 22
+                Layout.preferredHeight: 22
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 6
+                    color: Theme.surface
+                    visible: evArt.status !== Image.Ready
+                }
+                Image {
+                    id: evArt
+                    anchors.fill: parent
+                    source: UI.eventArt
+                    fillMode: Image.PreserveAspectCrop
+                    visible: status === Image.Ready
+                }
+                Lbl {
+                    anchors.centerIn: parent
+                    visible: evArt.status !== Image.Ready
+                    text: UI.eventIcon
+                    color: Theme.accent
+                    font.pixelSize: 13
+                }
+            }
+
+            ColumnLayout {
+                spacing: -1
+                Lbl {
+                    Layout.maximumWidth: 260
+                    text: UI.eventText
+                    font.bold: true
+                    elide: Text.ElideRight
+                }
+                Lbl {
+                    visible: UI.eventSub !== ""
+                    Layout.maximumWidth: 260
+                    text: UI.eventSub
+                    color: Theme.muted
+                    font.pixelSize: 10
+                    elide: Text.ElideRight
+                }
+            }
+
+            // эквалайзер для музыки
+            Row {
+                visible: UI.eventKind === "media"
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 2
+                Repeater {
+                    model: 4
+                    delegate: Item {
+                        id: eq
+                        required property int index
+                        width: 3
+                        height: 16
+                        Rectangle {
+                            id: barRect
+                            anchors.bottom: parent.bottom
+                            width: 3
+                            radius: 1.5
+                            height: 5
+                            color: Theme.accent
+                            SequentialAnimation on height {
+                                loops: Animation.Infinite
+                                running: UI.eventActive && UI.eventKind === "media"
+                                NumberAnimation { to: 15; duration: 260 + eq.index * 70; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 4;  duration: 300 + eq.index * 60; easing.type: Easing.InOutSine }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // палитра при смене темы
+            Row {
+                visible: UI.eventKind === "theme"
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 4
+                Repeater {
+                    model: [Theme.accent, Theme.accent2, Theme.text, Theme.surface]
+                    delegate: Rectangle {
+                        required property var modelData
+                        width: 14; height: 14; radius: 7
+                        color: modelData
+                        border.width: 1
+                        border.color: Theme.hairline
+                    }
+                }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: UI.eventActive
+            onClicked: UI.eventActive = false
         }
     }
 
@@ -204,6 +337,13 @@ PanelWindow {
                     }
                 }
             }
+        }
+
+        // Обои и тема
+        Pill {
+            interactive: true
+            onClicked: { UI.launcher = false; UI.session = false; UI.wallpaper = !UI.wallpaper }
+            Lbl { text: "\uf1fc"; color: Theme.muted; font.pixelSize: Theme.iconSize }
         }
 
         // Раскладка клавиатуры

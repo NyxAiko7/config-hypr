@@ -28,6 +28,7 @@ Singleton {
     readonly property int iconSize: 14
 
     property string lastRaw: ""
+    property bool loadedOnce: false
 
     Behavior on bg           { ColorAnimation { duration: 400 } }
     Behavior on popupBg      { ColorAnimation { duration: 400 } }
@@ -88,6 +89,9 @@ Singleton {
 
         exportSwaync([["bg", solid], ["fg", fg], ["surface", nSurface], ["muted", nMuted],
                       ["accent", nAccent], ["accent2", nAccent2], ["warn", nWarn], ["onaccent", solid]])
+
+        if (loadedOnce) UI.flash("\uf1fc", "Тема обновлена", "Цвета из обоев", "", "theme")
+        loadedOnce = true
     }
 
     // пишем colors.css для SwayNC и перезагружаем его стиль

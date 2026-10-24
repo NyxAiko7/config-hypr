@@ -38,7 +38,7 @@ PanelWindow {
 
     function icon() {
         if (isBrightness) return "\uf185"
-        if (muted) return "\uf6a9"
+        if (muted) return "\uf026"
         return value < 0.01 ? "\uf026" : (value < 0.5 ? "\uf027" : "\uf028")
     }
 
