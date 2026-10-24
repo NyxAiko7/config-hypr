@@ -38,6 +38,14 @@ ShellRoot {
     }
     Timer { id: randomDelay; interval: 400; onTriggered: Wallpapers.random() }
 
+    // quickshell ipc call notifs toggle | dnd | clear
+    IpcHandler {
+        target: "notifs"
+        function toggle(): void { UI.toggleCenter() }
+        function dnd(): void { Notifs.dnd = !Notifs.dnd }
+        function clear(): void { Notifs.clearAll() }
+    }
+
     // quickshell ipc call osd brightness
     IpcHandler {
         target: "osd"

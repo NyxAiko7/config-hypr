@@ -2,27 +2,30 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Bluetooth
-import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
 
 BarPopup {
     id: cc
     alignment: "right"
-    implicitWidth: 360
-    property string page: "main"      // "main" | "wifi" | "bt"
-    implicitHeight: page === "main" ? content.implicitHeight + 32 : 500
+    implicitWidth: 380
+
+    property string page: "main"      // "main" | "wifi" | "bt" | "audio"
+    readonly property real maxH: (barWindow.screen ? barWindow.screen.height : 900) - 110
+    implicitHeight: page === "main" ? Math.min(content.implicitHeight + 32, maxH) : 500
 
     property var sink: Pipewire.defaultAudioSink
+    property var source: Pipewire.defaultAudioSource
     property var btAdapter: Bluetooth.defaultAdapter
     readonly property var btConnectedDevices: Bluetooth.devices.values.filter(d => d.connected)
     readonly property string userName: Quickshell.env("USER") || "user"
+    readonly property bool micMuted: source && source.audio ? source.audio.muted : false
 
-    PwObjectTracker { objects: [cc.sink] }
+    PwObjectTracker { objects: [cc.sink, cc.source] }
 
     onVisibleChanged: {
         SysStats.active = visible
-        if (visible) { Brightness.refresh(); Net.refresh() }
+        if (visible) { Brightness.refresh(); Net.refresh(); Quick.refresh() }
         else page = "main"
     }
 
@@ -37,6 +40,12 @@ BarPopup {
         const v = sink.audio.volume
         return v < 0.01 ? "\uf026" : (v < 0.5 ? "\uf027" : "\uf028")
     }
+    function sinkGlyph() {
+        const s = sink ? (String(sink.name) + " " + String(sink.description)).toLowerCase() : ""
+        if (s.indexOf("headphone") >= 0 || s.indexOf("headset") >= 0 || s.indexOf("bluez") >= 0) return "\uf025"
+        if (s.indexOf("hdmi") >= 0 || s.indexOf("displayport") >= 0) return "\uf108"
+        return "\uf028"
+    }
     function batIcon() {
         const d = UPower.displayDevice
         if (d.state === UPowerDeviceState.Charging) return "\uf0e7"
@@ -44,19 +53,19 @@ BarPopup {
         return icons[Math.min(4, Math.floor(d.percentage * 5))]
     }
 
-    // ───────── Плитка-переключатель ─────────
+    // ───────── Плитка ─────────
     component Tile: Rectangle {
         id: tile
         property string icon
         property string title
         property string subtitle
         property bool active: false
+        property bool expandable: false
         signal clicked()
         signal rightClicked()
-        property bool expandable: false
         signal expand()
 
-        implicitHeight: 64
+        implicitHeight: 62
         radius: 18
         color: active ? (tileArea.containsMouse ? Qt.lighter(Theme.accent, 1.08) : Theme.accent)
                       : (tileArea.containsMouse ? Qt.lighter(Theme.surface, 1.18) : Theme.surface)
@@ -65,13 +74,13 @@ BarPopup {
         RowLayout {
             anchors.fill: parent
             anchors.leftMargin: 12
-            anchors.rightMargin: tile.expandable ? 40 : 12
-            spacing: 12
+            anchors.rightMargin: tile.expandable ? 34 : 10
+            spacing: 10
 
             Rectangle {
-                Layout.preferredWidth: 38
-                Layout.preferredHeight: 38
-                radius: 19
+                Layout.preferredWidth: 34
+                Layout.preferredHeight: 34
+                radius: 17
                 color: tile.active
                     ? Qt.rgba(Theme.textOnAccent.r, Theme.textOnAccent.g, Theme.textOnAccent.b, 0.14)
                     : Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08)
@@ -79,7 +88,7 @@ BarPopup {
                     anchors.centerIn: parent
                     text: tile.icon
                     color: tile.active ? Theme.textOnAccent : Theme.text
-                    font.pixelSize: 16
+                    font.pixelSize: 15
                 }
             }
             ColumnLayout {
@@ -113,9 +122,9 @@ BarPopup {
         Rectangle {
             visible: tile.expandable
             anchors.right: parent.right
-            anchors.rightMargin: 8
+            anchors.rightMargin: 6
             anchors.verticalCenter: parent.verticalCenter
-            width: 28; height: 28; radius: 14
+            width: 26; height: 26; radius: 13
             color: chevArea.containsMouse
                 ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.16) : "transparent"
             Lbl {
@@ -134,7 +143,7 @@ BarPopup {
         }
     }
 
-    // ───────── Толстый ползунок (как в мобильных ОС) ─────────
+    // ───────── Толстый ползунок ─────────
     component Slide: Item {
         id: sl
         property string icon
@@ -156,7 +165,6 @@ BarPopup {
                 radius: height / 2
                 color: Theme.accent
             }
-
             Lbl {
                 anchors.verticalCenter: parent.verticalCenter
                 x: (track.height - width) / 2
@@ -172,7 +180,6 @@ BarPopup {
                 color: sl.value > 0.9 ? Theme.textOnAccent : Theme.muted
                 font.pixelSize: 11
             }
-
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
@@ -182,7 +189,6 @@ BarPopup {
                 onPressed: m => setFrom(m.x)
                 onPositionChanged: m => setFrom(m.x)
             }
-            // клик по иконке — действие (например, mute)
             MouseArea {
                 width: track.height
                 height: track.height
@@ -192,29 +198,40 @@ BarPopup {
         }
     }
 
-    // ───────── Кнопка медиа ─────────
-    component MBtn: Rectangle {
+    // ───────── Кнопка быстрого действия ─────────
+    component QuickBtn: Rectangle {
+        id: qb
         property string icon
-        property bool primary: false
+        property string label
+        property bool active: false
         signal activated()
-        implicitWidth: 30
-        implicitHeight: 30
-        radius: 15
-        color: primary ? (mArea.containsMouse ? Qt.lighter(Theme.accent, 1.1) : Theme.accent)
-                       : (mArea.containsMouse ? Qt.lighter(Theme.surface, 1.4) : "transparent")
-        Behavior on color { ColorAnimation { duration: 120 } }
-        Lbl {
+        implicitHeight: 58
+        radius: 16
+        color: active ? (qArea.containsMouse ? Qt.lighter(Theme.accent, 1.08) : Theme.accent)
+                      : (qArea.containsMouse ? Qt.lighter(Theme.surface, 1.18) : Theme.surface)
+        Behavior on color { ColorAnimation { duration: 140 } }
+        ColumnLayout {
             anchors.centerIn: parent
-            text: parent.icon
-            color: parent.primary ? Theme.textOnAccent : Theme.text
-            font.pixelSize: 11
+            spacing: 3
+            Lbl {
+                Layout.alignment: Qt.AlignHCenter
+                text: qb.icon
+                color: qb.active ? Theme.textOnAccent : Theme.text
+                font.pixelSize: 15
+            }
+            Lbl {
+                Layout.alignment: Qt.AlignHCenter
+                text: qb.label
+                color: qb.active ? Theme.textOnAccent : Theme.muted
+                font.pixelSize: 9
+            }
         }
         MouseArea {
-            id: mArea
+            id: qArea
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: parent.activated()
+            onClicked: qb.activated()
         }
     }
 
@@ -223,22 +240,24 @@ BarPopup {
         id: st
         property string label
         property int value: 0
-        implicitHeight: 62
-        radius: 18
+        property string sub: ""
+        implicitHeight: 64
+        radius: 16
         color: Theme.surface
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 14
-            spacing: 8
+            anchors.margins: 12
+            spacing: 6
             RowLayout {
                 Layout.fillWidth: true
-                Lbl { text: st.label; color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true }
-                Lbl { text: st.value + "%"; font.bold: true }
+                Lbl { text: st.label; color: Theme.muted; font.pixelSize: 10; Layout.fillWidth: true }
+                Lbl { text: st.sub; color: Theme.muted; font.pixelSize: 9; visible: st.sub !== "" }
             }
+            Lbl { text: st.value + "%"; font.bold: true; font.pixelSize: 15 }
             Rectangle {
                 Layout.fillWidth: true
-                height: 4
+                height: 3
                 radius: 2
                 color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.1)
                 Rectangle {
@@ -252,226 +271,257 @@ BarPopup {
         }
     }
 
-    ColumnLayout {
-        id: content
+    // ───────── Главная страница (прокручивается, если не помещается) ─────────
+    Flickable {
+        id: mainScroll
         visible: cc.page === "main"
         anchors.fill: parent
         anchors.margins: 16
-        spacing: 14
+        contentWidth: width
+        contentHeight: content.implicitHeight
+        clip: true
+        interactive: contentHeight > height
+        boundsBehavior: Flickable.StopAtBounds
 
-        // ── Шапка ──
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
-
-            Rectangle {
-                Layout.preferredWidth: 42
-                Layout.preferredHeight: 42
-                radius: 21
-                color: Theme.accent
-                Lbl {
-                    anchors.centerIn: parent
-                    text: cc.userName.charAt(0).toUpperCase()
-                    color: Theme.textOnAccent
-                    font.bold: true
-                    font.pixelSize: 17
-                }
-            }
-            ColumnLayout {
-                spacing: 1
-                Lbl { text: cc.userName; font.bold: true; font.pixelSize: 14 }
-                RowLayout {
-                    visible: UPower.displayDevice.isLaptopBattery
-                    spacing: 6
-                    Lbl {
-                        text: cc.batIcon()
-                        color: UPower.displayDevice.percentage < 0.2 ? Theme.warn : Theme.accent2
-                        font.pixelSize: 12
-                    }
-                    Lbl {
-                        color: Theme.muted
-                        font.pixelSize: 11
-                        text: Math.round(UPower.displayDevice.percentage * 100) + "% · "
-                            + (UPower.displayDevice.state === UPowerDeviceState.Charging ? "заряжается" : "от батареи")
-                    }
-                }
-            }
-            Item { Layout.fillWidth: true }
-            IconBtn {
-                size: 38
-                icon: "\uf1fc"
-                onClicked: { cc.visible = false; UI.launcher = false; UI.session = false; UI.wallpaper = true }
-            }
-            Rectangle {
-                implicitWidth: 38; implicitHeight: 38; radius: 19
-                color: pwrArea.containsMouse ? Theme.surface : "transparent"
-                Behavior on color { ColorAnimation { duration: 120 } }
-                Lbl { anchors.centerIn: parent; text: "\uf011"; color: Theme.muted; font.pixelSize: 15 }
-                MouseArea {
-                    id: pwrArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: { cc.visible = false; UI.launcher = false; UI.session = true }
-                }
-            }
-        }
-
-        // ── Плитки ──
-        GridLayout {
-            Layout.fillWidth: true
-            columns: 2
-            rowSpacing: 8
-            columnSpacing: 8
-
-            Tile {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                icon: Net.icon
-                title: Net.kind === "ethernet" ? "Ethernet" : "Wi-Fi"
-                subtitle: Net.kind === "ethernet" ? "Подключено"
-                        : (Net.connected ? Net.connection : (Net.wifiEnabled ? "Не подключено" : "Выключено"))
-                active: Net.wifiEnabled || Net.kind === "ethernet"
-                onClicked: Net.toggleWifi()
-                expandable: true
-                onExpand: cc.page = "wifi"
-                onRightClicked: Quickshell.execDetached(["nm-connection-editor"])
-            }
-            Tile {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                icon: "\uf293"
-                title: "Bluetooth"
-                subtitle: !cc.btAdapter ? "Недоступно"
-                    : (cc.btAdapter.enabled
-                        ? (cc.btConnectedDevices.length > 0
-                            ? cc.btConnectedDevices.map(d => d.name || d.deviceName).join(", ")
-                            : "Включён")
-                        : "Выключен")
-                active: cc.btAdapter ? cc.btAdapter.enabled : false
-                onClicked: if (cc.btAdapter) cc.btAdapter.enabled = !cc.btAdapter.enabled
-                expandable: true
-                onExpand: cc.page = "bt"
-                onRightClicked: Quickshell.execDetached(["blueman-manager"])
-            }
-            Tile {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                icon: SwayNC.dnd ? "\uf1f6" : "\uf0f3"
-                title: "Не беспокоить"
-                subtitle: SwayNC.dnd ? "Включено" : "Выключено"
-                active: SwayNC.dnd
-                onClicked: SwayNC.toggleDnd()
-                onRightClicked: SwayNC.toggle()
-            }
-            Tile {
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                icon: cc.volIcon()
-                title: "Звук"
-                subtitle: (cc.sink && cc.sink.audio && !cc.sink.audio.muted) ? "Включён" : "Выключен"
-                active: cc.sink && cc.sink.audio ? !cc.sink.audio.muted : false
-                onClicked: if (cc.sink && cc.sink.audio) cc.sink.audio.muted = !cc.sink.audio.muted
-                onRightClicked: Quickshell.execDetached(["pavucontrol"])
-            }
-        }
-
-        // ── Ползунки ──
         ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            Slide {
-                Layout.fillWidth: true
-                icon: cc.volIcon()
-                value: (cc.sink && cc.sink.audio) ? cc.sink.audio.volume : 0
-                onMoved: v => { if (cc.sink && cc.sink.audio) cc.sink.audio.volume = v }
-                onIconClicked: if (cc.sink && cc.sink.audio) cc.sink.audio.muted = !cc.sink.audio.muted
-            }
-            Slide {
-                Layout.fillWidth: true
-                visible: Brightness.available
-                icon: "\uf185"
-                value: Brightness.value
-                onMoved: v => Brightness.set(v)
-            }
-        }
+            id: content
+            width: mainScroll.width
+            spacing: 14
 
-        // ── Мини-плеер ──
-        Rectangle {
-            visible: Media.player !== null
-            Layout.fillWidth: true
-            implicitHeight: 64
-            radius: 18
-            color: Theme.surface
-
+            // ── Шапка ──
             RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
+                Layout.fillWidth: true
                 spacing: 12
 
                 Rectangle {
-                    Layout.preferredWidth: 44
-                    Layout.preferredHeight: 44
-                    radius: 10
-                    color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08)
-                    clip: true
-                    Image {
-                        id: mArt
-                        anchors.fill: parent
-                        source: Media.player ? Media.player.trackArtUrl : ""
-                        fillMode: Image.PreserveAspectCrop
-                        visible: status === Image.Ready
-                    }
+                    Layout.preferredWidth: 42
+                    Layout.preferredHeight: 42
+                    radius: 21
+                    color: Theme.accent
                     Lbl {
                         anchors.centerIn: parent
-                        visible: !mArt.visible
-                        text: "\uf001"
-                        color: Theme.muted
+                        text: cc.userName.charAt(0).toUpperCase()
+                        color: Theme.textOnAccent
+                        font.bold: true
+                        font.pixelSize: 17
                     }
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 0
-                    Lbl {
+                    Layout.minimumWidth: 0
+                    spacing: 1
+                    Lbl { text: cc.userName; font.bold: true; font.pixelSize: 14 }
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: Media.player ? (Media.player.trackTitle || "Без названия") : ""
-                        font.bold: true
-                        elide: Text.ElideRight
+                        Layout.minimumWidth: 0
+                        spacing: 6
+                        Lbl {
+                            visible: UPower.displayDevice.isLaptopBattery
+                            text: cc.batIcon()
+                            color: UPower.displayDevice.percentage < 0.2 ? Theme.warn : Theme.accent2
+                            font.pixelSize: 12
+                        }
+                        Lbl {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            color: Theme.muted
+                            font.pixelSize: 11
+                            text: (UPower.displayDevice.isLaptopBattery
+                                    ? Math.round(UPower.displayDevice.percentage * 100) + "% · "
+                                      + (UPower.displayDevice.state === UPowerDeviceState.Charging ? "заряжается" : "от батареи") + " · "
+                                    : "")
+                                + "работает " + SysStats.uptimeText
+                        }
                     }
-                    Lbl {
-                        Layout.fillWidth: true
-                        text: Media.player ? Media.player.trackArtist : ""
-                        color: Theme.muted
-                        font.pixelSize: 11
-                        elide: Text.ElideRight
+                }
+                IconBtn {
+                    size: 38
+                    icon: "\uf1fc"
+                    onClicked: { cc.visible = false; UI.launcher = false; UI.session = false; UI.wallpaper = true }
+                }
+                Rectangle {
+                    implicitWidth: 38; implicitHeight: 38; radius: 19
+                    color: pwrArea.containsMouse ? Theme.surface : "transparent"
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Lbl { anchors.centerIn: parent; text: "\uf011"; color: Theme.muted; font.pixelSize: 15 }
+                    MouseArea {
+                        id: pwrArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: { cc.visible = false; UI.launcher = false; UI.session = true }
                     }
-                }
-                MBtn {
-                    icon: "\uf048"
-                    onActivated: if (Media.player && Media.player.canGoPrevious) Media.player.previous()
-                }
-                MBtn {
-                    primary: true
-                    icon: (Media.player && Media.player.playbackState === MprisPlaybackState.Playing) ? "\uf04c" : "\uf04b"
-                    onActivated: if (Media.player && Media.player.canTogglePlaying) Media.player.togglePlaying()
-                }
-                MBtn {
-                    icon: "\uf051"
-                    onActivated: if (Media.player && Media.player.canGoNext) Media.player.next()
                 }
             }
-        }
 
-        // ── Статистика ──
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            Stat { Layout.fillWidth: true; Layout.preferredWidth: 1; label: "CPU"; value: SysStats.cpu }
-            Stat { Layout.fillWidth: true; Layout.preferredWidth: 1; label: "RAM"; value: SysStats.mem }
+            // ── Плитки ──
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                rowSpacing: 8
+                columnSpacing: 8
+
+                Tile {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    icon: Net.icon
+                    title: Net.kind === "ethernet" ? "Ethernet" : "Wi-Fi"
+                    subtitle: Net.kind === "ethernet" ? "Подключено"
+                            : (Net.connected ? Net.connection : (Net.wifiEnabled ? "Не подключено" : "Выключено"))
+                    active: Net.wifiEnabled || Net.kind === "ethernet"
+                    onClicked: Net.toggleWifi()
+                    expandable: true
+                    onExpand: cc.page = "wifi"
+                    onRightClicked: Quickshell.execDetached(["nm-connection-editor"])
+                }
+                Tile {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    icon: "\uf293"
+                    title: "Bluetooth"
+                    subtitle: !cc.btAdapter ? "Недоступно"
+                        : (cc.btAdapter.enabled
+                            ? (cc.btConnectedDevices.length > 0
+                                ? cc.btConnectedDevices.map(d => d.name || d.deviceName).join(", ")
+                                : "Включён")
+                            : "Выключен")
+                    active: cc.btAdapter ? cc.btAdapter.enabled : false
+                    onClicked: if (cc.btAdapter) cc.btAdapter.enabled = !cc.btAdapter.enabled
+                    expandable: true
+                    onExpand: cc.page = "bt"
+                    onRightClicked: Quickshell.execDetached(["blueman-manager"])
+                }
+                Tile {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    icon: Notifs.dnd ? "\uf1f6" : "\uf0f3"
+                    title: "Тишина"
+                    subtitle: Notifs.dnd ? "Не беспокоить" : "Уведомления"
+                    active: Notifs.dnd
+                    onClicked: Notifs.dnd = !Notifs.dnd
+                    onRightClicked: UI.toggleCenter()
+                }
+                Tile {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    icon: "\uf0f4"
+                    title: "Не засыпать"
+                    subtitle: UI.caffeine ? "Экран не гаснет" : "Выключено"
+                    active: UI.caffeine
+                    onClicked: {
+                        UI.caffeine = !UI.caffeine
+                        UI.flash("\uf0f4", "Не засыпать", UI.caffeine ? "Включено" : "Выключено", "", "info", "")
+                    }
+                }
+            }
+
+            // ── Музыка ──
+            MediaCard {
+                Layout.fillWidth: true
+                active: cc.visible && cc.page === "main"
+            }
+
+            // ── Ползунки ──
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                Slide {
+                    Layout.fillWidth: true
+                    icon: cc.volIcon()
+                    value: (cc.sink && cc.sink.audio) ? cc.sink.audio.volume : 0
+                    onMoved: v => { if (cc.sink && cc.sink.audio) cc.sink.audio.volume = v }
+                    onIconClicked: if (cc.sink && cc.sink.audio) cc.sink.audio.muted = !cc.sink.audio.muted
+                }
+                Slide {
+                    Layout.fillWidth: true
+                    visible: Brightness.available
+                    icon: "\uf185"
+                    value: Brightness.value
+                    onMoved: v => Brightness.set(v)
+                }
+
+                // устройство вывода + микрофон
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 44
+                    radius: 16
+                    color: audioArea.containsMouse ? Qt.lighter(Theme.surface, 1.18) : Theme.surface
+                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                    MouseArea {
+                        id: audioArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: cc.page = "audio"
+                    }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 8
+                        spacing: 10
+                        Lbl { text: cc.sinkGlyph(); color: Theme.accent2; font.pixelSize: 14; Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter }
+                        Lbl {
+                            Layout.fillWidth: true
+                            text: cc.sink ? (cc.sink.description || cc.sink.nickname || cc.sink.name) : "Нет устройства вывода"
+                            font.pixelSize: 11
+                            elide: Text.ElideRight
+                        }
+                        IconBtn {
+                            size: 30
+                            visible: cc.source !== null
+                            icon: cc.micMuted ? "\uf131" : "\uf130"
+                            iconColor: cc.micMuted ? Theme.warn : Theme.muted
+                            onClicked: if (cc.source && cc.source.audio) cc.source.audio.muted = !cc.source.audio.muted
+                        }
+                        Lbl { text: "\uf054"; color: Theme.muted; font.pixelSize: 10 }
+                    }
+                }
+            }
+
+            // ── Быстрые действия ──
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                QuickBtn {
+                    Layout.fillWidth: true; Layout.preferredWidth: 1
+                    icon: "\uf125"; label: "Область"
+                    onActivated: { cc.visible = false; Quick.screenshot(true) }
+                }
+                QuickBtn {
+                    Layout.fillWidth: true; Layout.preferredWidth: 1
+                    icon: "\uf030"; label: "Экран"
+                    onActivated: { cc.visible = false; Quick.screenshot(false) }
+                }
+                QuickBtn {
+                    Layout.fillWidth: true; Layout.preferredWidth: 1
+                    icon: "\uf1fb"; label: "Пипетка"
+                    onActivated: { cc.visible = false; Quick.pick() }
+                }
+                QuickBtn {
+                    Layout.fillWidth: true; Layout.preferredWidth: 1
+                    icon: "\uf186"; label: "Ночной"
+                    active: Quick.night
+                    onActivated: Quick.toggleNight()
+                }
+            }
+
+            // ── Статистика ──
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                Stat {
+                    Layout.fillWidth: true; Layout.preferredWidth: 1
+                    label: "CPU"; value: SysStats.cpu
+                    sub: SysStats.temp > 0 ? SysStats.temp + "°" : ""
+                }
+                Stat { Layout.fillWidth: true; Layout.preferredWidth: 1; label: "RAM"; value: SysStats.mem }
+                Stat { Layout.fillWidth: true; Layout.preferredWidth: 1; label: "ДИСК"; value: SysStats.disk }
+            }
         }
     }
 
+    // ───────── Подстраницы ─────────
     WifiPage {
         anchors.fill: parent
         anchors.margins: 16
@@ -484,6 +534,13 @@ BarPopup {
         anchors.margins: 16
         visible: cc.page === "bt"
         active: cc.visible && cc.page === "bt"
+        onBack: cc.page = "main"
+    }
+    AudioPage {
+        anchors.fill: parent
+        anchors.margins: 16
+        visible: cc.page === "audio"
+        active: cc.visible && cc.page === "audio"
         onBack: cc.page = "main"
     }
 }

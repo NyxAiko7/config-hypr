@@ -4,8 +4,7 @@ import Quickshell
 import Quickshell.Io
 
 // Цвета берутся из pywal (~/.cache/wal/colors.json).
-// При каждом изменении палитры Quickshell сам пишет ~/.config/swaync/colors.css
-// и перезагружает стиль SwayNC — шаблоны и симлинки pywal больше не нужны.
+// Палитра обновляется сама при каждом запуске wal.
 Singleton {
     id: root
 
@@ -87,23 +86,9 @@ Singleton {
         textOnAccent = solid
         hairline     = Qt.rgba(fg.r, fg.g, fg.b, 0.07)
 
-        exportSwaync([["bg", solid], ["fg", fg], ["surface", nSurface], ["muted", nMuted],
-                      ["accent", nAccent], ["accent2", nAccent2], ["warn", nWarn], ["onaccent", solid]])
-
-        if (loadedOnce) UI.flash("\uf1fc", "Тема обновлена", "Цвета из обоев", "", "theme")
+        if (loadedOnce) UI.flash("\uf1fc", "Тема обновлена", "Цвета из обоев", "", "theme", "wallpaper")
         loadedOnce = true
     }
-
-    // пишем colors.css для SwayNC и перезагружаем его стиль
-    function exportSwaync(pairs) {
-        const css = pairs.map(p => "@define-color " + p[0] + " " + hex(p[1]) + ";").join("\n") + "\n"
-        swayProc.command = ["sh", "-c",
-            'mkdir -p "$HOME/.config/swaync" && printf "%s" "$1" > "$HOME/.config/swaync/colors.css" && (swaync-client -rs >/dev/null 2>&1 || true)',
-            "sh", css]
-        swayProc.running = true
-    }
-
-    Process { id: swayProc }
 
     FileView {
         id: walFile

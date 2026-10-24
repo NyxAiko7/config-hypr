@@ -16,7 +16,7 @@ PopupWindow {
         if (!visible) {
             const p = anchorItem.mapToItem(null, 0, 0)
             // окно открывается на 6px ниже нижней кромки острова
-            anchor.rect = Qt.rect(p.x, p.y, anchorItem.width, barWindow.implicitHeight - p.y + 6)
+            anchor.rect = Qt.rect(p.x, p.y, anchorItem.width, Theme.barHeight - p.y + 6)
         }
         visible = !visible
     }

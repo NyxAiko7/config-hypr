@@ -7,6 +7,7 @@ Rectangle {
     property bool interactive: false
     signal clicked(var mouse)
     signal scrolled(var wheel)
+    readonly property bool hovered: hover.containsMouse
 
     implicitHeight: Theme.barHeight - 8
     implicitWidth: row.implicitWidth + 20
