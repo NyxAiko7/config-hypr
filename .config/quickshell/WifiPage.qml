@@ -7,6 +7,42 @@ Item {
     property bool active: false
     signal back()
 
+    // маленький показатель: значок, значение, подпись
+    component MiniStat: Rectangle {
+        id: ms
+        property string icon
+        property string value
+        property string label
+        property color valueColor: Theme.text
+        implicitHeight: 56
+        radius: 14
+        color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06)
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 1
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 5
+                Lbl { text: ms.icon; color: Theme.accent2; font.pixelSize: 11 }
+                Lbl { text: ms.value; color: ms.valueColor; font.bold: true; font.pixelSize: 13 }
+            }
+            Lbl { Layout.alignment: Qt.AlignHCenter; text: ms.label; color: Theme.muted; font.pixelSize: 9 }
+        }
+    }
+
+    // строка «подпись — значение»
+    readonly property string statusLine: {
+        const parts = []
+        if (Net.connectivity === "limited") parts.push("Нет доступа в интернет")
+        else if (Net.connectivity === "portal") parts.push("Нужна авторизация")
+        else parts.push("Подключено")
+        if (Net.kind === "wifi") {
+            if (Net.band !== "") parts.push(Net.band)
+            if (Net.security !== "") parts.push(Net.security)
+        } else if (Net.kind === "ethernet") parts.push("Кабель")
+        return parts.join("  ·  ")
+    }
+
     onActiveChanged: {
         Net.wantList = active
         if (active) Net.scan()
@@ -41,6 +77,127 @@ Item {
             }
         }
 
+        // ── текущее соединение: самое главное ──
+        Rectangle {
+            visible: Net.connected && (Net.kind === "ethernet" || Net.wifiEnabled)
+            Layout.fillWidth: true
+            implicitHeight: info.implicitHeight + 24
+            radius: 18
+            color: Theme.surface
+
+            ColumnLayout {
+                id: info
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 10
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+                    Rectangle {
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 40
+                        radius: 20
+                        color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18)
+                        Lbl { anchors.centerIn: parent; text: Net.icon; color: Theme.accent; font.pixelSize: 17 }
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        spacing: 0
+                        Lbl { Layout.fillWidth: true; text: Net.connection; font.bold: true; font.pixelSize: 14; elide: Text.ElideRight }
+                        Lbl {
+                            Layout.fillWidth: true
+                            text: page.statusLine
+                            color: Net.connectivity === "limited" || Net.connectivity === "portal" ? Theme.warn : Theme.muted
+                            font.pixelSize: 10
+                            elide: Text.ElideRight
+                        }
+                    }
+                    // уровень сигнала
+                    Rectangle {
+                        visible: Net.kind === "wifi"
+                        implicitWidth: sigLbl.implicitWidth + 16
+                        implicitHeight: 24
+                        radius: 12
+                        color: Qt.rgba(Theme.accent2.r, Theme.accent2.g, Theme.accent2.b, 0.16)
+                        Lbl { id: sigLbl; anchors.centerIn: parent; text: Net.strength + "%"; color: Theme.accent2; font.pixelSize: 11; font.bold: true }
+                    }
+                }
+
+                // скорость в реальном времени и пинг
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    MiniStat {
+                        Layout.fillWidth: true; Layout.preferredWidth: 1
+                        icon: "\uf063"; label: "Приём"
+                        value: Net.fmtRate(Net.rxRate)
+                    }
+                    MiniStat {
+                        Layout.fillWidth: true; Layout.preferredWidth: 1
+                        icon: "\uf062"; label: "Отдача"
+                        value: Net.fmtRate(Net.txRate)
+                    }
+                    MiniStat {
+                        Layout.fillWidth: true; Layout.preferredWidth: 1
+                        icon: "\uf012"; label: "Пинг"
+                        value: Net.latency >= 0 ? Net.latency + " мс" : "—"
+                        valueColor: Net.latency < 0 ? Theme.warn : (Net.latency > 150 ? Theme.warn : Theme.text)
+                    }
+                }
+
+                // IP (клик — скопировать) и скорость канала
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        implicitHeight: 32
+                        radius: 12
+                        color: ipArea.containsMouse ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.12)
+                                                    : Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06)
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 10
+                            spacing: 8
+                            Lbl { text: "IP"; color: Theme.muted; font.pixelSize: 10 }
+                            Lbl { Layout.fillWidth: true; text: Net.ip !== "" ? Net.ip : "—"; font.pixelSize: 11; elide: Text.ElideRight }
+                            Lbl { text: "\uf0c5"; color: Theme.muted; font.pixelSize: 10 }
+                        }
+                        MouseArea {
+                            id: ipArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                Net.copyIp()
+                                UI.flash("\uf0c5", "IP скопирован", Net.ip, "", "info", "")
+                            }
+                        }
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        implicitHeight: 32
+                        radius: 12
+                        color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06)
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 10
+                            spacing: 8
+                            Lbl { text: "Канал"; color: Theme.muted; font.pixelSize: 10 }
+                            Lbl { Layout.fillWidth: true; text: Net.linkSpeed !== "" ? Net.linkSpeed : "—"; font.pixelSize: 11; elide: Text.ElideRight }
+                        }
+                    }
+                }
+            }
+        }
+
         // Wi-Fi выключен
         Item {
             visible: !Net.wifiEnabled
@@ -52,6 +209,14 @@ Item {
                 Lbl { Layout.alignment: Qt.AlignHCenter; text: "\uf1eb"; color: Theme.muted; font.pixelSize: 30; opacity: 0.5 }
                 Lbl { Layout.alignment: Qt.AlignHCenter; text: "Wi-Fi выключен"; color: Theme.muted }
             }
+        }
+
+        Lbl {
+            visible: Net.wifiEnabled
+            text: "ДОСТУПНЫЕ СЕТИ"
+            color: Theme.muted
+            font.pixelSize: 10
+            Layout.leftMargin: 6
         }
 
         ListView {
