@@ -41,7 +41,7 @@ hl.config({
 -- Set programs that you use
 local terminal = "alacritty"
 local fileManager = "nautilus"
-local menu = "rofi -show drun"
+local menu = "quickshell ipc call launcher toggle"
 
 
 -------------------
@@ -56,11 +56,13 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("wireplumber &")
     hl.exec_cmd("quickshell")
     hl.exec_cmd("awww-daemon")
-    hl.exec_cmd("swaync &")
-    hl.exec_cmd("astal-tray -d")
     hl.exec_cmd("/usr/lib/xdg-desktop-portal-hyprland")
     hl.exec_cmd("/usr/lib/xdg-desktop-portal")
     hl.exec_cmd("/usr/lib/hyprpolkitagent")
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+    hl.exec_cmd("dbus-update-activation-environment --all")
+    hl.exec_cmd("wl-paste --type text --watch cliphist store")
+    hl.exec_cmd("wl-paste --type image --watch cliphist store")
 end)
 
 -------------------------------
