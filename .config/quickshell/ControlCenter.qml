@@ -12,7 +12,8 @@ BarPopup {
 
     property string page: "main"      // "main" | "wifi" | "bt" | "audio"
     readonly property real maxH: (barWindow.screen ? barWindow.screen.height : 900) - 110
-    implicitHeight: page === "main" ? Math.min(content.implicitHeight + 32, maxH) : 500
+    implicitHeight: page === "main" ? Math.min(content.implicitHeight + 32, maxH)
+                                   : (page === "wifi" ? Math.min(600, maxH) : 500)
 
     property var sink: Pipewire.defaultAudioSink
     property var source: Pipewire.defaultAudioSource
@@ -25,6 +26,7 @@ BarPopup {
 
     onVisibleChanged: {
         SysStats.active = visible
+        Net.detailsActive = visible
         if (visible) { Brightness.refresh(); Net.refresh(); Quick.refresh() }
         else page = "main"
     }
@@ -45,6 +47,13 @@ BarPopup {
         if (s.indexOf("headphone") >= 0 || s.indexOf("headset") >= 0 || s.indexOf("bluez") >= 0) return "\uf025"
         if (s.indexOf("hdmi") >= 0 || s.indexOf("displayport") >= 0) return "\uf108"
         return "\uf028"
+    }
+    function etaText() {
+        const d = UPower.displayDevice
+        const sec = d.state === UPowerDeviceState.Charging ? d.timeToFull : d.timeToEmpty
+        if (!sec || sec <= 0) return ""
+        const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60)
+        return " (" + (h > 0 ? h + " ч " : "") + m + " мин)"
     }
     function batIcon() {
         const d = UPower.displayDevice
@@ -328,7 +337,7 @@ BarPopup {
                             font.pixelSize: 11
                             text: (UPower.displayDevice.isLaptopBattery
                                     ? Math.round(UPower.displayDevice.percentage * 100) + "% · "
-                                      + (UPower.displayDevice.state === UPowerDeviceState.Charging ? "заряжается" : "от батареи") + " · "
+                                      + (UPower.displayDevice.state === UPowerDeviceState.Charging ? "заряжается" : "от батареи") + cc.etaText() + " · "
                                     : "")
                                 + "работает " + SysStats.uptimeText
                         }
@@ -497,6 +506,12 @@ BarPopup {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
                     icon: "\uf1fb"; label: "Пипетка"
                     onActivated: { cc.visible = false; Quick.pick() }
+                }
+                QuickBtn {
+                    Layout.fillWidth: true; Layout.preferredWidth: 1
+                    icon: "\uf132"; label: "VPN"
+                    active: Net.vpn
+                    onActivated: Net.toggleVpn()
                 }
                 QuickBtn {
                     Layout.fillWidth: true; Layout.preferredWidth: 1

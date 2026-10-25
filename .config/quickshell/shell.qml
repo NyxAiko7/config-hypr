@@ -38,6 +38,13 @@ ShellRoot {
     }
     Timer { id: randomDelay; interval: 400; onTriggered: Wallpapers.random() }
 
+    // quickshell ipc call pomodoro toggle | skip
+    IpcHandler {
+        target: "pomodoro"
+        function toggle(): void { if (Pomodoro.running) Pomodoro.stop(); else Pomodoro.start("focus") }
+        function skip(): void { if (Pomodoro.running) Pomodoro.skip() }
+    }
+
     // quickshell ipc call notifs toggle | dnd | clear
     IpcHandler {
         target: "notifs"

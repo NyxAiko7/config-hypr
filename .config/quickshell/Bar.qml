@@ -34,6 +34,15 @@ PanelWindow {
     property var btAdapter: Bluetooth.defaultAdapter
     property var player: Media.player
 
+    // значок активного окна
+    readonly property string activeIcon: {
+        const t = ToplevelManager.activeToplevel
+        if (!t || !t.appId) return ""
+        let e = null
+        try { e = DesktopEntries.byId(t.appId) || DesktopEntries.heuristicLookup(t.appId) } catch (err) {}
+        return (e && e.icon) ? Quickshell.iconPath(e.icon) : ""
+    }
+
     PwObjectTracker { objects: [bar.sink] }
     IdleInhibitor { window: bar; enabled: UI.caffeine }
     SystemClock { id: clock; precision: SystemClock.Minutes }
@@ -146,9 +155,40 @@ PanelWindow {
             }
         }
 
-        // Заголовок окна
+        // Таймер фокуса: клик — старт/стоп, ПКМ — следующая фаза
+        Pill {
+            interactive: true
+            onClicked: mouse => {
+                if (mouse.button === Qt.RightButton) { if (Pomodoro.running) Pomodoro.skip(); else Pomodoro.start("break") }
+                else if (Pomodoro.running) Pomodoro.stop()
+                else Pomodoro.start("focus")
+            }
+            Lbl {
+                text: Pomodoro.mode === "break" ? "\uf0f4" : "\uf017"
+                color: Pomodoro.mode === "focus" ? Theme.accent : (Pomodoro.mode === "break" ? Theme.accent2 : Theme.muted)
+                font.pixelSize: Theme.iconSize
+            }
+            Lbl {
+                visible: Pomodoro.running
+                text: Pomodoro.text()
+                font.bold: true
+                color: Pomodoro.mode === "focus" ? Theme.accent : Theme.accent2
+            }
+        }
+
+        // Значок и заголовок активного окна
+        Image {
+            id: winIcon
+            Layout.leftMargin: 4
+            Layout.preferredWidth: 16
+            Layout.preferredHeight: 16
+            source: bar.activeIcon
+            sourceSize: Qt.size(32, 32)
+            smooth: true
+            visible: status === Image.Ready
+        }
         Lbl {
-            Layout.leftMargin: 6
+            Layout.leftMargin: winIcon.visible ? 0 : 6
             Layout.rightMargin: 8
             Layout.maximumWidth: 220
             text: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.title : ""
@@ -171,11 +211,11 @@ PanelWindow {
         readonly property var nn: Notifs.current !== null ? Notifs.current : lastNotif
 
         // в режиме уведомления остров растёт в основном вширь и совсем чуть вниз
-        readonly property real notifW: Math.max(460, Math.min(640, bar.width - 760))
+        readonly property real notifW: Math.max(340, Math.min(Math.min(560, bar.width - 760), notifBox.implicitWidth + 36))
 
         width: notifMode ? notifW : (eventMode ? eventRow.implicitWidth + 24 : clockGroup.implicitWidth + 24)
-        height: notifMode ? notifBox.implicitHeight + 24 : Theme.barHeight
-        radius: notifMode ? 26 : Theme.islandRadius
+        height: notifMode ? notifBox.implicitHeight + 18 : Theme.barHeight
+        radius: notifMode ? 22 : Theme.islandRadius
         color: Theme.bg
         clip: true
         border.width: 1
@@ -412,29 +452,29 @@ PanelWindow {
             }
         }
 
-        // ───────── режим УВЕДОМЛЕНИЯ: аватар | приложение · кто написал · текст | кнопки ─────────
+        // ───────── режим УВЕДОМЛЕНИЯ: компактно, в две строки ─────────
         RowLayout {
             id: notifBox
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
-            anchors.topMargin: 12
+            anchors.topMargin: 9
             width: centerIsland.notifW - 36
-            spacing: 14
+            spacing: 12
             opacity: centerIsland.notifMode ? 1 : 0
             visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: 220 } }
 
-            // аватар / картинка, а значок приложения — маленьким бейджем в углу
+            // аватар (или значок приложения); у аватара значок приложения — крошечным бейджем
             Item {
                 id: avatar
-                Layout.preferredWidth: 48
-                Layout.preferredHeight: 48
+                Layout.preferredWidth: 34
+                Layout.preferredHeight: 34
                 Layout.alignment: Qt.AlignVCenter
                 readonly property bool hasPic: picImg.status === Image.Ready
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 15
+                    radius: 11
                     color: Theme.surface
                     visible: !avatar.hasPic
                 }
@@ -448,18 +488,18 @@ PanelWindow {
                 }
                 RoundMask {
                     anchors.fill: parent
-                    radius: 15
+                    radius: 11
                     maskColor: Theme.bg
                     visible: avatar.hasPic
                 }
                 Image {
                     id: appIcon
-                    width: avatar.hasPic ? 20 : 30
+                    width: avatar.hasPic ? 14 : 22
                     height: width
-                    x: avatar.hasPic ? avatar.width - width + 4 : (avatar.width - width) / 2
-                    y: avatar.hasPic ? avatar.height - height + 4 : (avatar.height - height) / 2
+                    x: avatar.hasPic ? avatar.width - width + 3 : (avatar.width - width) / 2
+                    y: avatar.hasPic ? avatar.height - height + 3 : (avatar.height - height) / 2
                     source: Notifs.appIconSource(centerIsland.nn)
-                    sourceSize: Qt.size(60, 60)
+                    sourceSize: Qt.size(44, 44)
                     smooth: true
                     visible: status === Image.Ready
                 }
@@ -468,67 +508,59 @@ PanelWindow {
                     visible: !avatar.hasPic && appIcon.status !== Image.Ready
                     text: "\uf0f3"
                     color: Theme.accent
-                    font.pixelSize: 18
+                    font.pixelSize: 14
                 }
             }
 
-            // приложение · время  /  кто написал  /  текст
+            // строка 1: кто написал  ·····  приложение · время
+            // строка 2: сообщение
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.alignment: Qt.AlignVCenter
-                spacing: 1
+                spacing: 0
 
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 8
                     Lbl {
-                        Layout.maximumWidth: 220
-                        text: centerIsland.nn ? (centerIsland.nn.appName || "Уведомление") : ""
+                        Layout.fillWidth: true
+                        text: centerIsland.nn ? centerIsland.nn.summary : ""
+                        font.bold: true
+                        font.pixelSize: 13
+                        elide: Text.ElideRight
+                    }
+                    Lbl {
+                        Layout.maximumWidth: 120
+                        text: centerIsland.nn ? (centerIsland.nn.appName || "") : ""
+                        color: Theme.accent
+                        font.pixelSize: 10
+                        elide: Text.ElideRight
+                    }
+                    Lbl {
+                        text: Notifs.timeAgo(centerIsland.nn)
+                        color: Theme.muted
+                        font.pixelSize: 10
+                    }
+                    Lbl {
+                        visible: Notifs.pending > 0
+                        text: "+" + Notifs.pending
                         color: Theme.accent
                         font.pixelSize: 10
                         font.bold: true
-                        elide: Text.ElideRight
                     }
-                    Lbl { text: "·"; color: Theme.muted; font.pixelSize: 10 }
-                    Lbl { text: Notifs.timeAgo(centerIsland.nn); color: Theme.muted; font.pixelSize: 10 }
-                    Item { Layout.fillWidth: true }
-                    Rectangle {
-                        visible: Notifs.pending > 0
-                        implicitWidth: pendLbl.implicitWidth + 12
-                        implicitHeight: 16
-                        radius: 8
-                        color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.2)
-                        Lbl {
-                            id: pendLbl
-                            anchors.centerIn: parent
-                            text: "+" + Notifs.pending
-                            color: Theme.accent
-                            font.pixelSize: 9
-                            font.bold: true
-                        }
-                    }
-                }
-                Lbl {
-                    Layout.fillWidth: true
-                    text: centerIsland.nn ? centerIsland.nn.summary : ""
-                    font.bold: true
-                    font.pixelSize: 14
-                    elide: Text.ElideRight
                 }
                 Lbl {
                     Layout.fillWidth: true
                     visible: text !== ""
-                    text: centerIsland.nn ? centerIsland.nn.body : ""
-                    opacity: 0.88
+                    text: centerIsland.nn ? String(centerIsland.nn.body).replace(/\s*\n\s*/g, "  ") : ""
+                    opacity: 0.75
                     font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                    maximumLineCount: 2
                     elide: Text.ElideRight
                 }
             }
 
-            // кнопки действий справа
+            // действия приложения — небольшие кнопки справа
             RowLayout {
                 Layout.alignment: Qt.AlignVCenter
                 spacing: 6
@@ -538,9 +570,9 @@ PanelWindow {
                     delegate: Rectangle {
                         id: actBtn
                         required property var modelData
-                        implicitWidth: actLbl.implicitWidth + 24
-                        implicitHeight: 30
-                        radius: 15
+                        implicitWidth: actLbl.implicitWidth + 20
+                        implicitHeight: 26
+                        radius: 13
                         color: actArea.containsMouse ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
                         Behavior on color { ColorAnimation { duration: 100 } }
                         Lbl {
@@ -548,7 +580,7 @@ PanelWindow {
                             anchors.centerIn: parent
                             text: actBtn.modelData.text
                             color: Theme.textOnAccent
-                            font.pixelSize: 11
+                            font.pixelSize: 10
                             font.bold: true
                         }
                         MouseArea {
@@ -567,12 +599,12 @@ PanelWindow {
         Rectangle {
             visible: centerIsland.eventMode || (centerIsland.notifMode && Notifs.duration > 0)
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 3
+            anchors.bottomMargin: 2
             anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.max(0, (centerIsland.width - 40) * centerIsland.ttlFrac)
-            height: 2
+            width: Math.max(0, (centerIsland.width - 56) * centerIsland.ttlFrac)
+            height: 1.5
             radius: 1
-            color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.75)
+            color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.55)
         }
         NumberAnimation {
             id: ttlAnim
@@ -627,6 +659,21 @@ PanelWindow {
                         }
                     }
                 }
+            }
+        }
+
+        // VPN: виден, пока включён (клик — выключить, если профиль в NetworkManager)
+        Pill {
+            visible: Net.vpn
+            interactive: Net.vpnManaged
+            onClicked: Net.toggleVpn()
+            Lbl { text: "\uf132"; color: Theme.accent2; font.pixelSize: Theme.iconSize }
+            Lbl {
+                Layout.maximumWidth: 90
+                text: Net.vpnName
+                color: Theme.muted
+                font.pixelSize: 11
+                elide: Text.ElideRight
             }
         }
 

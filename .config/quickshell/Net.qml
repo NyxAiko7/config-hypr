@@ -13,6 +13,12 @@ Singleton {
     property string kind: ""          // "wifi" | "ethernet" | ""
     property string connection: ""
     property string iface: ""
+
+    // ── VPN ──
+    property string vpnName: ""         // имя активного VPN ("" = выключен)
+    property bool vpnManaged: false     // управляется через NetworkManager
+    property bool vpnInit: false
+    readonly property bool vpn: vpnName !== ""
     property int strength: 0
     readonly property string icon: kind === "ethernet" ? "\uf0ac" : "\uf1eb"
 
@@ -69,6 +75,7 @@ Singleton {
     function refresh() {
         radioProc.running = true
         statusProc.running = true
+        vpnProc.running = true
         if (detailsActive) {
             connProc.running = true
             if (iface !== "") loadDetails()
@@ -79,6 +86,33 @@ Singleton {
             'i="$1"; nmcli -t -f IP4.ADDRESS,IP4.GATEWAY,IP4.DNS device show "$i" 2>/dev/null; echo "SPEED:$(cat /sys/class/net/$i/speed 2>/dev/null)"',
             "sh", iface]
         detailsProc.running = true
+    }
+
+    // активные VPN: профили NetworkManager + любые туннельные интерфейсы (wg, tun, sing-box …)
+    function parseVpn(text) {
+        let name = "", managed = false, dev = ""
+        const lines = text.split("\n")
+        for (let i = 0; i < lines.length; i++) {
+            const l = lines[i]
+            if (l === "") continue
+            if (l.indexOf("IFACE:") === 0) { if (dev === "") dev = l.slice(6); continue }
+            const f = splitTerse(l)
+            if (f.length >= 2 && (f[1] === "vpn" || f[1] === "wireguard" || f[1] === "tun")) {
+                name = f[0]; managed = true
+            }
+        }
+        vpnManaged = managed
+        vpnName = name !== "" ? name : dev
+        vpnInit = true
+    }
+
+    function toggleVpn() {
+        if (vpn && vpnManaged) {
+            Quickshell.execDetached(["nmcli", "connection", "down", "id", vpnName])
+            later.restart()
+        } else if (!vpn) {
+            vpnPickProc.running = true
+        }
     }
 
     function toggleWifi() {
@@ -271,6 +305,31 @@ Singleton {
                     root.linkSpeed = (f[4] || "").replace("Mbit/s", "Мбит/с").trim()
                     break
                 }
+            }
+        }
+    }
+    Process {
+        id: vpnProc
+        command: ["sh", "-c",
+            'nmcli -t -f NAME,TYPE connection show --active; for i in /sys/class/net/*; do n=$(basename "$i"); case "$n" in tun*|tap*|wg*|proton*|nordlynx*|tailscale*|zt*|ppp*|singbox*|sing-box*|xray*|clash*|Meta*|utun*) echo "IFACE:$n";; esac; done']
+        stdout: StdioCollector { onStreamFinished: root.parseVpn(text) }
+    }
+    // первый VPN-профиль NetworkManager — включить
+    Process {
+        id: vpnPickProc
+        command: ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.split("\n")
+                for (let i = 0; i < lines.length; i++) {
+                    const f = root.splitTerse(lines[i])
+                    if (f.length >= 2 && (f[1] === "vpn" || f[1] === "wireguard")) {
+                        Quickshell.execDetached(["nmcli", "connection", "up", "id", f[0]])
+                        later.restart()
+                        return
+                    }
+                }
+                UI.flash("\uf132", "VPN", "Профиль NetworkManager не найден", "", "info", "")
             }
         }
     }

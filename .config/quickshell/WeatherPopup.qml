@@ -77,6 +77,20 @@ BarPopup {
                 }
             }
 
+            // рассвет, закат, давление
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                Lbl { text: "\ue34c"; color: Theme.accent2; font.pixelSize: 14 }
+                Lbl { text: Weather.sunrise; color: Theme.muted; font.pixelSize: 11 }
+                Item { Layout.fillWidth: true }
+                Lbl { text: "\ue34d"; color: Theme.accent; font.pixelSize: 14 }
+                Lbl { text: Weather.sunset; color: Theme.muted; font.pixelSize: 11 }
+                Item { Layout.fillWidth: true }
+                Lbl { text: "\uf0e4"; color: Theme.muted; font.pixelSize: 11 }
+                Lbl { text: Weather.pressure; color: Theme.muted; font.pixelSize: 11 }
+            }
+
             // Почасовой график
             ColumnLayout {
                 Layout.fillWidth: true

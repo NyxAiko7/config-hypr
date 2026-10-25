@@ -162,7 +162,7 @@ Item {
                             text: row.connecting ? "Подключение…"
                                 : row.modelData.pairing ? "Сопряжение…"
                                 : row.modelData.connected
-                                    ? ("Подключено" + (row.modelData.batteryAvailable ? "  ·  " + Math.round(row.modelData.battery * 100) + "%" : ""))
+                                    ? ("Подключено" + (row.modelData.batteryAvailable ? "  ·  " + Bt.percent(row.modelData) + "%" : ""))
                                 : row.modelData.paired ? "Сопряжено"
                                 : "Доступно — нажми для сопряжения"
                         }

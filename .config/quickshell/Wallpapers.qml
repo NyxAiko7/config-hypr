@@ -54,7 +54,7 @@ Singleton {
             'else ' +
             '  pkill -x swaybg; (swaybg -i "$f" -m fill >/dev/null 2>&1 &); ' +
             'fi'
-        // сначала wal (перекрасит панель, SwayNC, терминалы), затем сами обои
+        // сначала wal (перекрасит панель и терминалы), затем сами обои
         Quickshell.execDetached(["sh", "-c", 'f="$1"; wal -i "$f" -n -q; ' + setter, "sh", path])
         current = path
     }
