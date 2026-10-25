@@ -10,6 +10,9 @@ Singleton {
     readonly property string weatherLon: ""        // например "37.62"
     readonly property int weatherRefreshMin: 20
 
+    // Поиск из лаунчера: «? запрос»
+    readonly property string searchUrl: "https://duckduckgo.com/?q="
+
     // Папка с обоями для переключателя. Пусто = ~/Pictures/Wallpapers (или ~/Pictures)
     readonly property string wallpaperDir: ""
     // Своя команда установки обоев (shell). Путь к картинке лежит в $f.

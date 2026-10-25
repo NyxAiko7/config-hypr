@@ -19,8 +19,10 @@ PanelWindow {
 
     // окно выше самой панели — чтобы остров мог расти вниз.
     // Резервируется только высота панели, а клики принимают лишь сами острова.
-    implicitHeight: 280
+    implicitHeight: 380
     exclusionMode: ExclusionMode.Normal
+    WlrLayershell.keyboardFocus: launcherHere ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.layer: launcherHere ? WlrLayer.Overlay : WlrLayer.Top
     exclusiveZone: Theme.barHeight
     color: "transparent"
     mask: Region {
@@ -33,6 +35,14 @@ PanelWindow {
     property var bat: UPower.displayDevice
     property var btAdapter: Bluetooth.defaultAdapter
     property var player: Media.player
+
+    // лаунчер открывается на том мониторе, где ты сейчас работаешь
+    readonly property bool launcherHere: {
+        if (!UI.launcher) return false
+        const fm = Hyprland.focusedMonitor
+        if (!fm || !bar.screen) return true
+        return fm.name === bar.screen.name
+    }
 
     // значок активного окна
     readonly property string activeIcon: {
@@ -122,7 +132,7 @@ PanelWindow {
             interactive: true
             onClicked: mouse => {
                 if (mouse.button === Qt.RightButton) { UI.launcher = false; UI.session = true }
-                else { UI.session = false; UI.launcher = !UI.launcher }
+                else UI.openLauncher("apps")
             }
             Lbl {
                 text: "\uf303"
@@ -153,6 +163,26 @@ PanelWindow {
                     }
                 }
             }
+        }
+
+        // Идёт запись экрана (клик — остановить)
+        Pill {
+            visible: Recorder.recording
+            interactive: true
+            onClicked: Recorder.stop()
+            Rectangle {
+                Layout.preferredWidth: 8
+                Layout.preferredHeight: 8
+                radius: 4
+                color: Theme.warn
+                SequentialAnimation on opacity {
+                    loops: Animation.Infinite
+                    running: Recorder.recording
+                    NumberAnimation { to: 0.3; duration: 700 }
+                    NumberAnimation { to: 1; duration: 700 }
+                }
+            }
+            Lbl { text: Recorder.text(); color: Theme.warn; font.bold: true }
         }
 
         // Таймер фокуса: клик — старт/стоп, ПКМ — следующая фаза
@@ -206,20 +236,25 @@ PanelWindow {
         property real ttlFrac: 0
         property var lastNotif: null
 
-        readonly property bool notifMode: Notifs.current !== null
-        readonly property bool eventMode: !notifMode && UI.eventActive
+        readonly property bool launchMode: bar.launcherHere
+        readonly property bool notifMode: !launchMode && Notifs.current !== null
+        readonly property bool eventMode: !launchMode && !notifMode && UI.eventActive
         readonly property var nn: Notifs.current !== null ? Notifs.current : lastNotif
 
         // в режиме уведомления остров растёт в основном вширь и совсем чуть вниз
         readonly property real notifW: Math.max(340, Math.min(Math.min(560, bar.width - 760), notifBox.implicitWidth + 36))
 
-        width: notifMode ? notifW : (eventMode ? eventRow.implicitWidth + 24 : clockGroup.implicitWidth + 24)
-        height: notifMode ? notifBox.implicitHeight + 18 : Theme.barHeight
-        radius: notifMode ? 22 : Theme.islandRadius
+        readonly property real launchW: Math.max(420, Math.min(580, bar.width - 760))
+
+        width: launchMode ? launchW
+             : (notifMode ? notifW : (eventMode ? eventRow.implicitWidth + 24 : clockGroup.implicitWidth + 24))
+        height: launchMode ? launchBox.implicitHeight + 12
+              : (notifMode ? notifBox.implicitHeight + 18 : Theme.barHeight)
+        radius: launchMode ? 22 : (notifMode ? 22 : Theme.islandRadius)
         color: Theme.bg
         clip: true
         border.width: 1
-        border.color: (notifMode || eventMode)
+        border.color: (launchMode || notifMode || eventMode)
             ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.4)
             : Theme.hairline
 
@@ -284,7 +319,7 @@ PanelWindow {
             id: clockGroup
             anchors.centerIn: parent
             spacing: 2
-            opacity: (centerIsland.notifMode || centerIsland.eventMode) ? 0 : 1
+            opacity: (centerIsland.launchMode || centerIsland.notifMode || centerIsland.eventMode) ? 0 : 1
             visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: 180 } }
 
@@ -378,6 +413,7 @@ PanelWindow {
             }
 
             ColumnLayout {
+                visible: UI.eventKind !== "level"
                 spacing: -1
                 Lbl {
                     Layout.maximumWidth: 260
@@ -393,6 +429,34 @@ PanelWindow {
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
+            }
+
+            // уровень громкости / яркости
+            Item {
+                visible: UI.eventKind === "level"
+                Layout.preferredWidth: 150
+                Layout.preferredHeight: 6
+                Layout.alignment: Qt.AlignVCenter
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 3
+                    color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.14)
+                }
+                Rectangle {
+                    width: parent.width * Math.max(0, Math.min(1, Levels.muted ? 0 : Levels.value))
+                    height: parent.height
+                    radius: 3
+                    color: Levels.muted ? Theme.muted : Theme.accent
+                    Behavior on width { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                }
+            }
+            Lbl {
+                visible: UI.eventKind === "level"
+                Layout.preferredWidth: 26
+                horizontalAlignment: Text.AlignRight
+                text: Levels.muted ? "–" : Math.round(Levels.value * 100)
+                color: Theme.muted
+                font.pixelSize: 11
             }
 
             // эквалайзер для музыки
@@ -595,9 +659,179 @@ PanelWindow {
             }
         }
 
+        // ───────── режим ЛАУНЧЕРА: поиск и запуск приложений ─────────
+        ColumnLayout {
+            id: launchBox
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: 6
+            width: centerIsland.launchW - 24
+            spacing: 4
+            opacity: centerIsland.launchMode ? 1 : 0
+            visible: opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: 180 } }
+
+            readonly property string mode: UI.launcherMode
+            readonly property var results: mode === "clip" ? Clip.search(searchInput.text)
+                                         : (mode === "windows" ? Wins.search(searchInput.text)
+                                                               : Apps.search(searchInput.text))
+
+            function launch(e) {
+                UI.launcher = false
+                if (e.kind === "clip") Clip.paste(e)
+                else if (e.kind === "window") Wins.focus(e)
+                else Apps.launch(e)
+            }
+
+            Connections {
+                target: centerIsland
+                function onLaunchModeChanged() {
+                    if (centerIsland.launchMode) {
+                        if (UI.launcherMode === "clip") Clip.reload()
+                        searchInput.text = ""
+                        resultList.currentIndex = 0
+                        Qt.callLater(() => searchInput.forceActiveFocus())
+                    }
+                }
+            }
+
+            // строка поиска
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 32
+                spacing: 10
+
+                Lbl {
+                    text: launchBox.mode === "clip" ? "\uf0ea" : (launchBox.mode === "windows" ? "\uf2d0" : "\uf002")
+                    color: Theme.accent
+                    font.pixelSize: 13
+                    Layout.leftMargin: 6
+                }
+
+                TextInput {
+                    id: searchInput
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    font.family: Theme.font
+                    font.pixelSize: 14
+                    selectionColor: Theme.accent
+                    selectedTextColor: Theme.textOnAccent
+                    selectByMouse: true
+                    clip: true
+                    onTextChanged: resultList.currentIndex = 0
+
+                    Keys.onPressed: event => {
+                        const ctrl = event.modifiers & Qt.ControlModifier
+                        const n = launchBox.results.length
+                        if (event.key === Qt.Key_Escape) {
+                            UI.launcher = false; event.accepted = true
+                        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab
+                                   || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
+                            resultList.currentIndex = Math.min(n - 1, resultList.currentIndex + 1); event.accepted = true
+                        } else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab
+                                   || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P))) {
+                            resultList.currentIndex = Math.max(0, resultList.currentIndex - 1); event.accepted = true
+                        } else if (event.key === Qt.Key_Delete && launchBox.mode === "windows") {
+                            // Delete — закрыть выбранное окно
+                            if (n > 0) { Wins.close(launchBox.results[resultList.currentIndex]); UI.launcher = false }
+                            event.accepted = true
+                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            if (n > 0) launchBox.launch(launchBox.results[resultList.currentIndex])
+                            event.accepted = true
+                        }
+                    }
+
+                    Lbl {
+                        visible: searchInput.text === ""
+                        text: launchBox.mode === "clip" ? "Буфер обмена…" : (launchBox.mode === "windows" ? "Переключить окно…" : "Приложение, 2+2, ? поиск, > команда")
+                        color: Theme.muted
+                        font.pixelSize: 14
+                    }
+                }
+
+                Lbl {
+                    visible: launchBox.results.length > 0
+                    text: "\u21b5"
+                    color: Theme.muted
+                    font.pixelSize: 12
+                    Layout.rightMargin: 6
+                }
+            }
+
+            // результаты
+            ListView {
+                id: resultList
+                Layout.fillWidth: true
+                Layout.preferredHeight: count * 40
+                interactive: false
+                clip: true
+                model: launchBox.results
+                currentIndex: 0
+                highlightMoveDuration: 80
+
+                delegate: Rectangle {
+                    id: row
+                    required property var modelData
+                    required property int index
+                    width: resultList.width
+                    height: 40
+                    radius: 14
+                    color: ListView.isCurrentItem
+                        ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18)
+                        : "transparent"
+                    Behavior on color { ColorAnimation { duration: 100 } }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 12
+                        spacing: 12
+                        Item {
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
+                            Image {
+                                anchors.fill: parent
+                                source: row.modelData.icon ? Quickshell.iconPath(row.modelData.icon) : ""
+                                sourceSize: Qt.size(44, 44)
+                                smooth: true
+                                visible: status === Image.Ready
+                            }
+                            Lbl {
+                                anchors.centerIn: parent
+                                visible: !!row.modelData.glyph && !row.modelData.icon
+                                text: row.modelData.glyph || ""
+                                color: Theme.accent
+                                font.pixelSize: 15
+                            }
+                        }
+                        Lbl {
+                            Layout.fillWidth: true
+                            text: row.modelData.name
+                            font.pixelSize: 13
+                            elide: Text.ElideRight
+                        }
+                        Lbl {
+                            Layout.maximumWidth: 200
+                            text: row.modelData.comment || row.modelData.genericName || ""
+                            color: Theme.muted
+                            font.pixelSize: 11
+                            elide: Text.ElideRight
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onEntered: resultList.currentIndex = row.index
+                        onClicked: launchBox.launch(row.modelData)
+                    }
+                }
+            }
+        }
+
         // полоска оставшегося времени (для уведомлений и событий)
         Rectangle {
-            visible: centerIsland.eventMode || (centerIsland.notifMode && Notifs.duration > 0)
+            visible: (centerIsland.eventMode && UI.eventKind !== "level") || (centerIsland.notifMode && Notifs.duration > 0)
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 2
             anchors.horizontalCenter: parent.horizontalCenter
@@ -611,7 +845,7 @@ PanelWindow {
             target: centerIsland
             property: "ttlFrac"
             from: 1; to: 0
-            duration: centerIsland.notifMode ? Math.max(1, Notifs.duration) : UI.eventDuration
+            duration: centerIsland.notifMode ? Math.max(1, Notifs.duration) : UI.eventTotal
             paused: centerIsland.notifMode ? Notifs.hold : UI.eventHold
         }
     }

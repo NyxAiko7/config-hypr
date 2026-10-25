@@ -10,6 +10,26 @@ Singleton {
 
     property bool night: false
 
+    // ── режимы питания (power-profiles-daemon: powerprofilesctl) ──
+    property string profile: ""            // power-saver | balanced | performance
+    readonly property string profileName:
+        profile === "power-saver" ? "Экономия" : (profile === "performance" ? "Мощность" : (profile === "balanced" ? "Баланс" : "Питание"))
+    readonly property string profileIcon:
+        profile === "power-saver" ? "\uf06c" : (profile === "performance" ? "\uf135" : "\uf0e4")
+
+    function cycleProfile() {
+        if (profile === "") {
+            UI.flash("\uf0e4", "Режимы питания", "нужен power-profiles-daemon", "", "info", "")
+            return
+        }
+        const order = ["power-saver", "balanced", "performance"]
+        const next = order[(order.indexOf(profile) + 1) % order.length]
+        Quickshell.execDetached(["powerprofilesctl", "set", next])
+        profile = next
+        UI.flash(profileIcon, "Режим: " + profileName, "", "", "info", "")
+        recheckProfile.restart()
+    }
+
     function screenshot(region) {
         const script =
             'sleep 0.4; mkdir -p "$HOME/Pictures/Screenshots"; ' +
@@ -32,9 +52,15 @@ Singleton {
         recheck.restart()
     }
 
-    function refresh() { nightProc.running = true }
+    function refresh() { nightProc.running = true; profProc.running = true }
 
     Timer { id: recheck; interval: 1200; onTriggered: root.refresh() }
+    Timer { id: recheckProfile; interval: 800; onTriggered: profProc.running = true }
+    Process {
+        id: profProc
+        command: ["powerprofilesctl", "get"]
+        stdout: SplitParser { onRead: d => root.profile = d.trim() }
+    }
     Process {
         id: nightProc
         command: ["pgrep", "-x", "hyprsunset"]

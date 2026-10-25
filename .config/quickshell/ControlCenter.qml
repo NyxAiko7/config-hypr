@@ -489,9 +489,12 @@ BarPopup {
             }
 
             // ── Быстрые действия ──
-            RowLayout {
+            GridLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                columns: 4
+                rowSpacing: 8
+                columnSpacing: 8
+
                 QuickBtn {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
                     icon: "\uf125"; label: "Область"
@@ -501,6 +504,12 @@ BarPopup {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
                     icon: "\uf030"; label: "Экран"
                     onActivated: { cc.visible = false; Quick.screenshot(false) }
+                }
+                QuickBtn {
+                    Layout.fillWidth: true; Layout.preferredWidth: 1
+                    icon: "\uf03d"; label: Recorder.recording ? "Стоп" : "Запись"
+                    active: Recorder.recording
+                    onActivated: { cc.visible = false; Recorder.toggle(true) }
                 }
                 QuickBtn {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
@@ -518,6 +527,17 @@ BarPopup {
                     icon: "\uf186"; label: "Ночной"
                     active: Quick.night
                     onActivated: Quick.toggleNight()
+                }
+                QuickBtn {
+                    Layout.fillWidth: true; Layout.preferredWidth: 1
+                    icon: Quick.profileIcon; label: Quick.profileName
+                    active: Quick.profile === "performance"
+                    onActivated: Quick.cycleProfile()
+                }
+                QuickBtn {
+                    Layout.fillWidth: true; Layout.preferredWidth: 1
+                    icon: "\uf0ea"; label: "Буфер"
+                    onActivated: { cc.visible = false; Clip.reload(); UI.openLauncher("clip") }
                 }
             }
 
