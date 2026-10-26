@@ -16,7 +16,7 @@ PanelWindow {
 
     // Artix: без systemd, поэтому loginctl (elogind) с запасными вариантами
     readonly property var actions: [
-        { icon: "\uf023", label: "Блокировка",    key: "L", cmd: ["sh", "-c", "command -v hyprlock >/dev/null && exec hyprlock || loginctl lock-session"], danger: false },
+        { icon: "\uf023", label: "Блокировка",    key: "L", lock: true, cmd: [], danger: false },
         { icon: "\uf2f5", label: "Выход",         key: "E", cmd: ["hyprctl", "dispatch", "exit"], danger: false },
         { icon: "\uf186", label: "Сон",           key: "S", cmd: ["sh", "-c", "loginctl suspend || systemctl suspend"], danger: false },
         { icon: "\uf021", label: "Перезагрузка",  key: "R", cmd: ["sh", "-c", "loginctl reboot || reboot"], danger: true },
@@ -25,6 +25,7 @@ PanelWindow {
 
     function run(a) {
         UI.session = false
+        if (a.lock) { UI.locked = true; return }
         Quickshell.execDetached(a.cmd)
     }
 

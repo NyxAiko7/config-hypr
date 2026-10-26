@@ -98,6 +98,11 @@ PanelWindow {
         const v = sink.audio.volume
         return v < 0.01 ? "\uf026" : (v < 0.5 ? "\uf027" : "\uf028")
     }
+    // потребление/зарядка в ваттах ("" если данных нет)
+    function watts() {
+        const w = Math.abs(bat.changeRate)
+        return w >= 0.5 ? w.toFixed(1) + " Вт" : ""
+    }
     function batIcon() {
         if (bat.state === UPowerDeviceState.Charging) return "\uf0e7"
         const icons = ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"]
@@ -984,6 +989,12 @@ PanelWindow {
                 Lbl {
                     text: Math.round(bar.bat.percentage * 100)
                     color: Theme.muted
+                }
+                Lbl {
+                    visible: text !== ""
+                    text: bar.watts()
+                    color: bar.bat.state === UPowerDeviceState.Charging ? Theme.accent2 : Theme.muted
+                    font.pixelSize: 10
                 }
             }
         }

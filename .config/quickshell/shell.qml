@@ -24,6 +24,7 @@ ShellRoot {
     Corners {}      // скруглённые углы экрана (удали строку, чтобы отключить)
     Events {}
     Session {}
+    Lock {}
     PasswordPrompt {}
     WallpaperPicker {}
 

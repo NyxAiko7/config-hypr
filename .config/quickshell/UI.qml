@@ -8,6 +8,7 @@ Singleton {
     property bool launcher: false
     property string launcherMode: "apps"   // apps | clip | windows
     property bool session: false
+    property bool locked: false            // экран блокировки
     property bool wallpaper: false
     property bool caffeine: false          // запрет блокировки/засыпания
     property string wifiSsid: ""           // непустое = показать запрос пароля

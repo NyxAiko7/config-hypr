@@ -1,5 +1,7 @@
 # hyprland
 ![](./2026-10-25-130509_hyprshot.png)
+## Lock screen
+![](./lockscreen.png)
 
 # Installation
 

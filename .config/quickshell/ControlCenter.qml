@@ -55,6 +55,13 @@ BarPopup {
         const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60)
         return " (" + (h > 0 ? h + " ч " : "") + m + " мин)"
     }
+    function powerText() {
+        const d = UPower.displayDevice
+        const w = Math.abs(d.changeRate)
+        let t = w >= 0.5 ? " · " + w.toFixed(1) + " Вт" : ""
+        if (d.healthSupported && d.healthPercentage > 0) t += " · здоровье " + Math.round(d.healthPercentage) + "%"
+        return t
+    }
     function batIcon() {
         const d = UPower.displayDevice
         if (d.state === UPowerDeviceState.Charging) return "\uf0e7"
@@ -337,7 +344,7 @@ BarPopup {
                             font.pixelSize: 11
                             text: (UPower.displayDevice.isLaptopBattery
                                     ? Math.round(UPower.displayDevice.percentage * 100) + "% · "
-                                      + (UPower.displayDevice.state === UPowerDeviceState.Charging ? "заряжается" : "от батареи") + cc.etaText() + " · "
+                                      + (UPower.displayDevice.state === UPowerDeviceState.Charging ? "заряжается" : "от батареи") + cc.etaText() + cc.powerText() + " · "
                                     : "")
                                 + "работает " + SysStats.uptimeText
                         }
