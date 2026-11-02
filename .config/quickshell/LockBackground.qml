@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Effects
 
 // Фон локскрина: обои + «manga»-полутон, сцена световых лучей,
-// гигантский контурный заголовок группы, потёк слёз и летящие ноты.
+// потёк слёз и летящие ноты.
 Item {
     id: bg
 
@@ -10,7 +10,14 @@ Item {
     property real enterProgress: 0
     property bool flash: false
 
-    Rectangle { anchors.fill: parent; color: Rock.ink }
+    Rectangle {
+        anchors.fill: parent
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Rock.a(Rock.pink, 0.85) }
+            GradientStop { position: 0.55; color: Rock.a(Rock.purple, 0.8) }
+            GradientStop { position: 1.0; color: Rock.a(Rock.cyan, 0.85) }
+        }
+    }
 
     Image {
         id: wall
@@ -31,15 +38,6 @@ Item {
         blurMax: 80
         brightness: -0.42
         saturation: -0.55
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Rock.a(Rock.ink, 0.62) }
-            GradientStop { position: 0.5; color: Rock.a(Rock.ink2, 0.38) }
-            GradientStop { position: 1.0; color: Rock.a(Rock.ink, 0.82) }
-        }
     }
 
     // сцена световых лучей сверху — концертная подсветка
@@ -73,65 +71,6 @@ Item {
                     ctx.arc(x, y, step * 0.16, 0, Math.PI * 2)
                     ctx.fill()
                 }
-            }
-        }
-    }
-
-    // гигантский контурный заголовок группы
-    Item {
-        anchors.centerIn: parent
-        anchors.horizontalCenterOffset: parent.width * 0.02
-        anchors.verticalCenterOffset: -parent.height * 0.04
-        width: word.width
-        height: word.height
-        opacity: 0.13 * (0.4 + bg.enterProgress * 0.6)
-        rotation: -7
-
-        Item {
-            id: word
-            width: main.implicitWidth
-            height: main.implicitHeight + theRock.implicitHeight - 18
-
-            Text {
-                x: 12; y: 12
-                width: main.width; height: main.height
-                text: main.text
-                color: Rock.cyan
-                font.family: Rock.display
-                font.pixelSize: main.font.pixelSize
-                font.weight: Font.Black
-                font.letterSpacing: -3
-            }
-            Text {
-                x: 6; y: 6
-                width: main.width; height: main.height
-                text: main.text
-                color: Rock.pink
-                font.family: Rock.display
-                font.pixelSize: main.font.pixelSize
-                font.weight: Font.Black
-                font.letterSpacing: -3
-            }
-            Text {
-                id: main
-                text: "BOCCHI"
-                color: Rock.cream
-                font.family: Rock.display
-                font.pixelSize: Math.min(300, bg.width * 0.30)
-                font.weight: Font.Black
-                font.letterSpacing: -3
-            }
-            Text {
-                id: theRock
-                anchors.top: main.bottom
-                anchors.left: main.left
-                anchors.topMargin: -18
-                text: "THE ROCK"
-                color: Rock.yellow
-                font.family: Rock.display
-                font.pixelSize: Math.min(84, bg.width * 0.055)
-                font.weight: Font.Black
-                font.letterSpacing: 8
             }
         }
     }
