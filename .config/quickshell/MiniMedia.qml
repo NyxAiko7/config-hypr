@@ -16,11 +16,6 @@ Pill {
     interactive: true
     visible: p !== null
 
-    function fmt(s) {
-        if (!isFinite(s) || s < 0) return "0:00"
-        return Math.floor(s / 60) + ":" + ("0" + Math.floor(s % 60)).slice(-2)
-    }
-
     onClicked: mouse => {
         if (mouse.button === Qt.MiddleButton) { if (p && p.canTogglePlaying) p.togglePlaying() }
         else if (mouse.button === Qt.RightButton) { if (p && p.canGoNext) p.next() }
@@ -90,13 +85,13 @@ Pill {
                 color: Theme.muted
                 font.pixelSize: 9
             }
-            RoundMask { anchors.fill: parent; radius: 10; maskColor: Theme.bg }
+            RoundMask { anchors.fill: parent; radius: 10; maskColor: Theme.islandBg }
         }
     }
 
     // сколько играет трек
     Lbl {
-        text: chip.fmt(chip.p ? chip.p.position : 0)
+        text: Fmt.clock(chip.p ? chip.p.position : 0)
         font.pixelSize: 11
         font.bold: true
         color: chip.playing ? Theme.text : Theme.muted

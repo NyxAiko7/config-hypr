@@ -17,16 +17,40 @@ Rectangle {
     border.color: Theme.warn
     Behavior on color { ColorAnimation { duration: 120 } }
 
-    // клик: выполнить действие по умолчанию и закрыть
+    // клик: действие по умолчанию; свайп влево: закрыть
+    property real swipeX: 0
+    Behavior on swipeX { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+    x: card.swipeX
     MouseArea {
         id: hoverArea
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Notifs.defaultAction(card.notif) ? Qt.PointingHandCursor : Qt.ArrowCursor
+        drag.target: card
+        drag.axis: Drag.XAxis
+        drag.minimumX: -card.width * 0.6
+        drag.maximumX: 0
+        drag.threshold: 8
+        onPressed: card.swipeX = 0
+        onReleased: {
+            if (card.x < -card.width * 0.35) { card.notif.dismiss(); return }
+            card.swipeX = 0
+        }
         onClicked: {
+            if (Math.abs(card.x) > 4) return          // это был свайп, не клик
             const d = Notifs.defaultAction(card.notif)
             if (d) { d.invoke(); card.notif.dismiss() }
         }
+    }
+    // подсказка «смахни» на фоне карточки
+    Lbl {
+        anchors.right: parent.right
+        anchors.rightMargin: 16
+        anchors.verticalCenter: parent.verticalCenter
+        text: "\uf060  закрыть"
+        color: Theme.warn
+        font.pixelSize: 11
+        opacity: Math.min(1, Math.abs(card.swipeX) / (card.width * 0.35))
     }
 
     ColumnLayout {

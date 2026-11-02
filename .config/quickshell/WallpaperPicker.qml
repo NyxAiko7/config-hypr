@@ -286,6 +286,23 @@ PanelWindow {
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             cache: true
+                            opacity: status === Image.Ready ? 1 : 0
+                            Behavior on opacity { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        }
+                        Rectangle {
+                            id: pulse
+                            anchors.fill: parent
+                            radius: 14
+                            color: Theme.accent
+                            opacity: 0
+                        }
+                        SequentialAnimation {
+                            id: pulseAnim
+                            NumberAnimation {
+                                target: pulse; property: "opacity"
+                                from: 0.45; to: 0; duration: 380
+                                easing.type: Easing.OutCubic
+                            }
                         }
                         RoundMask { anchors.fill: parent; radius: 14; maskColor: Theme.popupBg }
                         Rectangle {
@@ -309,7 +326,13 @@ PanelWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: Wallpapers.apply(cell.modelData)
+                            onClicked: {
+                                const p = area.mapToItem(win.contentItem, area.mouseX, area.mouseY)
+                                pulseAnim.restart()
+                                Wallpapers.apply(cell.modelData,
+                                    p.x / Math.max(1, win.width),
+                                    p.y / Math.max(1, win.height))
+                            }
                         }
                     }
                 }

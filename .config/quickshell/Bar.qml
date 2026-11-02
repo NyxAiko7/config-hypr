@@ -18,7 +18,9 @@ PanelWindow {
     margins { top: 8; left: 10; right: 10 }
 
     // окно выше самой панели — чтобы остров мог расти вниз.
-    // Резервируется только высота панели, а клики принимают лишь сами острова.
+    // Резервируется только высота панели; клики принимают острова,
+    // а пустое пространство между ними перехватывается только когда
+    // открыто какое-то меню — клик мимо закрывает его.
     implicitHeight: 380
     exclusionMode: ExclusionMode.Normal
     WlrLayershell.keyboardFocus: launcherHere ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -29,6 +31,7 @@ PanelWindow {
         item: leftIsland
         Region { item: centerIsland }
         Region { item: rightIsland }
+        Region { item: dismissRect }
     }
 
     property var sink: Pipewire.defaultAudioSink
@@ -55,7 +58,11 @@ PanelWindow {
 
     PwObjectTracker { objects: [bar.sink] }
     IdleInhibitor { window: bar; enabled: UI.caffeine }
-    SystemClock { id: clock; precision: SystemClock.Minutes }
+    // часы всегда с точностью до секунд — тогда «ss» не нулится
+    SystemClock { id: barClock; precision: SystemClock.Seconds }
+
+    // секунды и дата в часах показываем только когда играет музыка
+    readonly property bool showSeconds: miniPill.playing
 
     MusicPopup    { id: musicPopup;    barWindow: bar; anchorItem: miniPill; player: bar.player }
     CalendarPopup { id: calendarPopup; barWindow: bar; anchorItem: clockPill }
@@ -63,10 +70,27 @@ PanelWindow {
     ControlCenter { id: controlCenter; barWindow: bar; anchorItem: statusPill }
     NotifCenter   { id: notifCenter;   barWindow: bar; anchorItem: bellPill }
 
-    // открыть центр уведомлений из любого места (IPC, события)
+    readonly property bool anyPopupOpen: musicPopup.visible || calendarPopup.visible
+                                         || weatherPopup.visible || controlCenter.visible
+                                         || notifCenter.visible || UI.anyPopupOpen
+
+    // клик по пустому месту панели — закрыть всё открытое
+    function closeAllPopups() {
+        musicPopup.visible = false
+        calendarPopup.visible = false
+        weatherPopup.visible = false
+        controlCenter.visible = false
+        notifCenter.visible = false
+        UI.launcher = false
+        // подложка-оверлей (обои/сессия) сама ловит клики мимо — не трогаем,
+        // иначе её окно перехватит второй клик и панель «застрянет»
+    }
+
     Connections {
         target: UI
         function onToggleCenter() { notifCenter.toggle() }
+        // клик мимо по панели: закрываем меню, только если оверлея нет
+        function onClosePopups() { if (!UI.wallpaper && !UI.session) bar.closeAllPopups() }
     }
 
     function runEventAction(a) {
@@ -108,21 +132,49 @@ PanelWindow {
         const icons = ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"]
         return icons[Math.min(4, Math.floor(bat.percentage * 5))]
     }
+    // цвет заряда: критично / мало / зарядка / нормально
+    function batColor() {
+        if (bat.state === UPowerDeviceState.Charging) return Theme.accent2
+        if (bat.percentage < 0.1) return Theme.warn
+        if (bat.percentage < 0.2) return Theme.warn
+        return Theme.text
+    }
 
     // ── Остров: скруглённая плашка, содержимое лежит в ряд ──
-    component Island: Rectangle {
+    component Island: Item {
+        id: isl
         default property alias content: inner.data
-        height: Theme.barHeight
-        width: inner.implicitWidth + 12
-        radius: Theme.islandRadius
-        color: Theme.bg
-        border.width: 1
-        border.color: Theme.hairline
+        height: Theme.islandHeight
+        width: inner.implicitWidth + 20
+
+        IslandSurface {
+            anchors.fill: parent
+            radius: Theme.islandRadius
+        }
 
         RowLayout {
             id: inner
             anchors.centerIn: parent
-            spacing: 2
+            spacing: 3
+        }
+    }
+
+    // ───────── Клик мимо: закрыть открытое меню ─────────
+    // Прозрачная полоса по всей ширине панели; участвует в mask только
+    // когда что-то открыто — в остальное время клики проходят насквозь.
+    Item {
+        id: dismissRect
+        visible: bar.anyPopupOpen
+        anchors { left: parent.left; right: parent.right; top: parent.top }
+        height: Theme.barHeight
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+            onClicked: {
+                UI.launcher = false
+                UI.closePopups()
+            }
         }
     }
 
@@ -131,6 +183,7 @@ PanelWindow {
         id: leftIsland
         anchors.left: parent.left
         anchors.top: parent.top
+        anchors.topMargin: Theme.islandInset
 
         // Лаунчер
         Pill {
@@ -143,10 +196,12 @@ PanelWindow {
                 text: "\uf303"
                 color: Theme.accent
                 font.pixelSize: 15
+                scale: parent.hovered ? 1.12 : 1.0
+                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
             }
         }
 
-        // Рабочие столы — точки
+        // Рабочие столы — точки с подсветкой занятых
         Pill {
             Repeater {
                 model: Hyprland.workspaces
@@ -156,8 +211,11 @@ PanelWindow {
                     Layout.preferredWidth: modelData.focused ? 20 : 6
                     Layout.preferredHeight: 6
                     radius: 3
-                    color: modelData.focused ? Theme.accent : Theme.muted
-                    opacity: modelData.focused ? 1 : 0.6
+                    // занятые (есть окна) горят приглушённым акцентом, пустые — тускло
+                    color: modelData.focused ? Theme.accent
+                           : (modelData.windows !== undefined && modelData.windows.values.length > 0
+                              ? Theme.accent2 : Theme.muted)
+                    opacity: modelData.focused ? 1 : 0.75
                     Behavior on Layout.preferredWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
                     Behavior on color { ColorAnimation { duration: 220 } }
                     MouseArea {
@@ -233,10 +291,11 @@ PanelWindow {
     }
 
     // ═════════ Центральный остров: часы · погода · события · УВЕДОМЛЕНИЯ ═════════
-    Rectangle {
+    Item {
         id: centerIsland
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
+        anchors.topMargin: Theme.islandInset
 
         property real ttlFrac: 0
         property var lastNotif: null
@@ -252,21 +311,22 @@ PanelWindow {
         readonly property real launchW: Math.max(420, Math.min(580, bar.width - 760))
 
         width: launchMode ? launchW
-             : (notifMode ? notifW : (eventMode ? eventRow.implicitWidth + 24 : clockGroup.implicitWidth + 24))
-        height: launchMode ? launchBox.implicitHeight + 12
-              : (notifMode ? notifBox.implicitHeight + 18 : Theme.barHeight)
-        radius: launchMode ? 22 : (notifMode ? 22 : Theme.islandRadius)
-        color: Theme.bg
+             : (notifMode ? notifW : (eventMode ? eventRow.implicitWidth + 30 : clockGroup.implicitWidth + 28))
+        height: launchMode ? launchBox.implicitHeight + 16
+              : (notifMode ? notifBox.implicitHeight + 22 : Theme.islandHeight)
+        property real radiusNow: (launchMode || notifMode) ? 22 : (eventMode ? 20 : Theme.islandRadius)
         clip: true
-        border.width: 1
-        border.color: (launchMode || notifMode || eventMode)
-            ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.4)
-            : Theme.hairline
 
         Behavior on width  { NumberAnimation { duration: 360; easing.type: Easing.OutBack; easing.overshoot: 0.6 } }
         Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.OutBack; easing.overshoot: 0.6 } }
-        Behavior on radius { NumberAnimation { duration: 260 } }
-        Behavior on border.color { ColorAnimation { duration: 250 } }
+        Behavior on radiusNow { NumberAnimation { duration: 260 } }
+
+        IslandSurface {
+            anchors.fill: parent
+            radius: centerIsland.radiusNow
+            active: centerIsland.launchMode || centerIsland.notifMode || centerIsland.eventMode
+            pulse: centerIsland.eventMode
+        }
 
         Connections {
             target: Notifs
@@ -364,12 +424,38 @@ PanelWindow {
                 id: clockPill
                 interactive: true
                 onClicked: calendarPopup.toggle()
-                Lbl {
-                    text: Qt.formatDateTime(clock.date, "HH:mm")
-                    font.bold: true
+                // Часы: HH:MM, разделитель мигает раз в секунду.
+                // Когда играет музыка — справа показываем реальные секунды и дату.
+                RowLayout {
+                    spacing: 0
+                    Lbl { text: Qt.formatDateTime(barClock.date, "HH"); font.bold: true }
+                    Lbl {
+                        text: ":"
+                        font.bold: true
+                        color: Theme.accent
+                        opacity: bar.showSeconds ? 1 : (Math.floor(barClock.date.getTime() / 1000) % 2 === 0 ? 1 : 0.3)
+                        Behavior on opacity { NumberAnimation { duration: 240 } }
+                    }
+                    Lbl { text: Qt.formatDateTime(barClock.date, "mm"); font.bold: true }
+                }
+                Rectangle {
+                    visible: bar.showSeconds
+                    implicitWidth: secLbl.implicitWidth + 10
+                    Layout.preferredHeight: 16
+                    radius: 8
+                    color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16)
+                    Lbl {
+                        id: secLbl
+                        anchors.centerIn: parent
+                        text: String(Math.floor((barClock.date.getTime() % 60000) / 1000)).padStart(2, "0")
+                        color: Theme.accent
+                        font.pixelSize: 10
+                        font.bold: true
+                    }
                 }
                 Lbl {
-                    text: Qt.formatDateTime(clock.date, "ddd, d MMM")
+                    visible: miniPill.visible
+                    text: Qt.formatDateTime(barClock.date, "ddd, d MMM")
                     color: Theme.muted
                 }
             }
@@ -378,8 +464,21 @@ PanelWindow {
                 interactive: true
                 visible: Weather.ready
                 onClicked: weatherPopup.toggle()
-                Lbl { text: Weather.icon; color: Theme.accent2; font.pixelSize: 14 }
-                Lbl { text: Weather.temp + "°" }
+                Lbl {
+                    text: Weather.icon
+                    color: Theme.accent2
+                    font.pixelSize: 14
+                    scale: parent.hovered ? 1.15 : 1.0
+                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                }
+                Lbl { text: Weather.temp + "°"; font.bold: true }
+                // вероятность осадков в ближайшие часы — если есть, то сразу видно
+                Lbl {
+                    visible: Weather.nextPrecip > 0
+                    text: "\uf043 " + Weather.nextPrecip + "%"
+                    color: Weather.nextPrecip >= 40 ? Theme.warn : Theme.muted
+                    font.pixelSize: 10
+                }
             }
         }
 
@@ -397,7 +496,7 @@ PanelWindow {
                 Layout.preferredHeight: 22
                 Rectangle {
                     anchors.fill: parent
-                    radius: 6
+                    radius: 8
                     color: Theme.surface
                     visible: evArt.status !== Image.Ready
                 }
@@ -543,7 +642,7 @@ PanelWindow {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 11
+                    radius: 12
                     color: Theme.surface
                     visible: !avatar.hasPic
                 }
@@ -557,8 +656,8 @@ PanelWindow {
                 }
                 RoundMask {
                     anchors.fill: parent
-                    radius: 11
-                    maskColor: Theme.bg
+                    radius: 12
+                    maskColor: Theme.islandBg
                     visible: avatar.hasPic
                 }
                 Image {
@@ -669,7 +768,7 @@ PanelWindow {
             id: launchBox
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
-            anchors.topMargin: 6
+            anchors.topMargin: 8
             width: centerIsland.launchW - 24
             spacing: 4
             opacity: centerIsland.launchMode ? 1 : 0
@@ -780,9 +879,9 @@ PanelWindow {
                     required property int index
                     width: resultList.width
                     height: 40
-                    radius: 14
+                    radius: 11
                     color: ListView.isCurrentItem
-                        ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18)
+                        ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.15)
                         : "transparent"
                     Behavior on color { ColorAnimation { duration: 100 } }
 
@@ -860,6 +959,7 @@ PanelWindow {
         id: rightIsland
         anchors.right: parent.right
         anchors.top: parent.top
+        anchors.topMargin: Theme.islandInset
 
         // Трей
         Pill {

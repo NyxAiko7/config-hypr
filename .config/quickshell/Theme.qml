@@ -21,7 +21,18 @@ Singleton {
 
     readonly property int barHeight: 36
     readonly property int radius: 20
-    readonly property int islandRadius: 18
+    readonly property int islandRadius: 17
+    readonly property int islandHeight: barHeight - 4
+    readonly property int islandInset: (barHeight - islandHeight) / 2
+
+    // «матовое стекло» островов: мягкий градиент, тонкая кромка и блик сверху
+    readonly property color islandBg:     Qt.rgba(bg.r, bg.g, bg.b, 0.94)
+    readonly property color islandTop:    Qt.lighter(islandBg, 1.20)
+    readonly property color islandBottom: Qt.darker(islandBg, 1.14)
+    readonly property color islandEdge:   Qt.rgba(text.r, text.g, text.b, 0.08)
+    readonly property color islandShine:  Qt.rgba(text.r, text.g, text.b, 0.14)
+    readonly property color islandHover:  Qt.rgba(accent.r, accent.g, accent.b, 0.16)
+
     readonly property string font: "JetBrainsMono Nerd Font"
     readonly property int fontSize: 12
     readonly property int iconSize: 14
