@@ -1,1 +1,5 @@
 *.save
+*.whl
+.config/quickshell/*.whl
+__pycache__/
+*.pyc
