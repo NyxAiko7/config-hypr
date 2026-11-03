@@ -6,6 +6,9 @@ BarPopup {
     id: pop
     alignment: "right"
     implicitWidth: 420
+    fill: Rock.cream
+    accent: Rock.pink
+    radius: 22
 
     readonly property real maxH: (barWindow.screen ? barWindow.screen.height : 900) - 110
     implicitHeight: Math.min(maxH, 64 + (Notifs.count === 0 ? 230 : feed.implicitHeight) + 88)
@@ -37,10 +40,17 @@ BarPopup {
             spacing: 10
             ColumnLayout {
                 spacing: 0
-                Lbl { text: "Уведомления"; font.bold: true; font.pixelSize: 15 }
+                Lbl {
+                    text: "УВЕДОМЛЕНИЯ"
+                    color: Rock.ink
+                    font.family: Rock.display
+                    font.weight: Font.Black
+                    font.pixelSize: 18
+                }
                 Lbl {
                     text: Notifs.count === 0 ? "Всё прочитано" : Notifs.count + " в истории"
-                    color: Theme.muted
+                    color: Rock.ink2
+                    opacity: 0.62
                     font.pixelSize: 10
                 }
             }
@@ -52,12 +62,14 @@ BarPopup {
                 implicitWidth: 28
                 implicitHeight: 28
                 radius: 14
-                color: moreArea.containsMouse || moreMenu.visible ? Theme.surface : "transparent"
+                color: moreArea.containsMouse || moreMenu.visible ? Rock.a(Rock.pink, 0.18) : "transparent"
+                border.width: moreMenu.visible ? 2 : 0
+                border.color: Rock.ink
                 Behavior on color { ColorAnimation { duration: 120 } }
                 Lbl {
                     anchors.centerIn: parent
                     text: "\uf141"
-                    color: Theme.muted
+                    color: Rock.ink
                     font.pixelSize: 13
                 }
                 MouseArea {
@@ -81,9 +93,9 @@ BarPopup {
                     Rectangle {
                         id: menuBg
                         radius: 14
-                        color: Theme.surface
-                        border.color: Theme.hairline
-                        border.width: 1
+                        color: Rock.paper
+                        border.color: Rock.ink
+                        border.width: 2
                         implicitWidth: menuCol.implicitWidth + 12
                         implicitHeight: menuCol.implicitHeight + 12
 
@@ -103,15 +115,15 @@ BarPopup {
                                     Layout.fillWidth: true
                                     implicitHeight: 30
                                     radius: 9
-                                    color: ma.containsMouse ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08) : "transparent"
+                                    color: ma.containsMouse ? Rock.a(Rock.yellow, 0.38) : "transparent"
                                     Behavior on color { ColorAnimation { duration: 100 } }
                                     RowLayout {
                                         anchors.fill: parent
                                         anchors.leftMargin: 10
                                         anchors.rightMargin: 10
                                         spacing: 8
-                                        Lbl { text: modelData.icon; font.pixelSize: 11; color: modelData.danger ? Theme.warn : Theme.muted }
-                                        Lbl { Layout.fillWidth: true; text: modelData.label; font.pixelSize: 11; color: modelData.danger ? Theme.warn : Theme.text }
+                                        Lbl { text: modelData.icon; font.pixelSize: 11; color: modelData.danger ? Rock.orange : Rock.ink2 }
+                                        Lbl { Layout.fillWidth: true; text: modelData.label; font.pixelSize: 11; color: modelData.danger ? Rock.orange : Rock.ink }
                                     }
                                     MouseArea {
                                         id: ma
@@ -141,16 +153,24 @@ BarPopup {
                 }
             }
 
-            Lbl { text: "Тишина"; color: Theme.muted; font.pixelSize: 11 }
-            Toggle { checked: Notifs.dnd; onToggled: Notifs.dnd = !Notifs.dnd }
+            Lbl { text: "Тишина"; color: Rock.ink2; font.pixelSize: 11 }
+            Toggle {
+                checked: Notifs.dnd
+                uncheckedColor: Rock.paper
+                borderColor: Rock.ink
+                uncheckedKnob: Rock.ink
+                onToggled: Notifs.dnd = !Notifs.dnd
+            }
             Rectangle {
                 visible: Notifs.count > 0
                 implicitWidth: clearLbl.implicitWidth + 24
                 implicitHeight: 28
                 radius: 14
-                color: clearArea.containsMouse ? Theme.surface : "transparent"
+                color: clearArea.containsMouse ? Rock.a(Rock.pink, 0.18) : "transparent"
+                border.width: 2
+                border.color: Rock.ink
                 Behavior on color { ColorAnimation { duration: 120 } }
-                Lbl { id: clearLbl; anchors.centerIn: parent; text: "Очистить"; color: Theme.accent; font.pixelSize: 11 }
+                Lbl { id: clearLbl; anchors.centerIn: parent; text: "Очистить"; color: Rock.pinkDeep; font.pixelSize: 11; font.bold: true }
                 MouseArea {
                     id: clearArea
                     anchors.fill: parent
@@ -167,24 +187,26 @@ BarPopup {
             Layout.fillWidth: true
             implicitHeight: 34
             radius: 17
-            color: searchField.activeFocus ? Theme.surface : Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.05)
-            border.width: searchField.activeFocus ? 1 : 0
-            border.color: Theme.accent
-            Behavior on color { ColorAnimation { duration: 120 } }
+            color: Rock.paper
+            border.width: 2
+            border.color: searchField.activeFocus ? Rock.pink : Rock.ink
+            Behavior on border.color { ColorAnimation { duration: 120 } }
 
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 12
                 anchors.rightMargin: 8
                 spacing: 8
-                Lbl { text: "\uf002"; color: Theme.muted; font.pixelSize: 12 }
+                Lbl { text: "\uf002"; color: Rock.ink2; font.pixelSize: 12 }
                 TextInput {
                     id: searchField
                     Layout.fillWidth: true
-                    color: Theme.text
+                    color: Rock.ink
+                    font.family: Theme.font
                     font.pixelSize: 12
                     clip: true
-                    selectionColor: Theme.accent
+                    selectionColor: Rock.pink
+                    selectedTextColor: Rock.cream
                     text: pop.query
                     onTextChanged: pop.query = text
                     onAccepted: { /* фильтр живой, Enter ничего не делает */ }
@@ -192,7 +214,7 @@ BarPopup {
                 Lbl {
                     visible: pop.query !== ""
                     text: "\uf00d"
-                    color: Theme.muted
+                    color: Rock.ink2
                     font.pixelSize: 12
                     MouseArea {
                         anchors.fill: parent
@@ -215,22 +237,25 @@ BarPopup {
                 Lbl {
                     Layout.alignment: Qt.AlignHCenter
                     text: Notifs.dnd ? "\uf1f6" : "\uf0f3"
-                    color: Theme.muted
-                    font.pixelSize: 34
-                    opacity: 0.45
+                    color: Rock.pink
+                    font.pixelSize: 38
+                    opacity: 0.55
                 }
                 Lbl {
                     Layout.alignment: Qt.AlignHCenter
                     text: Notifs.dnd ? "Режим «Тишина» включён" : "Нет уведомлений"
-                    color: Theme.muted
+                    color: Rock.ink
+                    font.family: Rock.display
+                    font.weight: Font.Black
+                    font.pixelSize: 15
                 }
                 Lbl {
                     Layout.alignment: Qt.AlignHCenter
                     visible: Notifs.dnd
                     text: "Новые уведомления молча копятся в истории"
-                    color: Theme.muted
+                    color: Rock.ink2
                     font.pixelSize: 10
-                    opacity: 0.7
+                    opacity: 0.65
                 }
             }
         }
@@ -243,7 +268,7 @@ BarPopup {
             Lbl {
                 anchors.centerIn: parent
                 text: "Ничего не найдено по «" + pop.query + "»"
-                color: Theme.muted
+                color: Rock.ink2
                 font.pixelSize: 12
             }
         }
@@ -290,14 +315,14 @@ BarPopup {
                                     anchors.centerIn: parent
                                     visible: !gIcon.visible
                                     text: "\uf0f3"
-                                    color: Theme.accent
+                                    color: Rock.pinkDeep
                                     font.pixelSize: 11
                                 }
                             }
                             Lbl {
                                 Layout.fillWidth: true
                                 text: grp.modelData.app + (grp.modelData.items.length > 1 ? "  ·  " + grp.modelData.items.length : "")
-                                color: Theme.muted
+                                color: Rock.ink2
                                 font.pixelSize: 11
                                 font.bold: true
                                 elide: Text.ElideRight
@@ -305,6 +330,8 @@ BarPopup {
                             IconBtn {
                                 size: 24
                                 icon: "\uf00d"
+                                iconColor: Rock.ink2
+                                hoverColor: Rock.a(Rock.pink, 0.18)
                                 onClicked: {
                                     const items = grp.modelData.items.slice()
                                     for (let i = 0; i < items.length; i++) items[i].dismiss()
@@ -330,9 +357,9 @@ BarPopup {
             visible: Notifs.pending > 0
             Layout.alignment: Qt.AlignHCenter
             text: "\uf053  ещё " + Notifs.pending + " в очереди показа"
-            color: Theme.muted
+            color: Rock.ink2
             font.pixelSize: 10
-            opacity: 0.8
+            opacity: 0.65
         }
     }
 }

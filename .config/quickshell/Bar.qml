@@ -140,25 +140,6 @@ PanelWindow {
         return Theme.text
     }
 
-    // ── Остров: скруглённая плашка, содержимое лежит в ряд ──
-    component Island: Item {
-        id: isl
-        default property alias content: inner.data
-        height: Theme.islandHeight
-        width: inner.implicitWidth + 20
-
-        IslandSurface {
-            anchors.fill: parent
-            radius: Theme.islandRadius
-        }
-
-        RowLayout {
-            id: inner
-            anchors.centerIn: parent
-            spacing: 3
-        }
-    }
-
     // ───────── Клик мимо: закрыть открытое меню ─────────
     // Прозрачная полоса по всей ширине панели; участвует в mask только
     // когда что-то открыто — в остальное время клики проходят насквозь.
@@ -179,11 +160,14 @@ PanelWindow {
     }
 
     // ───────── Левый остров ─────────
-    Island {
+    BarIsland {
         id: leftIsland
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.topMargin: Theme.islandInset
+        fill: Rock.cream
+        shadowColor: Rock.pink
+        tilt: -0.8
 
         // Лаунчер
         Pill {
@@ -194,7 +178,7 @@ PanelWindow {
             }
             Lbl {
                 text: "\uf303"
-                color: Theme.accent
+                color: Rock.pinkDeep
                 font.pixelSize: 15
                 scale: parent.hovered ? 1.12 : 1.0
                 Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -211,11 +195,11 @@ PanelWindow {
                     Layout.preferredWidth: modelData.focused ? 20 : 6
                     Layout.preferredHeight: 6
                     radius: 3
-                    // занятые (есть окна) горят приглушённым акцентом, пустые — тускло
-                    color: modelData.focused ? Theme.accent
+                    // занятые (есть окна) горят бирюзой, пустые — тусклым контуром
+                    color: modelData.focused ? Rock.pinkDeep
                            : (modelData.windows !== undefined && modelData.windows.values.length > 0
-                              ? Theme.accent2 : Theme.muted)
-                    opacity: modelData.focused ? 1 : 0.75
+                              ? Rock.cyan : Rock.a(Rock.ink, 0.22))
+                    opacity: modelData.focused ? 1 : 0.9
                     Behavior on Layout.preferredWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
                     Behavior on color { ColorAnimation { duration: 220 } }
                     MouseArea {
@@ -237,7 +221,7 @@ PanelWindow {
                 Layout.preferredWidth: 8
                 Layout.preferredHeight: 8
                 radius: 4
-                color: Theme.warn
+                color: Rock.pinkDeep
                 SequentialAnimation on opacity {
                     loops: Animation.Infinite
                     running: Recorder.recording
@@ -245,7 +229,7 @@ PanelWindow {
                     NumberAnimation { to: 1; duration: 700 }
                 }
             }
-            Lbl { text: Recorder.text(); color: Theme.warn; font.bold: true }
+            Lbl { text: Recorder.text(); color: Rock.pinkDeep; font.bold: true }
         }
 
         // Таймер фокуса: клик — старт/стоп, ПКМ — следующая фаза
@@ -258,14 +242,14 @@ PanelWindow {
             }
             Lbl {
                 text: Pomodoro.mode === "break" ? "\uf0f4" : "\uf017"
-                color: Pomodoro.mode === "focus" ? Theme.accent : (Pomodoro.mode === "break" ? Theme.accent2 : Theme.muted)
+                color: Pomodoro.mode === "focus" ? Rock.pinkDeep : (Pomodoro.mode === "break" ? Rock.cyan : Rock.a(Rock.ink, 0.4))
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 visible: Pomodoro.running
                 text: Pomodoro.text()
                 font.bold: true
-                color: Pomodoro.mode === "focus" ? Theme.accent : Theme.accent2
+                color: Pomodoro.mode === "focus" ? Rock.pinkDeep : Rock.cyan
             }
         }
 
@@ -285,7 +269,8 @@ PanelWindow {
             Layout.rightMargin: 8
             Layout.maximumWidth: 220
             text: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.title : ""
-            color: Theme.muted
+            color: Rock.a(Rock.ink, 0.58)
+            font.weight: Font.DemiBold
             elide: Text.ElideRight
         }
     }
@@ -314,8 +299,9 @@ PanelWindow {
              : (notifMode ? notifW : (eventMode ? eventRow.implicitWidth + 30 : clockGroup.implicitWidth + 28))
         height: launchMode ? launchBox.implicitHeight + 16
               : (notifMode ? notifBox.implicitHeight + 22 : Theme.islandHeight)
-        property real radiusNow: (launchMode || notifMode) ? 22 : (eventMode ? 20 : Theme.islandRadius)
-        clip: true
+        property real radiusNow: (launchMode || notifMode) ? 16 : (eventMode ? 13 : 11)
+        readonly property bool cream: launchMode || notifMode
+        clip: false
 
         Behavior on width  { NumberAnimation { duration: 360; easing.type: Easing.OutBack; easing.overshoot: 0.6 } }
         Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.OutBack; easing.overshoot: 0.6 } }
@@ -324,6 +310,9 @@ PanelWindow {
         IslandSurface {
             anchors.fill: parent
             radius: centerIsland.radiusNow
+            fill: centerIsland.cream ? Rock.cream : Rock.ink2
+            shadowColor: centerIsland.cream ? Rock.pink : Rock.yellow
+            shadowOffset: 3
             active: centerIsland.launchMode || centerIsland.notifMode || centerIsland.eventMode
             pulse: centerIsland.eventMode
         }
@@ -402,13 +391,13 @@ PanelWindow {
                         spacing: 5
                         Lbl {
                             text: Bt.iconFor(btItem.modelData)
-                            color: Theme.accent
+                            color: Rock.cyan
                             font.pixelSize: Theme.iconSize
                         }
                         Lbl {
                             visible: Bt.percent(btItem.modelData) >= 0
                             text: Bt.percent(btItem.modelData) + "%"
-                            color: Bt.percent(btItem.modelData) <= 20 ? Theme.warn : Theme.muted
+                            color: Bt.percent(btItem.modelData) <= 20 ? Rock.pink : Rock.a(Rock.cream, 0.55)
                             font.pixelSize: 11
                         }
                     }
@@ -424,39 +413,70 @@ PanelWindow {
                 id: clockPill
                 interactive: true
                 onClicked: calendarPopup.toggle()
-                // Часы: HH:MM, разделитель мигает раз в секунду.
-                // Когда играет музыка — справа показываем реальные секунды и дату.
-                RowLayout {
-                    spacing: 0
-                    Lbl { text: Qt.formatDateTime(barClock.date, "HH"); font.bold: true }
-                    Lbl {
-                        text: ":"
-                        font.bold: true
-                        color: Theme.accent
-                        opacity: bar.showSeconds ? 1 : (Math.floor(barClock.date.getTime() / 1000) % 2 === 0 ? 1 : 0.3)
-                        Behavior on opacity { NumberAnimation { duration: 240 } }
+                // Часы как на локскрине: объёмное время с цветными слоями,
+                // рядом — жёлтый стикер с датой и розовый с секундами.
+                Item {
+                    Layout.preferredWidth: clockTime.width
+                    Layout.preferredHeight: clockTime.height
+
+                    Text {
+                        x: 2; y: 2
+                        text: clockTime.text
+                        color: Rock.pinkDeep
+                        font.family: Rock.display
+                        font.pixelSize: 16
+                        font.weight: Font.Black
+                        font.letterSpacing: -0.5
                     }
-                    Lbl { text: Qt.formatDateTime(barClock.date, "mm"); font.bold: true }
+                    Text {
+                        x: 1; y: 1
+                        text: clockTime.text
+                        color: Rock.cyan
+                        font.family: Rock.display
+                        font.pixelSize: 16
+                        font.weight: Font.Black
+                        font.letterSpacing: -0.5
+                    }
+                    Text {
+                        id: clockTime
+                        text: Qt.formatDateTime(barClock.date, "HH:mm")
+                        color: Rock.cream
+                        font.family: Rock.display
+                        font.pixelSize: 16
+                        font.weight: Font.Black
+                        font.letterSpacing: -0.5
+                    }
                 }
-                Rectangle {
-                    visible: bar.showSeconds
-                    implicitWidth: secLbl.implicitWidth + 10
-                    Layout.preferredHeight: 16
-                    radius: 8
-                    color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16)
+
+                RockChip {
+                    fill: Rock.yellow
+                    shadowColor: Rock.pink
+                    offset: 1.5
+                    padH: 8
+                    padV: 2
+                    radius: 6
                     Lbl {
-                        id: secLbl
-                        anchors.centerIn: parent
-                        text: String(Math.floor((barClock.date.getTime() % 60000) / 1000)).padStart(2, "0")
-                        color: Theme.accent
+                        text: Qt.formatDateTime(barClock.date, "ddd d").toUpperCase()
+                        color: Rock.ink
+                        font.family: Rock.display
+                        font.pixelSize: 9
+                        font.weight: Font.Black
+                        font.letterSpacing: 0.6
+                    }
+                }
+                RockChip {
+                    fill: Rock.pink
+                    shadowColor: Rock.cyan
+                    offset: 1.5
+                    padH: 7
+                    padV: 2
+                    radius: 6
+                    Lbl {
+                        text: Qt.formatDateTime(barClock.date, "ss")
+                        color: Rock.cream
                         font.pixelSize: 10
-                        font.bold: true
+                        font.weight: Font.Black
                     }
-                }
-                Lbl {
-                    visible: miniPill.visible
-                    text: Qt.formatDateTime(barClock.date, "ddd, d MMM")
-                    color: Theme.muted
                 }
             }
             Pill {
@@ -466,17 +486,23 @@ PanelWindow {
                 onClicked: weatherPopup.toggle()
                 Lbl {
                     text: Weather.icon
-                    color: Theme.accent2
+                    color: Rock.cyan
                     font.pixelSize: 14
                     scale: parent.hovered ? 1.15 : 1.0
                     Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                 }
-                Lbl { text: Weather.temp + "°"; font.bold: true }
+                Lbl {
+                    text: Weather.temp + "°"
+                    color: Rock.cream
+                    font.family: Rock.display
+                    font.weight: Font.Black
+                    font.pixelSize: 13
+                }
                 // вероятность осадков в ближайшие часы — если есть, то сразу видно
                 Lbl {
                     visible: Weather.nextPrecip > 0
                     text: "\uf043 " + Weather.nextPrecip + "%"
-                    color: Weather.nextPrecip >= 40 ? Theme.warn : Theme.muted
+                    color: Weather.nextPrecip >= 40 ? Rock.pink : Rock.a(Rock.cream, 0.55)
                     font.pixelSize: 10
                 }
             }
@@ -496,8 +522,10 @@ PanelWindow {
                 Layout.preferredHeight: 22
                 Rectangle {
                     anchors.fill: parent
-                    radius: 8
-                    color: Theme.surface
+                    radius: 7
+                    color: Rock.ink
+                    border.width: 2
+                    border.color: Rock.cream
                     visible: evArt.status !== Image.Ready
                 }
                 Image {
@@ -511,7 +539,7 @@ PanelWindow {
                     anchors.centerIn: parent
                     visible: evArt.status !== Image.Ready
                     text: UI.eventIcon
-                    color: Theme.accent
+                    color: Rock.pink
                     font.pixelSize: 13
                 }
             }
@@ -522,14 +550,15 @@ PanelWindow {
                 Lbl {
                     Layout.maximumWidth: 260
                     text: UI.eventText
-                    font.bold: true
+                    color: Rock.cream
+                    font.weight: Font.DemiBold
                     elide: Text.ElideRight
                 }
                 Lbl {
                     visible: UI.eventSub !== ""
                     Layout.maximumWidth: 260
                     text: UI.eventSub
-                    color: Theme.muted
+                    color: Rock.a(Rock.cream, 0.55)
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
@@ -544,13 +573,15 @@ PanelWindow {
                 Rectangle {
                     anchors.fill: parent
                     radius: 3
-                    color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.14)
+                    color: Rock.a(Rock.cream, 0.16)
+                    border.width: 1
+                    border.color: Rock.a(Rock.cream, 0.22)
                 }
                 Rectangle {
                     width: parent.width * Math.max(0, Math.min(1, Levels.muted ? 0 : Levels.value))
                     height: parent.height
                     radius: 3
-                    color: Levels.muted ? Theme.muted : Theme.accent
+                    color: Levels.muted ? Rock.a(Rock.cream, 0.4) : Rock.yellow
                     Behavior on width { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                 }
             }
@@ -559,7 +590,7 @@ PanelWindow {
                 Layout.preferredWidth: 26
                 horizontalAlignment: Text.AlignRight
                 text: Levels.muted ? "–" : Math.round(Levels.value * 100)
-                color: Theme.muted
+                color: Rock.a(Rock.cream, 0.6)
                 font.pixelSize: 11
             }
 
@@ -581,7 +612,7 @@ PanelWindow {
                             width: 3
                             radius: 1.5
                             height: 5
-                            color: Theme.accent
+                            color: Rock.yellow
                             SequentialAnimation on height {
                                 loops: Animation.Infinite
                                 running: centerIsland.eventMode && UI.eventKind === "media"
@@ -598,7 +629,7 @@ PanelWindow {
                 visible: UI.eventKind === "media" && Media.player !== null
                 Layout.alignment: Qt.AlignVCenter
                 text: bar.fmtTime(Media.player ? Media.player.position : 0) + " / " + bar.fmtTime(Media.player ? Media.player.length : 0)
-                color: Theme.muted
+                color: Rock.a(Rock.cream, 0.55)
                 font.pixelSize: 10
             }
 
@@ -608,13 +639,13 @@ PanelWindow {
                 Layout.alignment: Qt.AlignVCenter
                 spacing: 4
                 Repeater {
-                    model: [Theme.accent, Theme.accent2, Theme.text, Theme.surface]
+                    model: [Rock.pink, Rock.cyan, Rock.yellow, Rock.cream]
                     delegate: Rectangle {
                         required property var modelData
                         width: 14; height: 14; radius: 7
                         color: modelData
-                        border.width: 1
-                        border.color: Theme.hairline
+                        border.width: 2
+                        border.color: Rock.ink
                     }
                 }
             }
@@ -642,8 +673,10 @@ PanelWindow {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 12
-                    color: Theme.surface
+                    radius: 10
+                    color: Rock.paper
+                    border.width: 2
+                    border.color: Rock.ink
                     visible: !avatar.hasPic
                 }
                 Image {
@@ -656,8 +689,8 @@ PanelWindow {
                 }
                 RoundMask {
                     anchors.fill: parent
-                    radius: 12
-                    maskColor: Theme.islandBg
+                    radius: 10
+                    maskColor: Rock.cream
                     visible: avatar.hasPic
                 }
                 Image {
@@ -675,7 +708,7 @@ PanelWindow {
                     anchors.centerIn: parent
                     visible: !avatar.hasPic && appIcon.status !== Image.Ready
                     text: "\uf0f3"
-                    color: Theme.accent
+                    color: Rock.pinkDeep
                     font.pixelSize: 14
                 }
             }
@@ -694,26 +727,29 @@ PanelWindow {
                     Lbl {
                         Layout.fillWidth: true
                         text: centerIsland.nn ? centerIsland.nn.summary : ""
-                        font.bold: true
+                        color: Rock.ink
+                        font.family: Rock.display
+                        font.weight: Font.Black
                         font.pixelSize: 13
                         elide: Text.ElideRight
                     }
                     Lbl {
                         Layout.maximumWidth: 120
                         text: centerIsland.nn ? (centerIsland.nn.appName || "") : ""
-                        color: Theme.accent
+                        color: Rock.pinkDeep
                         font.pixelSize: 10
+                        font.weight: Font.Bold
                         elide: Text.ElideRight
                     }
                     Lbl {
                         text: Notifs.timeAgo(centerIsland.nn)
-                        color: Theme.muted
+                        color: Rock.a(Rock.ink, 0.5)
                         font.pixelSize: 10
                     }
                     Lbl {
                         visible: Notifs.pending > 0
                         text: "+" + Notifs.pending
-                        color: Theme.accent
+                        color: Rock.pinkDeep
                         font.pixelSize: 10
                         font.bold: true
                     }
@@ -722,7 +758,7 @@ PanelWindow {
                     Layout.fillWidth: true
                     visible: text !== ""
                     text: centerIsland.nn ? String(centerIsland.nn.body).replace(/\s*\n\s*/g, "  ") : ""
-                    opacity: 0.75
+                    color: Rock.a(Rock.ink, 0.68)
                     font.pixelSize: 12
                     elide: Text.ElideRight
                 }
@@ -738,16 +774,18 @@ PanelWindow {
                     delegate: Rectangle {
                         id: actBtn
                         required property var modelData
-                        implicitWidth: actLbl.implicitWidth + 20
-                        implicitHeight: 26
-                        radius: 13
-                        color: actArea.containsMouse ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
+                        implicitWidth: actLbl.implicitWidth + 18
+                        implicitHeight: 24
+                        radius: 7
+                        color: actArea.containsMouse ? Rock.cream : Rock.yellow
+                        border.width: 2
+                        border.color: Rock.ink
                         Behavior on color { ColorAnimation { duration: 100 } }
                         Lbl {
                             id: actLbl
                             anchors.centerIn: parent
                             text: actBtn.modelData.text
-                            color: Theme.textOnAccent
+                            color: Rock.ink
                             font.pixelSize: 10
                             font.bold: true
                         }
@@ -807,7 +845,7 @@ PanelWindow {
 
                 Lbl {
                     text: launchBox.mode === "clip" ? "\uf0ea" : (launchBox.mode === "windows" ? "\uf2d0" : "\uf002")
-                    color: Theme.accent
+                    color: Rock.pinkDeep
                     font.pixelSize: 13
                     Layout.leftMargin: 6
                 }
@@ -815,11 +853,11 @@ PanelWindow {
                 TextInput {
                     id: searchInput
                     Layout.fillWidth: true
-                    color: Theme.text
-                    font.family: Theme.font
+                    color: Rock.ink
+                    font.family: Rock.mono
                     font.pixelSize: 14
-                    selectionColor: Theme.accent
-                    selectedTextColor: Theme.textOnAccent
+                    selectionColor: Rock.pink
+                    selectedTextColor: Rock.cream
                     selectByMouse: true
                     clip: true
                     onTextChanged: resultList.currentIndex = 0
@@ -848,7 +886,7 @@ PanelWindow {
                     Lbl {
                         visible: searchInput.text === ""
                         text: launchBox.mode === "clip" ? "Буфер обмена…" : (launchBox.mode === "windows" ? "Переключить окно…" : "Приложение, 2+2, ? поиск, > команда")
-                        color: Theme.muted
+                        color: Rock.a(Rock.ink, 0.45)
                         font.pixelSize: 14
                     }
                 }
@@ -856,7 +894,7 @@ PanelWindow {
                 Lbl {
                     visible: launchBox.results.length > 0
                     text: "\u21b5"
-                    color: Theme.muted
+                    color: Rock.a(Rock.ink, 0.45)
                     font.pixelSize: 12
                     Layout.rightMargin: 6
                 }
@@ -879,10 +917,12 @@ PanelWindow {
                     required property int index
                     width: resultList.width
                     height: 40
-                    radius: 11
+                    radius: 8
                     color: ListView.isCurrentItem
-                        ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.15)
+                        ? Rock.a(Rock.pink, 0.18)
                         : "transparent"
+                    border.width: ListView.isCurrentItem ? 1.5 : 0
+                    border.color: Rock.a(Rock.ink, 0.35)
                     Behavior on color { ColorAnimation { duration: 100 } }
 
                     RowLayout {
@@ -904,20 +944,23 @@ PanelWindow {
                                 anchors.centerIn: parent
                                 visible: !!row.modelData.glyph && !row.modelData.icon
                                 text: row.modelData.glyph || ""
-                                color: Theme.accent
+                                color: Rock.pinkDeep
                                 font.pixelSize: 15
                             }
                         }
                         Lbl {
                             Layout.fillWidth: true
                             text: row.modelData.name
+                            color: Rock.ink
+                            font.family: Rock.display
+                            font.weight: Font.Black
                             font.pixelSize: 13
                             elide: Text.ElideRight
                         }
                         Lbl {
                             Layout.maximumWidth: 200
                             text: row.modelData.comment || row.modelData.genericName || ""
-                            color: Theme.muted
+                            color: Rock.a(Rock.ink, 0.55)
                             font.pixelSize: 11
                             elide: Text.ElideRight
                         }
@@ -940,9 +983,9 @@ PanelWindow {
             anchors.bottomMargin: 2
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.max(0, (centerIsland.width - 56) * centerIsland.ttlFrac)
-            height: 1.5
-            radius: 1
-            color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.55)
+            height: 3
+            radius: 1.5
+            color: centerIsland.cream ? Rock.pink : Rock.yellow
         }
         NumberAnimation {
             id: ttlAnim
@@ -955,11 +998,14 @@ PanelWindow {
     }
 
     // ───────── Правый остров ─────────
-    Island {
+    BarIsland {
         id: rightIsland
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.topMargin: Theme.islandInset
+        fill: Rock.ink2
+        shadowColor: Rock.cyan
+        tilt: 0.8
 
         // Трей
         Pill {
@@ -1006,11 +1052,11 @@ PanelWindow {
             visible: Net.vpn
             interactive: Net.vpnManaged
             onClicked: Net.toggleVpn()
-            Lbl { text: "\uf132"; color: Theme.accent2; font.pixelSize: Theme.iconSize }
+            Lbl { text: "\uf132"; color: Rock.cyan; font.pixelSize: Theme.iconSize }
             Lbl {
                 Layout.maximumWidth: 90
                 text: Net.vpnName
-                color: Theme.muted
+                color: Rock.a(Rock.cream, 0.55)
                 font.pixelSize: 11
                 elide: Text.ElideRight
             }
@@ -1020,7 +1066,7 @@ PanelWindow {
         Pill {
             interactive: true
             onClicked: { UI.launcher = false; UI.session = false; UI.wallpaper = !UI.wallpaper }
-            Lbl { text: "\uf1fc"; color: Theme.muted; font.pixelSize: Theme.iconSize }
+            Lbl { text: "\uf1fc"; color: Rock.a(Rock.cream, 0.55); font.pixelSize: Theme.iconSize }
         }
 
         // Раскладка клавиатуры
@@ -1029,7 +1075,9 @@ PanelWindow {
             onClicked: Kb.next()
             Lbl {
                 text: Kb.layout
-                font.bold: true
+                color: Rock.cream
+                font.family: Rock.display
+                font.weight: Font.Black
                 font.pixelSize: 11
             }
         }
@@ -1052,30 +1100,30 @@ PanelWindow {
             Lbl {
                 visible: UI.caffeine
                 text: "\uf0f4"
-                color: Theme.accent
+                color: Rock.yellow
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 visible: Quick.night
                 text: "\uf186"
-                color: Theme.accent2
+                color: Rock.purple
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 text: Net.icon
-                color: Net.connected ? Theme.text : Theme.muted
+                color: Net.connected ? Rock.cream : Rock.a(Rock.cream, 0.4)
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 visible: bar.btAdapter !== null
                 text: "\uf293"
-                color: Bt.connected.length > 0 ? Theme.accent
-                     : (bar.btAdapter && bar.btAdapter.enabled ? Theme.text : Theme.muted)
+                color: Bt.connected.length > 0 ? Rock.cyan
+                     : (bar.btAdapter && bar.btAdapter.enabled ? Rock.cream : Rock.a(Rock.cream, 0.4))
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 text: bar.volIcon()
-                color: (bar.sink && bar.sink.audio && bar.sink.audio.muted) ? Theme.muted : Theme.text
+                color: (bar.sink && bar.sink.audio && bar.sink.audio.muted) ? Rock.a(Rock.cream, 0.4) : Rock.cream
                 font.pixelSize: Theme.iconSize
             }
             RowLayout {
@@ -1083,17 +1131,17 @@ PanelWindow {
                 spacing: 5
                 Lbl {
                     text: bar.batIcon()
-                    color: bar.bat.percentage < 0.2 ? Theme.warn : Theme.text
+                    color: bar.bat.percentage < 0.2 ? Rock.pink : Rock.cream
                     font.pixelSize: Theme.iconSize
                 }
                 Lbl {
                     text: Math.round(bar.bat.percentage * 100)
-                    color: Theme.muted
+                    color: Rock.a(Rock.cream, 0.55)
                 }
                 Lbl {
                     visible: text !== ""
                     text: bar.watts()
-                    color: bar.bat.state === UPowerDeviceState.Charging ? Theme.accent2 : Theme.muted
+                    color: bar.bat.state === UPowerDeviceState.Charging ? Rock.cyan : Rock.a(Rock.cream, 0.55)
                     font.pixelSize: 10
                 }
             }
@@ -1110,13 +1158,13 @@ PanelWindow {
             }
             Lbl {
                 text: Notifs.dnd ? "\uf1f6" : "\uf0f3"
-                color: Notifs.dnd ? Theme.warn : (Notifs.count > 0 ? Theme.accent : Theme.muted)
+                color: Notifs.dnd ? Rock.pink : (Notifs.count > 0 ? Rock.yellow : Rock.a(Rock.cream, 0.45))
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 visible: Notifs.count > 0
                 text: Notifs.count
-                color: Theme.accent
+                color: Rock.yellow
                 font.bold: true
             }
         }

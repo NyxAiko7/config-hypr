@@ -48,12 +48,12 @@ Pill {
                 ctx.reset()
                 const c = width / 2, rad = c - 1.5
                 ctx.lineWidth = 2
-                ctx.strokeStyle = Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.16)
+                ctx.strokeStyle = Rock.a(Rock.cream, 0.18)
                 ctx.beginPath()
                 ctx.arc(c, c, rad, 0, Math.PI * 2)
                 ctx.stroke()
                 if (prog > 0.001) {
-                    ctx.strokeStyle = Theme.accent
+                    ctx.strokeStyle = Rock.yellow
                     ctx.lineCap = "round"
                     ctx.beginPath()
                     ctx.arc(c, c, rad, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2)
@@ -69,7 +69,7 @@ Pill {
             opacity: chip.playing ? 1 : 0.5
             Behavior on opacity { NumberAnimation { duration: 200 } }
 
-            Rectangle { anchors.fill: parent; color: Theme.surface }
+            Rectangle { anchors.fill: parent; color: Rock.paper }
             Image {
                 id: cover
                 anchors.fill: parent
@@ -82,10 +82,10 @@ Pill {
                 anchors.centerIn: parent
                 visible: !cover.visible
                 text: "\uf001"
-                color: Theme.muted
+                color: Rock.a(Rock.cream, 0.55)
                 font.pixelSize: 9
             }
-            RoundMask { anchors.fill: parent; radius: 10; maskColor: Theme.islandBg }
+            RoundMask { anchors.fill: parent; radius: 10; maskColor: Rock.ink2 }
         }
     }
 
@@ -94,7 +94,7 @@ Pill {
         text: Fmt.clock(chip.p ? chip.p.position : 0)
         font.pixelSize: 11
         font.bold: true
-        color: chip.playing ? Theme.text : Theme.muted
+        color: chip.playing ? Rock.cream : Rock.a(Rock.cream, 0.5)
     }
 
     // название выезжает при наведении
@@ -107,7 +107,7 @@ Pill {
         Behavior on Layout.preferredWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         elide: Text.ElideRight
         clip: true
-        color: Theme.muted
+        color: Rock.a(Rock.cream, 0.6)
         font.pixelSize: 11
         text: chip.p
             ? (chip.p.trackArtist ? chip.p.trackArtist + " – " : "") + (chip.p.trackTitle || "")

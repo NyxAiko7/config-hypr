@@ -7,6 +7,9 @@ import Quickshell.Hyprland
 // Левый остров: лаунчер, рабочие столы, запись, помодоро, активное окно.
 BarIsland {
     id: leftIsland
+    fill: Rock.cream
+    shadowColor: Rock.pink
+    tilt: -0.8
 
     // значок активного окна
     readonly property string activeIcon: {
@@ -26,7 +29,7 @@ BarIsland {
         }
         Lbl {
             text: "\uf303"
-            color: Theme.accent
+            color: Rock.pinkDeep
             font.pixelSize: 15
             scale: parent.hovered ? 1.12 : 1.0
             Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -44,10 +47,10 @@ BarIsland {
                 Layout.preferredHeight: 6
                 radius: 3
                 // занятые (есть окна) горят приглушённым акцентом, пустые — тускло
-                color: modelData.focused ? Theme.accent
+                color: modelData.focused ? Rock.pinkDeep
                        : (modelData.windows !== undefined && modelData.windows.values.length > 0
-                          ? Theme.accent2 : Theme.muted)
-                opacity: modelData.focused ? 1 : 0.75
+                          ? Rock.cyan : Rock.a(Rock.ink, 0.22))
+                opacity: modelData.focused ? 1 : 0.9
                 Behavior on Layout.preferredWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: 220 } }
                 MouseArea {
@@ -69,7 +72,7 @@ BarIsland {
             Layout.preferredWidth: 8
             Layout.preferredHeight: 8
             radius: 4
-            color: Theme.warn
+            color: Rock.pinkDeep
             SequentialAnimation on opacity {
                 loops: Animation.Infinite
                 running: Recorder.recording
@@ -77,7 +80,7 @@ BarIsland {
                 NumberAnimation { to: 1; duration: 700 }
             }
         }
-        Lbl { text: Recorder.text(); color: Theme.warn; font.bold: true }
+        Lbl { text: Recorder.text(); color: Rock.pinkDeep; font.bold: true }
     }
 
     // Таймер фокуса: клик — старт/стоп, ПКМ — следующая фаза
@@ -90,14 +93,14 @@ BarIsland {
         }
         Lbl {
             text: Pomodoro.mode === "break" ? "\uf0f4" : "\uf017"
-            color: Pomodoro.mode === "focus" ? Theme.accent : (Pomodoro.mode === "break" ? Theme.accent2 : Theme.muted)
+            color: Pomodoro.mode === "focus" ? Rock.pinkDeep : (Pomodoro.mode === "break" ? Rock.cyan : Rock.a(Rock.ink, 0.4))
             font.pixelSize: Theme.iconSize
         }
         Lbl {
             visible: Pomodoro.running
             text: Pomodoro.text()
             font.bold: true
-            color: Pomodoro.mode === "focus" ? Theme.accent : Theme.accent2
+            color: Pomodoro.mode === "focus" ? Rock.pinkDeep : Rock.cyan
         }
     }
 
@@ -117,7 +120,8 @@ BarIsland {
         Layout.rightMargin: 8
         Layout.maximumWidth: 220
         text: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.title : ""
-        color: Theme.muted
+        color: Rock.a(Rock.ink, 0.58)
+        font.weight: Font.DemiBold
         elide: Text.ElideRight
     }
 }

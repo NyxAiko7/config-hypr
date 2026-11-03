@@ -1,39 +1,41 @@
 import QtQuick
 
-// Поверхность острова: матовое стекло, мягкий градиент и тонкий блик.
+// Поверхность острова в духе локскрина: плотная «наклейка»
+// с жирным контуром и жёсткой офсетной тенью.
 Item {
     id: surface
 
-    property real radius: Theme.islandRadius
+    property real radius: 11
     property bool active: false
     property bool pulse: false
+    property color fill: Rock.ink2
+    property color edge: Rock.ink
+    property color shadowColor: Rock.pink
+    property real shadowOffset: 3
+    property int borderWidth: 2
 
+    // жёсткая тень-подложка
     Rectangle {
-        anchors.fill: parent
+        x: surface.shadowOffset
+        y: surface.shadowOffset
+        width: parent.width
+        height: parent.height
         radius: surface.radius
-        gradient: Gradient {
-            GradientStop { position: 0.0;  color: Theme.islandTop }
-            GradientStop { position: 0.45; color: Theme.islandBg }
-            GradientStop { position: 1.0;  color: Theme.islandBottom }
-        }
-        border.width: 1
-        border.color: surface.active
-            ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.38)
-            : Theme.islandEdge
-        Behavior on border.color { ColorAnimation { duration: 240 } }
+        color: surface.shadowColor
+        border.width: surface.borderWidth
+        border.color: surface.edge
     }
 
-    // светлая линия по верхней кромке — стеклянный блик
+    // сама карточка
     Rectangle {
-        anchors {
-            top: parent.top; left: parent.left; right: parent.right
-            topMargin: 1
-            leftMargin: surface.radius * 0.9
-            rightMargin: surface.radius * 0.9
-        }
-        height: 1
-        radius: 0.5
-        color: Theme.islandShine
+        width: parent.width
+        height: parent.height
+        radius: surface.radius
+        color: surface.fill
+        border.width: surface.borderWidth
+        border.color: surface.active ? Rock.yellow : surface.edge
+        Behavior on color { ColorAnimation { duration: 220 } }
+        Behavior on border.color { ColorAnimation { duration: 180 } }
     }
 
     // акцентная «пульсация» в режиме события
@@ -41,15 +43,15 @@ Item {
         anchors.fill: parent
         radius: surface.radius
         color: "transparent"
-        border.width: 1
-        border.color: Theme.accent
+        border.width: surface.borderWidth + 1
+        border.color: Rock.yellow
         visible: surface.pulse
         opacity: 0
         SequentialAnimation on opacity {
             running: surface.pulse
             loops: Animation.Infinite
-            NumberAnimation { to: 0.40; duration: 1000; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 0.08; duration: 1000; easing.type: Easing.InOutSine }
+            NumberAnimation { to: 0.55; duration: 900; easing.type: Easing.InOutSine }
+            NumberAnimation { to: 0.10; duration: 900; easing.type: Easing.InOutSine }
         }
     }
 }

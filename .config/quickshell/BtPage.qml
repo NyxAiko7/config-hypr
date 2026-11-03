@@ -45,7 +45,7 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
-            IconBtn { icon: "\uf053"; iconColor: Theme.text; onClicked: page.back() }
+            IconBtn { icon: "\uf053"; iconColor: Rock.cream; onClicked: page.back() }
             Lbl { Layout.fillWidth: true; text: "Bluetooth"; font.bold: true; font.pixelSize: 15 }
             IconBtn {
                 visible: page.adapter !== null && page.adapter.enabled
@@ -67,10 +67,10 @@ Item {
             ColumnLayout {
                 anchors.centerIn: parent
                 spacing: 8
-                Lbl { Layout.alignment: Qt.AlignHCenter; text: "\uf293"; color: Theme.muted; font.pixelSize: 30; opacity: 0.5 }
+                Lbl { Layout.alignment: Qt.AlignHCenter; text: "\uf293"; color: Rock.muted; font.pixelSize: 30; opacity: 0.5 }
                 Lbl {
                     Layout.alignment: Qt.AlignHCenter
-                    color: Theme.muted
+                    color: Rock.muted
                     text: page.adapter === null ? "Bluetooth-адаптер не найден" : "Bluetooth выключен"
                 }
             }
@@ -90,7 +90,7 @@ Item {
                 anchors.centerIn: parent
                 visible: list.count === 0
                 text: (page.adapter && page.adapter.discovering) ? "Поиск устройств…" : "Устройства не найдены"
-                color: Theme.muted
+                color: Rock.muted
             }
 
             delegate: Rectangle {
@@ -101,9 +101,9 @@ Item {
                 width: list.width
                 height: 56
                 radius: 14
-                color: rowArea.containsMouse ? Theme.surface : "transparent"
+                color: rowArea.containsMouse ? Rock.ink : "transparent"
                 border.width: modelData.connected ? 1 : 0
-                border.color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.5)
+                border.color: Qt.rgba(Rock.pink.r, Rock.pink.g, Rock.pink.b, 0.5)
                 Behavior on color { ColorAnimation { duration: 120 } }
 
                 // после сопряжения сразу подключаемся
@@ -142,7 +142,7 @@ Item {
                         Layout.preferredWidth: 22
                         horizontalAlignment: Text.AlignHCenter
                         text: page.iconFor(row.modelData)
-                        color: row.modelData.connected ? Theme.accent : Theme.text
+                        color: row.modelData.connected ? Rock.pink : Rock.cream
                         font.pixelSize: 16
                     }
                     ColumnLayout {
@@ -158,7 +158,7 @@ Item {
                             Layout.fillWidth: true
                             font.pixelSize: 10
                             elide: Text.ElideRight
-                            color: (row.modelData.connected || row.connecting) ? Theme.accent : Theme.muted
+                            color: (row.modelData.connected || row.connecting) ? Rock.pink : Rock.muted
                             text: row.connecting ? "Подключение…"
                                 : row.modelData.pairing ? "Сопряжение…"
                                 : row.modelData.connected

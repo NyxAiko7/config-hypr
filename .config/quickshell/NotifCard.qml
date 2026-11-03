@@ -11,10 +11,10 @@ Rectangle {
     readonly property bool critical: notif && notif.urgency === NotificationUrgency.Critical
 
     implicitHeight: col.implicitHeight + 24
-    radius: 16
-    color: hoverArea.containsMouse ? Qt.lighter(Theme.surface, 1.15) : Theme.surface
-    border.width: critical ? 1 : 0
-    border.color: Theme.warn
+    radius: 14
+    color: hoverArea.containsMouse ? Rock.cream : Rock.paper
+    border.width: critical ? 3 : 2
+    border.color: critical ? Rock.orange : Rock.ink
     Behavior on color { ColorAnimation { duration: 120 } }
 
     // клик: действие по умолчанию; свайп влево: закрыть
@@ -48,8 +48,9 @@ Rectangle {
         anchors.rightMargin: 16
         anchors.verticalCenter: parent.verticalCenter
         text: "\uf060  закрыть"
-        color: Theme.warn
+        color: Rock.orange
         font.pixelSize: 11
+        font.bold: true
         opacity: Math.min(1, Math.abs(card.swipeX) / (card.width * 0.35))
     }
 
@@ -67,7 +68,12 @@ Rectangle {
                 Layout.preferredWidth: 38
                 Layout.preferredHeight: 38
                 Layout.alignment: Qt.AlignTop
-                Rectangle { anchors.fill: parent; color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08) }
+                Rectangle {
+                    anchors.fill: parent
+                    color: Rock.cream
+                    border.width: 2
+                    border.color: Rock.ink
+                }
                 Image {
                     id: img
                     anchors.fill: parent
@@ -81,7 +87,7 @@ Rectangle {
                     anchors.centerIn: parent
                     visible: !img.visible
                     text: "\uf0f3"
-                    color: Theme.accent
+                    color: Rock.pinkDeep
                     font.pixelSize: 15
                 }
                 RoundMask { anchors.fill: parent; radius: 12; maskColor: card.color }
@@ -98,13 +104,18 @@ Rectangle {
                     Lbl {
                         Layout.fillWidth: true
                         text: card.notif.summary
-                        font.bold: true
+                        color: Rock.ink
+                        font.family: Rock.display
+                        font.weight: Font.Black
+                        font.pixelSize: 14
                         elide: Text.ElideRight
                     }
-                    Lbl { text: Notifs.timeAgo(card.notif); color: Theme.muted; font.pixelSize: 10 }
+                    Lbl { text: Notifs.timeAgo(card.notif); color: Rock.ink2; opacity: 0.6; font.pixelSize: 10 }
                     IconBtn {
                         size: 22
                         icon: "\uf00d"
+                        iconColor: Rock.ink2
+                        hoverColor: Rock.a(Rock.pink, 0.18)
                         onClicked: card.notif.dismiss()
                     }
                 }
@@ -112,8 +123,8 @@ Rectangle {
                     Layout.fillWidth: true
                     visible: text !== ""
                     text: card.notif.body
-                    color: Theme.text
-                    opacity: 0.8
+                    color: Rock.ink
+                    opacity: 0.78
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                     maximumLineCount: 4
@@ -134,9 +145,11 @@ Rectangle {
                     implicitWidth: actLbl.implicitWidth + 24
                     implicitHeight: 28
                     radius: 14
-                    color: actArea.containsMouse ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
+                    color: actArea.containsMouse ? Qt.lighter(Rock.yellow, 1.06) : Rock.yellow
+                    border.width: 2
+                    border.color: Rock.ink
                     Behavior on color { ColorAnimation { duration: 100 } }
-                    Lbl { id: actLbl; anchors.centerIn: parent; text: act.modelData.text; color: Theme.textOnAccent; font.pixelSize: 11; font.bold: true }
+                    Lbl { id: actLbl; anchors.centerIn: parent; text: act.modelData.text; color: Rock.ink; font.pixelSize: 11; font.bold: true }
                     MouseArea {
                         id: actArea
                         anchors.fill: parent

@@ -9,6 +9,9 @@ import Quickshell.Services.SystemTray
 // Правый остров: трей, VPN, обои, раскладка, статус, уведомления.
 BarIsland {
     id: rightIsland
+    fill: Rock.ink2
+    shadowColor: Rock.cyan
+    tilt: 0.8
 
     property var barWindow: null
     property var sink: Pipewire.defaultAudioSink
@@ -38,10 +41,10 @@ BarIsland {
     }
     // цвет заряда: критично / мало / зарядка / нормально
     function batColor() {
-        if (rightIsland.bat.state === UPowerDeviceState.Charging) return Theme.accent2
-        if (rightIsland.bat.percentage < 0.1) return Theme.warn
-        if (rightIsland.bat.percentage < 0.2) return Theme.warn
-        return Theme.text
+        if (rightIsland.bat.state === UPowerDeviceState.Charging) return Rock.cyan
+        if (rightIsland.bat.percentage < 0.1) return Rock.pink
+        if (rightIsland.bat.percentage < 0.2) return Rock.pink
+        return Rock.cream
     }
 
     // Трей
@@ -89,11 +92,11 @@ BarIsland {
         visible: Net.vpn
         interactive: Net.vpnManaged
         onClicked: Net.toggleVpn()
-        Lbl { text: "\uf132"; color: Theme.accent2; font.pixelSize: Theme.iconSize }
+        Lbl { text: "\uf132"; color: Rock.cyan; font.pixelSize: Theme.iconSize }
         Lbl {
             Layout.maximumWidth: 90
             text: Net.vpnName
-            color: Theme.muted
+            color: Rock.a(Rock.cream, 0.55)
             font.pixelSize: 11
             elide: Text.ElideRight
         }
@@ -103,7 +106,7 @@ BarIsland {
     Pill {
         interactive: true
         onClicked: { UI.launcher = false; UI.session = false; UI.wallpaper = !UI.wallpaper }
-        Lbl { text: "\uf1fc"; color: Theme.muted; font.pixelSize: Theme.iconSize }
+        Lbl { text: "\uf1fc"; color: Rock.a(Rock.cream, 0.55); font.pixelSize: Theme.iconSize }
     }
 
     // Раскладка клавиатуры
@@ -112,7 +115,9 @@ BarIsland {
         onClicked: Kb.next()
         Lbl {
             text: Kb.layout
-            font.bold: true
+            color: Rock.cream
+            font.family: Rock.display
+            font.weight: Font.Black
             font.pixelSize: 11
         }
     }
@@ -135,30 +140,30 @@ BarIsland {
         Lbl {
             visible: UI.caffeine
             text: "\uf0f4"
-            color: Theme.accent
+            color: Rock.yellow
             font.pixelSize: Theme.iconSize
         }
         Lbl {
             visible: Quick.night
             text: "\uf186"
-            color: Theme.accent2
+            color: Rock.purple
             font.pixelSize: Theme.iconSize
         }
         Lbl {
             text: Net.icon
-            color: Net.connected ? Theme.text : Theme.muted
+            color: Net.connected ? Rock.cream : Rock.a(Rock.cream, 0.4)
             font.pixelSize: Theme.iconSize
         }
         Lbl {
             visible: rightIsland.btAdapter !== null
             text: "\uf293"
-            color: Bt.connected.length > 0 ? Theme.accent
-                 : (rightIsland.btAdapter && rightIsland.btAdapter.enabled ? Theme.text : Theme.muted)
+            color: Bt.connected.length > 0 ? Rock.cyan
+                 : (rightIsland.btAdapter && rightIsland.btAdapter.enabled ? Rock.cream : Rock.a(Rock.cream, 0.4))
             font.pixelSize: Theme.iconSize
         }
         Lbl {
             text: rightIsland.volIcon()
-            color: (rightIsland.sink && rightIsland.sink.audio && rightIsland.sink.audio.muted) ? Theme.muted : Theme.text
+            color: (rightIsland.sink && rightIsland.sink.audio && rightIsland.sink.audio.muted) ? Rock.a(Rock.cream, 0.4) : Rock.cream
             font.pixelSize: Theme.iconSize
         }
         RowLayout {
@@ -166,17 +171,17 @@ BarIsland {
             spacing: 5
             Lbl {
                 text: rightIsland.batIcon()
-                color: rightIsland.bat.percentage < 0.2 ? Theme.warn : Theme.text
+                color: rightIsland.bat.percentage < 0.2 ? Rock.pink : Rock.cream
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 text: Math.round(rightIsland.bat.percentage * 100)
-                color: Theme.muted
+                color: Rock.a(Rock.cream, 0.55)
             }
             Lbl {
                 visible: text !== ""
                 text: rightIsland.watts()
-                color: rightIsland.bat.state === UPowerDeviceState.Charging ? Theme.accent2 : Theme.muted
+                color: rightIsland.bat.state === UPowerDeviceState.Charging ? Rock.cyan : Rock.a(Rock.cream, 0.55)
                 font.pixelSize: 10
             }
         }
@@ -193,13 +198,13 @@ BarIsland {
         }
         Lbl {
             text: Notifs.dnd ? "\uf1f6" : "\uf0f3"
-            color: Notifs.dnd ? Theme.warn : (Notifs.count > 0 ? Theme.accent : Theme.muted)
+            color: Notifs.dnd ? Rock.pink : (Notifs.count > 0 ? Rock.yellow : Rock.a(Rock.cream, 0.45))
             font.pixelSize: Theme.iconSize
         }
         Lbl {
             visible: Notifs.count > 0
             text: Notifs.count
-            color: Theme.accent
+            color: Rock.yellow
             font.bold: true
         }
     }

@@ -6,6 +6,9 @@ import Quickshell
 BarPopup {
     id: pop
     alignment: "right"
+    fill: Rock.ink2
+    accent: Rock.cyan
+    radius: 20
 
     property var handle: null          // QsMenuHandle иконки
     property var current: handle
@@ -28,13 +31,13 @@ BarPopup {
             Layout.fillWidth: true
             Layout.preferredHeight: 34
             radius: 10
-            color: backArea.containsMouse ? Theme.surface : "transparent"
+            color: backArea.containsMouse ? Rock.a(Rock.pink, 0.22) : "transparent"
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 12
                 spacing: 8
-                Lbl { text: "\uf053"; color: Theme.muted; font.pixelSize: 10 }
-                Lbl { text: "Назад"; color: Theme.muted }
+                Lbl { text: "\uf053"; color: Rock.muted; font.pixelSize: 10 }
+                Lbl { text: "Назад"; color: Rock.muted }
             }
             MouseArea {
                 id: backArea
@@ -69,14 +72,14 @@ BarPopup {
                     anchors.centerIn: parent
                     width: parent.width - 16
                     height: 1
-                    color: Theme.hairline
+                    color: Rock.a(Rock.cream, 0.15)
                 }
 
                 Rectangle {
                     visible: !entry.modelData.isSeparator
                     anchors.fill: parent
                     radius: 10
-                    color: (area.containsMouse && entry.modelData.enabled) ? Theme.surface : "transparent"
+                    color: (area.containsMouse && entry.modelData.enabled) ? Rock.a(Rock.pink, 0.20) : "transparent"
 
                     RowLayout {
                         anchors.fill: parent
@@ -88,19 +91,19 @@ BarPopup {
                             visible: entry.modelData.buttonType !== 0
                             Layout.preferredWidth: 14
                             text: entry.modelData.checkState === Qt.Checked ? "\uf00c" : ""
-                            color: Theme.accent
+                            color: Rock.yellow
                             font.pixelSize: 11
                         }
                         Lbl {
                             Layout.fillWidth: true
                             text: String(entry.modelData.text).replace(/_([^_])/g, "$1")
-                            color: entry.modelData.enabled ? Theme.text : Theme.muted
+                            color: entry.modelData.enabled ? Rock.cream : Rock.muted
                             elide: Text.ElideRight
                         }
                         Lbl {
                             visible: entry.modelData.hasChildren
                             text: "\uf054"
-                            color: Theme.muted
+                            color: Rock.muted
                             font.pixelSize: 10
                         }
                     }

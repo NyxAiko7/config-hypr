@@ -1,5 +1,5 @@
 # hyprland
-![](./2026-11-02_22-27-22.png)
+![](./2026-11-03-181315_hyprshot.png)
 ## Lock screen
 ![](./lockscreen12.png)
 

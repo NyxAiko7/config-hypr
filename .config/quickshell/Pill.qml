@@ -10,20 +10,20 @@ Rectangle {
     readonly property bool hovered: hover.containsMouse
 
     implicitHeight: Theme.islandHeight - 8
-    implicitWidth: row.implicitWidth + 18
-    radius: 9
+    implicitWidth: row.implicitWidth + 16
+    radius: 7
 
-    color: root.hovered && root.interactive ? Theme.islandHover : "transparent"
+    color: root.hovered && root.interactive ? Rock.a(Rock.pink, 0.18) : "transparent"
     border.width: 1
     border.color: root.hovered && root.interactive
-        ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.30)
+        ? Rock.a(Rock.pink, 0.55)
         : "transparent"
 
-    scale: root.interactive && hover.pressed ? 0.96 : 1
+    scale: root.interactive && hover.pressed ? 0.94 : 1
 
-    Behavior on color { ColorAnimation { duration: 140 } }
-    Behavior on border.color { ColorAnimation { duration: 140 } }
-    Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+    Behavior on color { ColorAnimation { duration: 120 } }
+    Behavior on border.color { ColorAnimation { duration: 120 } }
+    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
     MouseArea {
         id: hover
@@ -38,6 +38,6 @@ Rectangle {
     RowLayout {
         id: row
         anchors.centerIn: parent
-        spacing: 10
+        spacing: 8
     }
 }

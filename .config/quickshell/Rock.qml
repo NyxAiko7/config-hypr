@@ -15,6 +15,8 @@ Singleton {
     readonly property color cream:     "#fff4e8"
     readonly property color paper:     "#fffaf2"
     readonly property color orange:    "#ff8a4c"
+    readonly property color muted:     "#b9aecb"
+    readonly property color faint:     "#7d7291"
 
     readonly property string display: "DejaVu Sans Condensed"
     readonly property string mono: Theme.font

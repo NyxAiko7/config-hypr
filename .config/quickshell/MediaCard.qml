@@ -13,20 +13,21 @@ Rectangle {
     readonly property bool playing: p !== null && p.playbackState === MprisPlaybackState.Playing
     readonly property string artUrl: p ? String(p.trackArtUrl || "") : ""
 
-    property color tint: Theme.accent                // средний цвет обложки
+    property color tint: Rock.pink                   // средний цвет обложки
     property bool showRemaining: false
 
     // яркий вариант цвета обложки для акцентов
     readonly property color artAccent: {
-        if (tint.hslSaturation < 0.12) return Theme.accent
+        if (tint.hslSaturation < 0.12) return Rock.pink
         return Qt.hsla(Math.max(0, tint.hslHue), Math.max(0.5, Math.min(0.9, tint.hslSaturation)), 0.72, 1)
     }
 
     visible: p !== null
-    implicitHeight: col.implicitHeight + 24
-    radius: 20
-    color: Qt.tint(Theme.surface, Qt.rgba(tint.r, tint.g, tint.b, 0.08))
-    Behavior on color { ColorAnimation { duration: 450 } }
+    implicitHeight: col.implicitHeight + 28
+    radius: 18
+    color: Rock.paper
+    border.width: 3
+    border.color: Rock.ink
     Behavior on tint  { ColorAnimation { duration: 450 } }
 
     function cycleLoop() {
@@ -67,7 +68,7 @@ Rectangle {
         property string src: card.artUrl
 
         function refresh() {
-            if (src === "") { card.tint = Theme.accent; return }
+            if (src === "") { card.tint = Rock.pink; return }
             loadImage(src)
         }
         onSrcChanged: refresh()
@@ -88,7 +89,7 @@ Rectangle {
                 const wt = A * (sat * sat + 0.02) * (0.25 + mx) * (mx > 0.15 ? 1 : 0.1)
                 r += R * wt; g += G * wt; b += B * wt; w += wt
             }
-            card.tint = w > 0.01 ? Qt.rgba(r / w, g / w, b / w, 1) : Theme.accent
+            card.tint = w > 0.01 ? Qt.rgba(r / w, g / w, b / w, 1) : Rock.pink
         }
     }
 
@@ -113,7 +114,9 @@ Rectangle {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08)
+                    color: Rock.cream
+                    border.width: 2
+                    border.color: Rock.ink
                 }
                 Image {
                     id: art
@@ -127,7 +130,7 @@ Rectangle {
                     anchors.centerIn: parent
                     visible: !art.visible
                     text: "\uf001"
-                    color: Theme.muted
+                    color: Rock.ink2
                     font.pixelSize: 26
                 }
                 RoundMask { anchors.fill: parent; radius: 16; maskColor: card.color }
@@ -142,7 +145,7 @@ Rectangle {
                     Lbl {
                         anchors.centerIn: parent
                         text: card.playing ? "\uf04c" : "\uf04b"
-                        color: "white"
+                        color: Rock.cream
                         font.pixelSize: 22
                     }
                 }
@@ -168,15 +171,17 @@ Rectangle {
                     Lbl {
                         Layout.fillWidth: true
                         text: card.p ? (card.p.trackTitle || "Без названия") : ""
-                        font.bold: true
-                        font.pixelSize: 14
+                        color: Rock.ink
+                        font.family: Rock.display
+                        font.weight: Font.Black
+                        font.pixelSize: 16
                         elide: Text.ElideRight
                     }
                     // «любимый трек»
                     MediaBtn {
                         visible: card.p !== null
                         icon: Media.isLoved ? "\uf004" : "\uf08a"
-                        accentColor: "#e0557a"
+                        accentColor: Rock.pinkDeep
                         on: Media.isLoved
                         onActivated: Media.toggleLove()
                     }
@@ -187,14 +192,16 @@ Rectangle {
                     Lbl {
                         Layout.fillWidth: true
                         text: card.p ? card.p.trackArtist : ""
-                        color: card.artAccent
+                        color: Rock.pinkDeep
                         font.pixelSize: 12
+                        font.bold: true
                         elide: Text.ElideRight
                     }
                     Lbl {
                         visible: text !== ""
                         text: card.p ? (card.p.trackAlbum || "") : ""
-                        color: Theme.muted
+                        color: Rock.ink2
+                        opacity: 0.65
                         font.pixelSize: 10
                         elide: Text.ElideRight
                         Layout.maximumWidth: 110
@@ -211,7 +218,7 @@ Rectangle {
                     Lbl {
                         Layout.preferredWidth: 34
                         text: Fmt.hms(seek.dragRatio >= 0 && card.p ? seek.dragRatio * card.p.length : (card.p ? card.p.position : 0))
-                        color: Theme.muted
+                        color: Rock.ink2
                         font.pixelSize: 10
                     }
 
@@ -232,20 +239,26 @@ Rectangle {
                             width: parent.width
                             height: seek.hot ? 6 : 4
                             radius: height / 2
-                            color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.14)
+                            color: Rock.a(Rock.ink, 0.16)
+                            border.width: 1
+                            border.color: Rock.a(Rock.ink, 0.35)
                             Behavior on height { NumberAnimation { duration: 120 } }
                             Rectangle {
                                 width: parent.width * seek.shown
                                 height: parent.height
                                 radius: height / 2
                                 color: card.artAccent
+                                border.width: 1
+                                border.color: Rock.ink
                             }
                         }
                         Rectangle {
                             width: 12; height: 12; radius: 6
                             anchors.verticalCenter: parent.verticalCenter
                             x: Math.max(0, Math.min(parent.width - width, parent.width * seek.shown - width / 2))
-                            color: Theme.text
+                            color: Rock.ink
+                            border.width: 2
+                            border.color: Rock.cream
                             opacity: seek.hot ? 1 : 0
                             Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
@@ -275,7 +288,7 @@ Rectangle {
                         text: card.p
                             ? (card.showRemaining ? "-" + Fmt.hms(Math.max(0, card.p.length - card.p.position)) : Fmt.hms(card.p.length))
                             : ""
-                        color: Theme.muted
+                        color: Rock.ink2
                         font.pixelSize: 10
                         MouseArea {
                             anchors.fill: parent
@@ -297,7 +310,7 @@ Rectangle {
 
                     Lbl {
                         text: (card.p && card.p.volume <= 0) ? "\uf026" : (card.p && card.p.volume < 0.5 ? "\uf027" : "\uf028")
-                        color: Theme.muted
+                        color: Rock.ink2
                         font.pixelSize: 10
                         MouseArea {
                             anchors.fill: parent
@@ -318,20 +331,22 @@ Rectangle {
                             width: parent.width
                             height: vol.hot ? 5 : 3
                             radius: height / 2
-                            color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.12)
+                            color: Rock.a(Rock.ink, 0.14)
+                            border.width: 1
+                            border.color: Rock.a(Rock.ink, 0.3)
                             Behavior on height { NumberAnimation { duration: 120 } }
                             Rectangle {
                                 width: parent.width * vol.shown
                                 height: parent.height
                                 radius: height / 2
-                                color: Qt.rgba(card.artAccent.r, card.artAccent.g, card.artAccent.b, 0.75)
+                                color: Rock.a(card.artAccent, 0.85)
                             }
                         }
                         Rectangle {
                             width: 10; height: 10; radius: 5
                             anchors.verticalCenter: parent.verticalCenter
                             x: Math.max(0, Math.min(parent.width - width, parent.width * vol.shown - width / 2))
-                            color: Theme.text
+                            color: Rock.ink
                             opacity: vol.hot ? 1 : 0
                             Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
@@ -349,7 +364,7 @@ Rectangle {
                         Layout.preferredWidth: 30
                         horizontalAlignment: Text.AlignRight
                         text: card.p ? Math.round(card.p.volume * 100) + "%" : ""
-                        color: Theme.muted
+                        color: Rock.ink2
                         font.pixelSize: 9
                     }
                 }
@@ -363,7 +378,7 @@ Rectangle {
                     MediaBtn {
                         visible: card.p !== null && card.p.shuffleSupported
                         icon: "\uf074"
-                        accentColor: card.artAccent
+                        accentColor: Rock.pinkDeep
                         on: card.p ? card.p.shuffle : false
                         onActivated: if (card.p) card.p.shuffle = !card.p.shuffle
                     }
@@ -396,7 +411,7 @@ Rectangle {
                     MediaBtn {
                         visible: card.p !== null && card.p.loopSupported
                         icon: "\uf021"
-                        accentColor: card.artAccent
+                        accentColor: Rock.pinkDeep
                         on: card.p ? card.p.loopState !== MprisLoopState.None : false
                         badge: (card.p && card.p.loopState === MprisLoopState.Track) ? "1" : ""
                         onActivated: card.cycleLoop()
@@ -419,16 +434,17 @@ Rectangle {
                     implicitWidth: chipLbl.implicitWidth + 20
                     implicitHeight: 22
                     radius: 11
-                    color: current ? Qt.rgba(card.artAccent.r, card.artAccent.g, card.artAccent.b, 0.20)
-                                   : (chipArea.containsMouse ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08) : "transparent")
-                    border.width: 1
-                    border.color: current ? card.artAccent : Theme.hairline
+                    color: current ? Rock.a(Rock.pink, 0.18)
+                                   : (chipArea.containsMouse ? Rock.a(Rock.ink, 0.08) : "transparent")
+                    border.width: current ? 2 : 1
+                    border.color: current ? Rock.pinkDeep : Rock.a(Rock.ink, 0.35)
                     Lbl {
                         id: chipLbl
                         anchors.centerIn: parent
                         text: String(chip.modelData.identity).substring(0, 14)
-                        color: chip.current ? card.artAccent : Theme.muted
+                        color: chip.current ? Rock.pinkDeep : Rock.ink2
                         font.pixelSize: 10
+                        font.bold: chip.current
                     }
                     MouseArea {
                         id: chipArea

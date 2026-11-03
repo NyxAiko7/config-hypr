@@ -11,6 +11,12 @@ PopupWindow {
     property string alignment: "left"
     property double closedAt: 0
 
+    property color fill: Rock.ink2
+    property color edge: Rock.ink
+    property color accent: Rock.pink
+    property real radius: 20
+    property int borderWidth: 3
+
     function toggle() {
         if (Date.now() - closedAt < 500) return
         if (!visible) {
@@ -51,9 +57,19 @@ PopupWindow {
 
     Rectangle {
         anchors.fill: parent
-        radius: Theme.radius
-        color: Theme.popupBg
-        border.width: 1
-        border.color: Theme.hairline
+        radius: popup.radius
+        color: popup.fill
+        border.width: popup.borderWidth
+        border.color: popup.edge
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 5
+        radius: popup.radius - 4
+        color: "transparent"
+        border.width: 1.5
+        border.color: popup.accent
+        opacity: 0.55
     }
 }

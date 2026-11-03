@@ -7,6 +7,9 @@ BarPopup {
     alignment: "center"
     implicitWidth: 300
     implicitHeight: 330
+    fill: Rock.ink2
+    accent: Rock.pink
+    radius: 22
 
     readonly property var months: ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"]
     readonly property var days: ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"]
@@ -28,9 +31,9 @@ BarPopup {
         property string icon
         signal activated()
         implicitWidth: 28; implicitHeight: 28; radius: 14
-        color: a.containsMouse ? Theme.surface : "transparent"
+        color: a.containsMouse ? Rock.a(Rock.pink, 0.22) : "transparent"
         Behavior on color { ColorAnimation { duration: 120 } }
-        Lbl { anchors.centerIn: parent; text: parent.icon; color: Theme.muted; font.pixelSize: 10 }
+        Lbl { anchors.centerIn: parent; text: parent.icon; color: Rock.muted; font.pixelSize: 10 }
         MouseArea { id: a; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: parent.activated() }
     }
 
@@ -46,7 +49,10 @@ BarPopup {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 text: pop.months[pop.viewDate.getMonth()] + " " + pop.viewDate.getFullYear()
-                font.bold: true
+                color: Rock.cream
+                font.family: Rock.display
+                font.weight: Font.Black
+                font.pixelSize: 17
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: pop.viewDate = new Date() }
             }
             Arrow { icon: "\uf054"; onActivated: pop.shift(1) }
@@ -67,7 +73,7 @@ BarPopup {
                     Layout.bottomMargin: 4
                     horizontalAlignment: Text.AlignHCenter
                     text: modelData
-                    color: Theme.muted
+                    color: Rock.muted
                     font.pixelSize: 10
                     opacity: index >= 5 ? 0.6 : 1
                 }
@@ -84,14 +90,17 @@ BarPopup {
                     Layout.preferredWidth: 36
                     Layout.preferredHeight: 32
                     radius: 16
-                    color: isToday ? Theme.accent : "transparent"
+                    color: isToday ? Rock.pink : "transparent"
+                    border.width: isToday ? 2 : 0
+                    border.color: Rock.ink
 
                     Lbl {
                         anchors.centerIn: parent
                         text: parent.d.getDate()
-                        color: parent.isToday ? Theme.textOnAccent : Theme.text
+                        color: Rock.cream
                         opacity: parent.inMonth ? ((parent.index % 7) >= 5 && !parent.isToday ? 0.65 : 1) : 0.25
                         font.bold: parent.isToday
+                        font.family: parent.isToday ? Rock.display : Rock.mono
                     }
                 }
             }
