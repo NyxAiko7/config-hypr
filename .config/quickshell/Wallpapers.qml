@@ -43,61 +43,20 @@ Singleton {
         listProc.running = true
     }
 
-    function apply(path, originX, originY) {
-        current = path
-
-        // wal запускаем в фоне, чтобы обои появлялись сразу, а палитра догнала чуть позже
-        if (Config.wallpaperSetter !== "") {
-            Quickshell.execDetached(["sh", "-c",
-                'f="$1"; (wal -i "$f" -n -q >/dev/null 2>&1 &); ' + Config.wallpaperSetter,
-                "sh", path])
-            return
-        }
-
-        // Клик по миниатюре — обои «расцветают» из этой точки.
-        // Случайное переключение — каждый раз другой диагональный характер.
-        const hasOrigin = typeof originX === "number" && typeof originY === "number"
-        let type, angle, wave, pos
-        if (hasOrigin) {
-            type = "grow"
-            angle = "45"
-            wave = "22,14"
-            pos = Math.max(0, Math.min(1, originX)).toFixed(4) + "," +
-                  (1 - Math.max(0, Math.min(1, originY))).toFixed(4)
-        } else {
-            const variants = [
-                { t: "wave",  a: String(16 + Math.floor(Math.random() * 44)), w: "26,16" },
-                { t: "outer", a: "45", w: "20,20" },
-                { t: "grow",  a: "45", w: "20,20" }
-            ]
-            const v = variants[Math.floor(Math.random() * variants.length)]
-            type = v.t
-            angle = v.a
-            wave = v.w
-            pos = (0.2 + Math.random() * 0.6).toFixed(4) + "," +
-                  (0.2 + Math.random() * 0.6).toFixed(4)
-        }
-
-        const setter =
+    function apply(path) {
+        const setter = Config.wallpaperSetter !== "" ? Config.wallpaperSetter :
             'w=""; if command -v awww >/dev/null 2>&1; then w=awww; elif command -v swww >/dev/null 2>&1; then w=swww; fi; ' +
             'if [ -n "$w" ]; then ' +
-            '  if ! "$w" query >/dev/null 2>&1; then ' +
-            '    ("$w-daemon" >/dev/null 2>&1 &); i=0; ' +
-            '    while [ $i -lt 20 ]; do "$w" query >/dev/null 2>&1 && break; sleep 0.05; i=$((i+1)); done; ' +
-            '  fi; ' +
-            '  "$w" img "$f" --resize crop ' +
-            '    --transition-type "$2" --transition-pos "$3" ' +
-            '    --transition-angle "$4" --transition-wave "$5" ' +
-            '    --transition-duration 0.55 --transition-fps 120 ' +
-            '    --transition-bezier 0.22,1,0.36,1; ' +
+            '  "$w" query >/dev/null 2>&1 || { ("$w-daemon" >/dev/null 2>&1 &); sleep 0.7; }; ' +
+            '  "$w" img "$f" --transition-type grow --transition-duration 1.2; ' +
             'elif command -v hyprctl >/dev/null 2>&1 && pgrep -x hyprpaper >/dev/null 2>&1; then ' +
             '  hyprctl hyprpaper preload "$f"; hyprctl hyprpaper wallpaper ",$f"; ' +
             'else ' +
             '  pkill -x swaybg; (swaybg -i "$f" -m fill >/dev/null 2>&1 &); ' +
             'fi'
-        Quickshell.execDetached(["sh", "-c",
-            'f="$1"; (wal -i "$f" -n -q >/dev/null 2>&1 &); ' + setter,
-            "sh", path, type, pos, angle, wave])
+        // сначала wal (перекрасит панель и терминалы), затем сами обои
+        Quickshell.execDetached(["sh", "-c", 'f="$1"; wal -i "$f" -n -q; ' + setter, "sh", path])
+        current = path
     }
 
     function random() {

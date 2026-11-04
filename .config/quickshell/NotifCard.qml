@@ -11,47 +11,22 @@ Rectangle {
     readonly property bool critical: notif && notif.urgency === NotificationUrgency.Critical
 
     implicitHeight: col.implicitHeight + 24
-    radius: 14
-    color: hoverArea.containsMouse ? Rock.cream : Rock.paper
-    border.width: critical ? 3 : 2
-    border.color: critical ? Rock.orange : Rock.ink
+    radius: 16
+    color: hoverArea.containsMouse ? Qt.lighter(Theme.surface, 1.15) : Theme.surface
+    border.width: critical ? 1 : 0
+    border.color: Theme.warn
     Behavior on color { ColorAnimation { duration: 120 } }
 
-    // клик: действие по умолчанию; свайп влево: закрыть
-    property real swipeX: 0
-    Behavior on swipeX { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-    x: card.swipeX
+    // клик: выполнить действие по умолчанию и закрыть
     MouseArea {
         id: hoverArea
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Notifs.defaultAction(card.notif) ? Qt.PointingHandCursor : Qt.ArrowCursor
-        drag.target: card
-        drag.axis: Drag.XAxis
-        drag.minimumX: -card.width * 0.6
-        drag.maximumX: 0
-        drag.threshold: 8
-        onPressed: card.swipeX = 0
-        onReleased: {
-            if (card.x < -card.width * 0.35) { card.notif.dismiss(); return }
-            card.swipeX = 0
-        }
         onClicked: {
-            if (Math.abs(card.x) > 4) return          // это был свайп, не клик
             const d = Notifs.defaultAction(card.notif)
             if (d) { d.invoke(); card.notif.dismiss() }
         }
-    }
-    // подсказка «смахни» на фоне карточки
-    Lbl {
-        anchors.right: parent.right
-        anchors.rightMargin: 16
-        anchors.verticalCenter: parent.verticalCenter
-        text: "\uf060  закрыть"
-        color: Rock.orange
-        font.pixelSize: 11
-        font.bold: true
-        opacity: Math.min(1, Math.abs(card.swipeX) / (card.width * 0.35))
     }
 
     ColumnLayout {
@@ -68,12 +43,7 @@ Rectangle {
                 Layout.preferredWidth: 38
                 Layout.preferredHeight: 38
                 Layout.alignment: Qt.AlignTop
-                Rectangle {
-                    anchors.fill: parent
-                    color: Rock.cream
-                    border.width: 2
-                    border.color: Rock.ink
-                }
+                Rectangle { anchors.fill: parent; color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08) }
                 Image {
                     id: img
                     anchors.fill: parent
@@ -87,7 +57,7 @@ Rectangle {
                     anchors.centerIn: parent
                     visible: !img.visible
                     text: "\uf0f3"
-                    color: Rock.pinkDeep
+                    color: Theme.accent
                     font.pixelSize: 15
                 }
                 RoundMask { anchors.fill: parent; radius: 12; maskColor: card.color }
@@ -104,18 +74,13 @@ Rectangle {
                     Lbl {
                         Layout.fillWidth: true
                         text: card.notif.summary
-                        color: Rock.ink
-                        font.family: Rock.display
-                        font.weight: Font.Black
-                        font.pixelSize: 14
+                        font.bold: true
                         elide: Text.ElideRight
                     }
-                    Lbl { text: Notifs.timeAgo(card.notif); color: Rock.ink2; opacity: 0.6; font.pixelSize: 10 }
+                    Lbl { text: Notifs.timeAgo(card.notif); color: Theme.muted; font.pixelSize: 10 }
                     IconBtn {
                         size: 22
                         icon: "\uf00d"
-                        iconColor: Rock.ink2
-                        hoverColor: Rock.a(Rock.pink, 0.18)
                         onClicked: card.notif.dismiss()
                     }
                 }
@@ -123,8 +88,8 @@ Rectangle {
                     Layout.fillWidth: true
                     visible: text !== ""
                     text: card.notif.body
-                    color: Rock.ink
-                    opacity: 0.78
+                    color: Theme.text
+                    opacity: 0.8
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                     maximumLineCount: 4
@@ -145,11 +110,9 @@ Rectangle {
                     implicitWidth: actLbl.implicitWidth + 24
                     implicitHeight: 28
                     radius: 14
-                    color: actArea.containsMouse ? Qt.lighter(Rock.yellow, 1.06) : Rock.yellow
-                    border.width: 2
-                    border.color: Rock.ink
+                    color: actArea.containsMouse ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
                     Behavior on color { ColorAnimation { duration: 100 } }
-                    Lbl { id: actLbl; anchors.centerIn: parent; text: act.modelData.text; color: Rock.ink; font.pixelSize: 11; font.bold: true }
+                    Lbl { id: actLbl; anchors.centerIn: parent; text: act.modelData.text; color: Theme.textOnAccent; font.pixelSize: 11; font.bold: true }
                     MouseArea {
                         id: actArea
                         anchors.fill: parent

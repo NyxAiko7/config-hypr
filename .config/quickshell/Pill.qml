@@ -9,21 +9,13 @@ Rectangle {
     signal scrolled(var wheel)
     readonly property bool hovered: hover.containsMouse
 
-    implicitHeight: Theme.islandHeight - 8
-    implicitWidth: row.implicitWidth + 16
-    radius: 7
-
-    color: root.hovered && root.interactive ? Rock.a(Rock.pink, 0.18) : "transparent"
-    border.width: 1
-    border.color: root.hovered && root.interactive
-        ? Rock.a(Rock.pink, 0.55)
-        : "transparent"
-
-    scale: root.interactive && hover.pressed ? 0.94 : 1
-
-    Behavior on color { ColorAnimation { duration: 120 } }
-    Behavior on border.color { ColorAnimation { duration: 120 } }
-    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
+    implicitHeight: Theme.barHeight - 8
+    implicitWidth: row.implicitWidth + 20
+    radius: 10
+    color: (interactive && hover.containsMouse)
+        ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.09)
+        : Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0)
+    Behavior on color { ColorAnimation { duration: 140 } }
 
     MouseArea {
         id: hover
@@ -38,6 +30,6 @@ Rectangle {
     RowLayout {
         id: row
         anchors.centerIn: parent
-        spacing: 8
+        spacing: 10
     }
 }

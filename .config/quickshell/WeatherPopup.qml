@@ -5,11 +5,8 @@ import Quickshell
 BarPopup {
     id: pop
     alignment: "center"
-    implicitWidth: 360
+    implicitWidth: 340
     implicitHeight: content.implicitHeight + 32
-    fill: Rock.cream
-    accent: Rock.cyan
-    radius: 22
 
     onVisibleChanged: if (visible) Weather.refresh(false)
 
@@ -25,7 +22,7 @@ BarPopup {
             Layout.topMargin: 20
             Layout.bottomMargin: 20
             text: Weather.error ? "Не удалось получить погоду" : "Загрузка…"
-            color: Rock.ink2
+            color: Theme.muted
         }
 
         ColumnLayout {
@@ -37,64 +34,18 @@ BarPopup {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 14
-
-                Rectangle {
-                    Layout.preferredWidth: 62
-                    Layout.preferredHeight: 62
-                    radius: 31
-                    color: Rock.yellow
-                    border.width: 3
-                    border.color: Rock.ink
-                    Lbl {
-                        anchors.centerIn: parent
-                        text: Weather.icon
-                        color: Rock.ink
-                        font.pixelSize: 34
-                    }
-                }
-
+                Lbl { text: Weather.icon; color: Theme.accent; font.pixelSize: 40 }
                 ColumnLayout {
                     spacing: 0
-                    Lbl {
-                        text: Weather.temp + "°"
-                        color: Rock.ink
-                        font.family: Rock.display
-                        font.weight: Font.Black
-                        font.pixelSize: 40
-                    }
-                    Lbl {
-                        text: Weather.desc
-                        color: Rock.ink2
-                        font.pixelSize: 12
-                        font.bold: true
-                    }
+                    Lbl { text: Weather.temp + "°"; font.pixelSize: 32; font.bold: true }
+                    Lbl { text: Weather.desc; color: Theme.muted }
                 }
-
                 Item { Layout.fillWidth: true }
-
                 ColumnLayout {
                     Layout.alignment: Qt.AlignTop
-                    spacing: 4
-                    RockChip {
-                        Layout.alignment: Qt.AlignRight
-                        fill: Rock.paper
-                        shadowColor: Rock.pink
-                        offset: 2
-                        radius: 8
-                        padH: 8
-                        padV: 3
-                        Lbl { text: Weather.city; color: Rock.ink; font.pixelSize: 10; font.bold: true }
-                    }
-                    RockChip {
-                        Layout.alignment: Qt.AlignRight
-                        fill: Rock.paper
-                        shadowColor: Rock.cyan
-                        offset: 2
-                        radius: 8
-                        padH: 8
-                        padV: 3
-                        Lbl { text: "Ощущается " + Weather.feels + "°"; color: Rock.ink2; font.pixelSize: 10 }
-                    }
+                    spacing: 2
+                    Lbl { Layout.alignment: Qt.AlignRight; text: Weather.city; color: Theme.muted; font.pixelSize: 11 }
+                    Lbl { Layout.alignment: Qt.AlignRight; text: "Ощущается " + Weather.feels + "°"; color: Theme.muted; font.pixelSize: 11 }
                 }
             }
 
@@ -112,24 +63,15 @@ BarPopup {
                         required property var modelData
                         Layout.fillWidth: true
                         Layout.preferredWidth: 1
-                        implicitHeight: 64
-                        radius: 12
-                        color: Rock.paper
-                        border.width: 2
-                        border.color: Rock.ink
+                        implicitHeight: 60
+                        radius: 14
+                        color: Theme.surface
                         ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 1
-                            Lbl { Layout.alignment: Qt.AlignHCenter; text: modelData.i; color: Rock.pinkDeep; font.pixelSize: 14 }
-                            Lbl {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: modelData.t
-                                color: Rock.ink
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 14
-                            }
-                            Lbl { Layout.alignment: Qt.AlignHCenter; text: modelData.l; color: Rock.ink2; font.pixelSize: 9 }
+                            Lbl { Layout.alignment: Qt.AlignHCenter; text: modelData.i; color: Theme.accent2; font.pixelSize: 13 }
+                            Lbl { Layout.alignment: Qt.AlignHCenter; text: modelData.t; font.bold: true }
+                            Lbl { Layout.alignment: Qt.AlignHCenter; text: modelData.l; color: Theme.muted; font.pixelSize: 9 }
                         }
                     }
                 }
@@ -139,14 +81,14 @@ BarPopup {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                Lbl { text: "\ue34c"; color: Rock.orange; font.pixelSize: 14 }
-                Lbl { text: Weather.sunrise; color: Rock.ink2; font.pixelSize: 11; font.bold: true }
+                Lbl { text: "\ue34c"; color: Theme.accent2; font.pixelSize: 14 }
+                Lbl { text: Weather.sunrise; color: Theme.muted; font.pixelSize: 11 }
                 Item { Layout.fillWidth: true }
-                Lbl { text: "\ue34d"; color: Rock.pinkDeep; font.pixelSize: 14 }
-                Lbl { text: Weather.sunset; color: Rock.ink2; font.pixelSize: 11; font.bold: true }
+                Lbl { text: "\ue34d"; color: Theme.accent; font.pixelSize: 14 }
+                Lbl { text: Weather.sunset; color: Theme.muted; font.pixelSize: 11 }
                 Item { Layout.fillWidth: true }
-                Lbl { text: "\uf0e4"; color: Rock.purple; font.pixelSize: 11 }
-                Lbl { text: Weather.pressure; color: Rock.ink2; font.pixelSize: 11; font.bold: true }
+                Lbl { text: "\uf0e4"; color: Theme.muted; font.pixelSize: 11 }
+                Lbl { text: Weather.pressure; color: Theme.muted; font.pixelSize: 11 }
             }
 
             // Почасовой график
@@ -165,9 +107,7 @@ BarPopup {
                             Layout.preferredWidth: 1
                             horizontalAlignment: Text.AlignHCenter
                             text: modelData.temp + "°"
-                            color: Rock.ink
                             font.pixelSize: 11
-                            font.bold: true
                         }
                     }
                 }
@@ -183,8 +123,8 @@ BarPopup {
                         function onHourlyChanged() { chart.requestPaint() }
                     }
                     Connections {
-                        target: Rock
-                        function onPinkChanged() { chart.requestPaint() }
+                        target: Theme
+                        function onAccentChanged() { chart.requestPaint() }
                     }
                     onPaint: {
                         const ctx = getContext("2d")
@@ -197,39 +137,27 @@ BarPopup {
                         const xs = i => (i + 0.5) * width / n
                         const ys = v => mx === mn ? height / 2 : pad + (1 - (v - mn) / (mx - mn)) * (height - 2 * pad)
 
-                        function path() {
-                            ctx.beginPath()
-                            ctx.moveTo(xs(0), ys(h[0].temp))
-                            for (let i = 1; i < n; i++) {
-                                const x0 = xs(i - 1), y0 = ys(h[i - 1].temp), x1 = xs(i), y1 = ys(h[i].temp)
-                                ctx.bezierCurveTo((x0 + x1) / 2, y0, (x0 + x1) / 2, y1, x1, y1)
-                            }
+                        ctx.beginPath()
+                        ctx.moveTo(xs(0), ys(h[0].temp))
+                        for (let i = 1; i < n; i++) {
+                            const x0 = xs(i - 1), y0 = ys(h[i - 1].temp), x1 = xs(i), y1 = ys(h[i].temp)
+                            ctx.bezierCurveTo((x0 + x1) / 2, y0, (x0 + x1) / 2, y1, x1, y1)
                         }
-
-                        path()
-                        ctx.strokeStyle = Rock.ink
-                        ctx.lineWidth = 5
-                        ctx.stroke()
-
-                        path()
-                        ctx.strokeStyle = Rock.pink
-                        ctx.lineWidth = 3
+                        ctx.strokeStyle = Theme.accent
+                        ctx.lineWidth = 2
                         ctx.stroke()
 
                         ctx.lineTo(xs(n - 1), height)
                         ctx.lineTo(xs(0), height)
                         ctx.closePath()
-                        ctx.fillStyle = Rock.a(Rock.pink, 0.14)
+                        ctx.fillStyle = Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.12)
                         ctx.fill()
 
                         for (let i = 0; i < n; i++) {
                             ctx.beginPath()
-                            ctx.arc(xs(i), ys(h[i].temp), 3.5, 0, Math.PI * 2)
-                            ctx.fillStyle = Rock.pink
+                            ctx.arc(xs(i), ys(h[i].temp), 3, 0, Math.PI * 2)
+                            ctx.fillStyle = Theme.accent
                             ctx.fill()
-                            ctx.strokeStyle = Rock.ink
-                            ctx.lineWidth = 1.5
-                            ctx.stroke()
                         }
                     }
                 }
@@ -245,14 +173,14 @@ BarPopup {
                             Layout.preferredWidth: 1
                             horizontalAlignment: Text.AlignHCenter
                             text: modelData.label
-                            color: Rock.ink2
+                            color: Theme.muted
                             font.pixelSize: 10
                         }
                     }
                 }
             }
 
-            Rectangle { Layout.fillWidth: true; height: 2; color: Rock.a(Rock.ink, 0.18) }
+            Rectangle { Layout.fillWidth: true; height: 1; color: Theme.hairline }
 
             // Прогноз на дни
             ColumnLayout {
@@ -260,47 +188,15 @@ BarPopup {
                 spacing: 6
                 Repeater {
                     model: Weather.days
-                    delegate: Rectangle {
+                    delegate: RowLayout {
                         required property var modelData
                         Layout.fillWidth: true
-                        implicitHeight: 34
-                        radius: 10
-                        color: Rock.paper
-                        border.width: 2
-                        border.color: Rock.ink
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 10
-                            Lbl {
-                                Layout.preferredWidth: 70
-                                text: modelData.label
-                                color: Rock.ink
-                                font.bold: true
-                            }
-                            Lbl {
-                                text: modelData.icon
-                                color: Rock.purple
-                                font.pixelSize: 14
-                                Layout.preferredWidth: 22
-                            }
-                            Lbl {
-                                Layout.fillWidth: true
-                                text: modelData.desc
-                                color: Rock.ink2
-                                font.pixelSize: 11
-                                elide: Text.ElideRight
-                            }
-                            Lbl { text: modelData.lo + "°"; color: Rock.ink2 }
-                            Lbl {
-                                text: modelData.hi + "°"
-                                color: Rock.pinkDeep
-                                font.bold: true
-                                Layout.preferredWidth: 30
-                                horizontalAlignment: Text.AlignRight
-                            }
-                        }
+                        spacing: 10
+                        Lbl { Layout.preferredWidth: 70; text: modelData.label }
+                        Lbl { text: modelData.icon; color: Theme.accent2; font.pixelSize: 14; Layout.preferredWidth: 22 }
+                        Lbl { Layout.fillWidth: true; text: modelData.desc; color: Theme.muted; font.pixelSize: 11; elide: Text.ElideRight }
+                        Lbl { text: modelData.lo + "°"; color: Theme.muted }
+                        Lbl { text: modelData.hi + "°"; font.bold: true; Layout.preferredWidth: 30; horizontalAlignment: Text.AlignRight }
                     }
                 }
             }

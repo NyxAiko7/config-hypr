@@ -45,9 +45,9 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 48
         radius: 14
-        color: rArea.containsMouse ? Rock.ink : "transparent"
+        color: rArea.containsMouse ? Theme.surface : "transparent"
         border.width: current ? 1 : 0
-        border.color: Qt.rgba(Rock.pink.r, Rock.pink.g, Rock.pink.b, 0.5)
+        border.color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.5)
         Behavior on color { ColorAnimation { duration: 120 } }
 
         RowLayout {
@@ -59,7 +59,7 @@ Item {
                 Layout.preferredWidth: 22
                 horizontalAlignment: Text.AlignHCenter
                 text: row.glyph
-                color: row.current ? Rock.pink : Rock.cream
+                color: row.current ? Theme.accent : Theme.text
                 font.pixelSize: 15
             }
             Lbl {
@@ -68,7 +68,7 @@ Item {
                 font.bold: row.current
                 elide: Text.ElideRight
             }
-            Lbl { visible: row.current; text: "\uf00c"; color: Rock.pink; font.pixelSize: 12 }
+            Lbl { visible: row.current; text: "\uf00c"; color: Theme.accent; font.pixelSize: 12 }
         }
         MouseArea {
             id: rArea
@@ -104,19 +104,19 @@ Item {
                     width: parent.width
                     height: 4
                     radius: 2
-                    color: Qt.rgba(Rock.cream.r, Rock.cream.g, Rock.cream.b, 0.14)
+                    color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.14)
                     Rectangle {
                         width: parent.width * Math.min(1, sr.vol)
                         height: parent.height
                         radius: 2
-                        color: Rock.pink
+                        color: Theme.accent
                     }
                 }
                 Rectangle {
                     width: 10; height: 10; radius: 5
                     anchors.verticalCenter: parent.verticalCenter
                     x: Math.max(0, Math.min(parent.width - width, parent.width * Math.min(1, sr.vol) - width / 2))
-                    color: Rock.cream
+                    color: Theme.text
                 }
                 MouseArea {
                     anchors.fill: parent
@@ -128,7 +128,7 @@ Item {
                     onPositionChanged: m => { if (pressed) setV(m.x) }
                 }
             }
-            Lbl { Layout.preferredWidth: 30; horizontalAlignment: Text.AlignRight; text: Math.round(sr.vol * 100); color: Rock.muted; font.pixelSize: 11 }
+            Lbl { Layout.preferredWidth: 30; horizontalAlignment: Text.AlignRight; text: Math.round(sr.vol * 100); color: Theme.muted; font.pixelSize: 11 }
         }
     }
 
@@ -139,7 +139,7 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
-            IconBtn { icon: "\uf053"; iconColor: Rock.cream; onClicked: page.back() }
+            IconBtn { icon: "\uf053"; iconColor: Theme.text; onClicked: page.back() }
             Lbl { Layout.fillWidth: true; text: "Звук"; font.bold: true; font.pixelSize: 15 }
             IconBtn { icon: "\uf1de"; onClicked: Quickshell.execDetached(["pavucontrol"]) }
         }
@@ -158,7 +158,7 @@ Item {
                 width: scroll.width
                 spacing: 4
 
-                Lbl { text: "ВЫВОД"; color: Rock.muted; font.pixelSize: 10; Layout.leftMargin: 6; Layout.topMargin: 4 }
+                Lbl { text: "ВЫВОД"; color: Theme.muted; font.pixelSize: 10; Layout.leftMargin: 6; Layout.topMargin: 4 }
                 Repeater {
                     model: page.sinks
                     delegate: DeviceRow {
@@ -170,7 +170,7 @@ Item {
                     }
                 }
 
-                Lbl { text: "ВВОД"; color: Rock.muted; font.pixelSize: 10; Layout.leftMargin: 6; Layout.topMargin: 12 }
+                Lbl { text: "ВВОД"; color: Theme.muted; font.pixelSize: 10; Layout.leftMargin: 6; Layout.topMargin: 12 }
                 Repeater {
                     model: page.sources
                     delegate: DeviceRow {
@@ -185,7 +185,7 @@ Item {
                 Lbl {
                     visible: page.streams.length > 0
                     text: "ПРИЛОЖЕНИЯ"
-                    color: Rock.muted
+                    color: Theme.muted
                     font.pixelSize: 10
                     Layout.leftMargin: 6
                     Layout.topMargin: 12

@@ -13,11 +13,6 @@ Singleton {
     property bool caffeine: false          // запрет блокировки/засыпания
     property string wifiSsid: ""           // непустое = показать запрос пароля
     signal toggleCenter()                  // открыть/закрыть центр уведомлений
-    signal closePopups()                   // закрыть все всплывашки панели (клик мимо)
-
-    // Клик по «пустому» месту панели закрывает открытое меню — как в Hyprland.
-    readonly property bool anyPopupOpen: popupOpen || wallpaper || session
-    property bool popupOpen: false         // ставит Bar, когда открыт любой popup
 
     // Открыть лаунчер в нужном режиме; повторный вызов того же режима закрывает
     function openLauncher(mode) {
@@ -64,16 +59,14 @@ Singleton {
     }
 
     // Событие того же типа заменяет текущее, «level» (громкость/яркость) перебивает всё,
-    // остальные становятся в очередь (до 5, без дубликатов по kind+text)
-    readonly property int eventQueueMax: 5
-
+    // остальные становятся в очередь (до 3)
     function flash(icon, text, sub, art, kind, action, ms) {
         const ev = { icon: icon, text: text, sub: sub || "", art: art || "",
                      kind: kind || "info", action: action || "", ms: ms || 0 }
         if (!eventActive || ev.kind === eventKind || ev.kind === "level") { show(ev); return }
-        const q = eventQueue.filter(e => !(e.kind === ev.kind && e.text === ev.text))
+        const q = eventQueue.filter(e => e.kind !== ev.kind)
         q.push(ev)
-        eventQueue = q.slice(-eventQueueMax)
+        eventQueue = q.slice(-3)
     }
 
     function dismissEvent() {
@@ -81,7 +74,6 @@ Singleton {
         eventActive = false
         eventTimer.stop()
         eventHold = false
-        eventRemaining = 0
     }
 
     onEventHoldChanged: {

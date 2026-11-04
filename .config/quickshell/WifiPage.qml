@@ -13,20 +13,20 @@ Item {
         property string icon
         property string value
         property string label
-        property color valueColor: Rock.cream
+        property color valueColor: Theme.text
         implicitHeight: 56
         radius: 14
-        color: Qt.rgba(Rock.cream.r, Rock.cream.g, Rock.cream.b, 0.06)
+        color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06)
         ColumnLayout {
             anchors.centerIn: parent
             spacing: 1
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 5
-                Lbl { text: ms.icon; color: Rock.cyan; font.pixelSize: 11 }
+                Lbl { text: ms.icon; color: Theme.accent2; font.pixelSize: 11 }
                 Lbl { text: ms.value; color: ms.valueColor; font.bold: true; font.pixelSize: 13 }
             }
-            Lbl { Layout.alignment: Qt.AlignHCenter; text: ms.label; color: Rock.muted; font.pixelSize: 9 }
+            Lbl { Layout.alignment: Qt.AlignHCenter; text: ms.label; color: Theme.muted; font.pixelSize: 9 }
         }
     }
 
@@ -55,7 +55,7 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
-            IconBtn { icon: "\uf053"; iconColor: Rock.cream; onClicked: page.back() }
+            IconBtn { icon: "\uf053"; iconColor: Theme.text; onClicked: page.back() }
             Lbl { Layout.fillWidth: true; text: "Wi-Fi"; font.bold: true; font.pixelSize: 15 }
             IconBtn { icon: "\uf021"; spin: Net.scanning; onClicked: Net.scan() }
             Toggle { checked: Net.wifiEnabled; onToggled: Net.toggleWifi() }
@@ -67,13 +67,13 @@ Item {
             Layout.fillWidth: true
             implicitHeight: 36
             radius: 12
-            color: Qt.rgba(Rock.orange.r, Rock.orange.g, Rock.orange.b, 0.16)
+            color: Qt.rgba(Theme.warn.r, Theme.warn.g, Theme.warn.b, 0.16)
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 12
                 anchors.rightMargin: 8
-                Lbl { Layout.fillWidth: true; text: Net.lastError; color: Rock.orange; font.pixelSize: 11; elide: Text.ElideRight }
-                IconBtn { size: 24; icon: "\uf00d"; iconColor: Rock.orange; onClicked: Net.lastError = "" }
+                Lbl { Layout.fillWidth: true; text: Net.lastError; color: Theme.warn; font.pixelSize: 11; elide: Text.ElideRight }
+                IconBtn { size: 24; icon: "\uf00d"; iconColor: Theme.warn; onClicked: Net.lastError = "" }
             }
         }
 
@@ -83,7 +83,7 @@ Item {
             Layout.fillWidth: true
             implicitHeight: info.implicitHeight + 24
             radius: 18
-            color: Rock.ink
+            color: Theme.surface
 
             ColumnLayout {
                 id: info
@@ -98,8 +98,8 @@ Item {
                         Layout.preferredWidth: 40
                         Layout.preferredHeight: 40
                         radius: 20
-                        color: Qt.rgba(Rock.pink.r, Rock.pink.g, Rock.pink.b, 0.18)
-                        Lbl { anchors.centerIn: parent; text: Net.icon; color: Rock.pink; font.pixelSize: 17 }
+                        color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18)
+                        Lbl { anchors.centerIn: parent; text: Net.icon; color: Theme.accent; font.pixelSize: 17 }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
@@ -109,7 +109,7 @@ Item {
                         Lbl {
                             Layout.fillWidth: true
                             text: page.statusLine
-                            color: Net.connectivity === "limited" || Net.connectivity === "portal" ? Rock.orange : Rock.muted
+                            color: Net.connectivity === "limited" || Net.connectivity === "portal" ? Theme.warn : Theme.muted
                             font.pixelSize: 10
                             elide: Text.ElideRight
                         }
@@ -120,8 +120,8 @@ Item {
                         implicitWidth: sigLbl.implicitWidth + 16
                         implicitHeight: 24
                         radius: 12
-                        color: Qt.rgba(Rock.cyan.r, Rock.cyan.g, Rock.cyan.b, 0.16)
-                        Lbl { id: sigLbl; anchors.centerIn: parent; text: Net.strength + "%"; color: Rock.cyan; font.pixelSize: 11; font.bold: true }
+                        color: Qt.rgba(Theme.accent2.r, Theme.accent2.g, Theme.accent2.b, 0.16)
+                        Lbl { id: sigLbl; anchors.centerIn: parent; text: Net.strength + "%"; color: Theme.accent2; font.pixelSize: 11; font.bold: true }
                     }
                 }
 
@@ -143,7 +143,7 @@ Item {
                         Layout.fillWidth: true; Layout.preferredWidth: 1
                         icon: "\uf012"; label: "Пинг"
                         value: Net.latency >= 0 ? Net.latency + " мс" : "—"
-                        valueColor: Net.latency < 0 ? Rock.orange : (Net.latency > 150 ? Rock.orange : Rock.cream)
+                        valueColor: Net.latency < 0 ? Theme.warn : (Net.latency > 150 ? Theme.warn : Theme.text)
                     }
                 }
 
@@ -156,17 +156,17 @@ Item {
                         Layout.preferredWidth: 1
                         implicitHeight: 32
                         radius: 12
-                        color: ipArea.containsMouse ? Qt.rgba(Rock.cream.r, Rock.cream.g, Rock.cream.b, 0.12)
-                                                    : Qt.rgba(Rock.cream.r, Rock.cream.g, Rock.cream.b, 0.06)
+                        color: ipArea.containsMouse ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.12)
+                                                    : Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06)
                         Behavior on color { ColorAnimation { duration: 120 } }
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 12
                             anchors.rightMargin: 10
                             spacing: 8
-                            Lbl { text: "IP"; color: Rock.muted; font.pixelSize: 10 }
+                            Lbl { text: "IP"; color: Theme.muted; font.pixelSize: 10 }
                             Lbl { Layout.fillWidth: true; text: Net.ip !== "" ? Net.ip : "—"; font.pixelSize: 11; elide: Text.ElideRight }
-                            Lbl { text: "\uf0c5"; color: Rock.muted; font.pixelSize: 10 }
+                            Lbl { text: "\uf0c5"; color: Theme.muted; font.pixelSize: 10 }
                         }
                         MouseArea {
                             id: ipArea
@@ -184,13 +184,13 @@ Item {
                         Layout.preferredWidth: 1
                         implicitHeight: 32
                         radius: 12
-                        color: Qt.rgba(Rock.cream.r, Rock.cream.g, Rock.cream.b, 0.06)
+                        color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06)
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 12
                             anchors.rightMargin: 10
                             spacing: 8
-                            Lbl { text: "Канал"; color: Rock.muted; font.pixelSize: 10 }
+                            Lbl { text: "Канал"; color: Theme.muted; font.pixelSize: 10 }
                             Lbl { Layout.fillWidth: true; text: Net.linkSpeed !== "" ? Net.linkSpeed : "—"; font.pixelSize: 11; elide: Text.ElideRight }
                         }
                     }
@@ -206,15 +206,15 @@ Item {
             ColumnLayout {
                 anchors.centerIn: parent
                 spacing: 8
-                Lbl { Layout.alignment: Qt.AlignHCenter; text: "\uf1eb"; color: Rock.muted; font.pixelSize: 30; opacity: 0.5 }
-                Lbl { Layout.alignment: Qt.AlignHCenter; text: "Wi-Fi выключен"; color: Rock.muted }
+                Lbl { Layout.alignment: Qt.AlignHCenter; text: "\uf1eb"; color: Theme.muted; font.pixelSize: 30; opacity: 0.5 }
+                Lbl { Layout.alignment: Qt.AlignHCenter; text: "Wi-Fi выключен"; color: Theme.muted }
             }
         }
 
         Lbl {
             visible: Net.wifiEnabled
             text: "ДОСТУПНЫЕ СЕТИ"
-            color: Rock.muted
+            color: Theme.muted
             font.pixelSize: 10
             Layout.leftMargin: 6
         }
@@ -233,7 +233,7 @@ Item {
                 anchors.centerIn: parent
                 visible: list.count === 0
                 text: Net.scanning ? "Поиск сетей…" : "Сети не найдены"
-                color: Rock.muted
+                color: Theme.muted
             }
 
             delegate: Rectangle {
@@ -243,9 +243,9 @@ Item {
                 width: list.width
                 height: 56
                 radius: 14
-                color: rowArea.containsMouse ? Rock.ink : "transparent"
+                color: rowArea.containsMouse ? Theme.surface : "transparent"
                 border.width: modelData.inUse ? 1 : 0
-                border.color: Qt.rgba(Rock.pink.r, Rock.pink.g, Rock.pink.b, 0.5)
+                border.color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.5)
                 Behavior on color { ColorAnimation { duration: 120 } }
 
                 MouseArea {
@@ -271,7 +271,7 @@ Item {
                     Lbl {
                         Layout.preferredWidth: 22
                         text: "\uf1eb"
-                        color: row.modelData.inUse ? Rock.pink : Rock.cream
+                        color: row.modelData.inUse ? Theme.accent : Theme.text
                         font.pixelSize: 16
                         opacity: row.modelData.signal >= 75 ? 1 : (row.modelData.signal >= 50 ? 0.8 : (row.modelData.signal >= 25 ? 0.55 : 0.35))
                     }
@@ -288,7 +288,7 @@ Item {
                             Layout.fillWidth: true
                             font.pixelSize: 10
                             elide: Text.ElideRight
-                            color: row.modelData.inUse || row.busy ? Rock.pink : Rock.muted
+                            color: row.modelData.inUse || row.busy ? Theme.accent : Theme.muted
                             text: (row.busy ? "Подключение…"
                                  : row.modelData.inUse ? "Подключено"
                                  : row.modelData.saved ? "Сохранена"
@@ -299,7 +299,7 @@ Item {
                     Lbl {
                         visible: row.modelData.secured
                         text: "\uf023"
-                        color: Rock.muted
+                        color: Theme.muted
                         font.pixelSize: 11
                     }
                     IconBtn {

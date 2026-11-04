@@ -22,6 +22,7 @@ Singleton {
     property double deadline: 0
     readonly property int pending: queue.length
 
+    // ── время для подписей «5 мин» ──
     property double now: Date.now()
     property var arrived: ({})
     Timer { interval: 30000; running: true; repeat: true; onTriggered: root.now = Date.now() }

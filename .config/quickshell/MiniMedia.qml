@@ -16,6 +16,11 @@ Pill {
     interactive: true
     visible: p !== null
 
+    function fmt(s) {
+        if (!isFinite(s) || s < 0) return "0:00"
+        return Math.floor(s / 60) + ":" + ("0" + Math.floor(s % 60)).slice(-2)
+    }
+
     onClicked: mouse => {
         if (mouse.button === Qt.MiddleButton) { if (p && p.canTogglePlaying) p.togglePlaying() }
         else if (mouse.button === Qt.RightButton) { if (p && p.canGoNext) p.next() }
@@ -48,12 +53,12 @@ Pill {
                 ctx.reset()
                 const c = width / 2, rad = c - 1.5
                 ctx.lineWidth = 2
-                ctx.strokeStyle = Rock.a(Rock.cream, 0.18)
+                ctx.strokeStyle = Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.16)
                 ctx.beginPath()
                 ctx.arc(c, c, rad, 0, Math.PI * 2)
                 ctx.stroke()
                 if (prog > 0.001) {
-                    ctx.strokeStyle = Rock.yellow
+                    ctx.strokeStyle = Theme.accent
                     ctx.lineCap = "round"
                     ctx.beginPath()
                     ctx.arc(c, c, rad, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2)
@@ -69,7 +74,7 @@ Pill {
             opacity: chip.playing ? 1 : 0.5
             Behavior on opacity { NumberAnimation { duration: 200 } }
 
-            Rectangle { anchors.fill: parent; color: Rock.paper }
+            Rectangle { anchors.fill: parent; color: Theme.surface }
             Image {
                 id: cover
                 anchors.fill: parent
@@ -82,19 +87,19 @@ Pill {
                 anchors.centerIn: parent
                 visible: !cover.visible
                 text: "\uf001"
-                color: Rock.a(Rock.cream, 0.55)
+                color: Theme.muted
                 font.pixelSize: 9
             }
-            RoundMask { anchors.fill: parent; radius: 10; maskColor: Rock.ink2 }
+            RoundMask { anchors.fill: parent; radius: 10; maskColor: Theme.bg }
         }
     }
 
     // сколько играет трек
     Lbl {
-        text: Fmt.clock(chip.p ? chip.p.position : 0)
+        text: chip.fmt(chip.p ? chip.p.position : 0)
         font.pixelSize: 11
         font.bold: true
-        color: chip.playing ? Rock.cream : Rock.a(Rock.cream, 0.5)
+        color: chip.playing ? Theme.text : Theme.muted
     }
 
     // название выезжает при наведении
@@ -107,7 +112,7 @@ Pill {
         Behavior on Layout.preferredWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         elide: Text.ElideRight
         clip: true
-        color: Rock.a(Rock.cream, 0.6)
+        color: Theme.muted
         font.pixelSize: 11
         text: chip.p
             ? (chip.p.trackArtist ? chip.p.trackArtist + " – " : "") + (chip.p.trackTitle || "")

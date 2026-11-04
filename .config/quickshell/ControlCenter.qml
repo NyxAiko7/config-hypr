@@ -9,9 +9,6 @@ BarPopup {
     id: cc
     alignment: "right"
     implicitWidth: 380
-    fill: Rock.ink2
-    accent: Rock.cyan
-    radius: 22
 
     property string page: "main"      // "main" | "wifi" | "bt" | "audio"
     readonly property real maxH: (barWindow.screen ? barWindow.screen.height : 900) - 110
@@ -86,10 +83,8 @@ BarPopup {
 
         implicitHeight: 62
         radius: 18
-        color: active ? (tileArea.containsMouse ? Qt.lighter(Rock.pink, 1.08) : Rock.pink)
-                      : (tileArea.containsMouse ? Qt.lighter(Rock.ink, 1.18) : Rock.ink)
-        border.width: 2
-        border.color: active ? Rock.ink : Rock.a(Rock.cream, 0.16)
+        color: active ? (tileArea.containsMouse ? Qt.lighter(Theme.accent, 1.08) : Theme.accent)
+                      : (tileArea.containsMouse ? Qt.lighter(Theme.surface, 1.18) : Theme.surface)
         Behavior on color { ColorAnimation { duration: 140 } }
 
         RowLayout {
@@ -103,14 +98,12 @@ BarPopup {
                 Layout.preferredHeight: 34
                 radius: 17
                 color: tile.active
-                    ? Qt.rgba(Rock.cream.r, Rock.cream.g, Rock.cream.b, 0.14)
-                    : Qt.rgba(Rock.cream.r, Rock.cream.g, Rock.cream.b, 0.08)
+                    ? Qt.rgba(Theme.textOnAccent.r, Theme.textOnAccent.g, Theme.textOnAccent.b, 0.14)
+                    : Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08)
                 Lbl {
                     anchors.centerIn: parent
                     text: tile.icon
-                    color: tile.active ? Rock.ink : Rock.cream
-                    font.family: Rock.display
-                    font.weight: Font.Black
+                    color: tile.active ? Theme.textOnAccent : Theme.text
                     font.pixelSize: 15
                 }
             }
@@ -120,17 +113,15 @@ BarPopup {
                 Lbl {
                     Layout.fillWidth: true
                     text: tile.title
-                    color: tile.active ? Rock.ink : Rock.cream
-                    font.family: Rock.display
-                    font.weight: Font.Black
-                    font.pixelSize: 13
+                    font.bold: true
+                    color: tile.active ? Theme.textOnAccent : Theme.text
                     elide: Text.ElideRight
                 }
                 Lbl {
                     Layout.fillWidth: true
                     text: tile.subtitle
                     font.pixelSize: 10
-                    color: tile.active ? Rock.ink : Rock.muted
+                    color: tile.active ? Theme.textOnAccent : Theme.muted
                     opacity: tile.active ? 0.72 : 1
                     elide: Text.ElideRight
                 }
@@ -151,11 +142,11 @@ BarPopup {
             anchors.verticalCenter: parent.verticalCenter
             width: 26; height: 26; radius: 13
             color: chevArea.containsMouse
-                ? Qt.rgba(Rock.cream.r, Rock.cream.g, Rock.cream.b, 0.16) : "transparent"
+                ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.16) : "transparent"
             Lbl {
                 anchors.centerIn: parent
                 text: "\uf054"
-                color: tile.active ? Rock.cream : Rock.muted
+                color: tile.active ? Theme.textOnAccent : Theme.muted
                 font.pixelSize: 10
             }
             MouseArea {
@@ -181,22 +172,20 @@ BarPopup {
             id: track
             anchors.fill: parent
             radius: height / 2
-            color: Rock.ink
-            border.width: 2
-            border.color: Rock.a(Rock.cream, 0.18)
+            color: Theme.surface
             clip: true
 
             Rectangle {
                 width: track.height + (track.width - track.height) * Math.max(0, Math.min(1, sl.value))
                 height: track.height
                 radius: height / 2
-                color: Rock.pink
+                color: Theme.accent
             }
             Lbl {
                 anchors.verticalCenter: parent.verticalCenter
                 x: (track.height - width) / 2
                 text: sl.icon
-                color: Rock.cream
+                color: Theme.textOnAccent
                 font.pixelSize: 15
             }
             Lbl {
@@ -204,7 +193,7 @@ BarPopup {
                 anchors.right: parent.right
                 anchors.rightMargin: 16
                 text: Math.round(sl.value * 100)
-                color: sl.value > 0.9 ? Rock.cream : Rock.muted
+                color: sl.value > 0.9 ? Theme.textOnAccent : Theme.muted
                 font.pixelSize: 11
             }
             MouseArea {
@@ -234,10 +223,8 @@ BarPopup {
         signal activated()
         implicitHeight: 58
         radius: 16
-        color: active ? (qArea.containsMouse ? Qt.lighter(Rock.pink, 1.08) : Rock.pink)
-                      : (qArea.containsMouse ? Qt.lighter(Rock.ink, 1.18) : Rock.ink)
-        border.width: 2
-        border.color: active ? Rock.ink : Rock.a(Rock.cream, 0.16)
+        color: active ? (qArea.containsMouse ? Qt.lighter(Theme.accent, 1.08) : Theme.accent)
+                      : (qArea.containsMouse ? Qt.lighter(Theme.surface, 1.18) : Theme.surface)
         Behavior on color { ColorAnimation { duration: 140 } }
         ColumnLayout {
             anchors.centerIn: parent
@@ -245,17 +232,13 @@ BarPopup {
             Lbl {
                 Layout.alignment: Qt.AlignHCenter
                 text: qb.icon
-                color: qb.active ? Rock.ink : Rock.cream
-                font.family: Rock.display
-                font.weight: Font.Black
+                color: qb.active ? Theme.textOnAccent : Theme.text
                 font.pixelSize: 15
             }
             Lbl {
                 Layout.alignment: Qt.AlignHCenter
                 text: qb.label
-                color: qb.active ? Rock.ink : Rock.cream
-                font.family: Rock.display
-                font.weight: Font.Black
+                color: qb.active ? Theme.textOnAccent : Theme.muted
                 font.pixelSize: 9
             }
         }
@@ -276,9 +259,7 @@ BarPopup {
         property string sub: ""
         implicitHeight: 64
         radius: 16
-        color: Rock.ink
-        border.width: 2
-        border.color: Rock.a(Rock.cream, 0.14)
+        color: Theme.surface
 
         ColumnLayout {
             anchors.fill: parent
@@ -286,26 +267,20 @@ BarPopup {
             spacing: 6
             RowLayout {
                 Layout.fillWidth: true
-                Lbl { text: st.label; color: Rock.muted; font.pixelSize: 10; Layout.fillWidth: true }
-                Lbl { text: st.sub; color: Rock.muted; font.pixelSize: 9; visible: st.sub !== "" }
+                Lbl { text: st.label; color: Theme.muted; font.pixelSize: 10; Layout.fillWidth: true }
+                Lbl { text: st.sub; color: Theme.muted; font.pixelSize: 9; visible: st.sub !== "" }
             }
-            Lbl {
-                text: st.value + "%"
-                color: Rock.cream
-                font.family: Rock.display
-                font.weight: Font.Black
-                font.pixelSize: 17
-            }
+            Lbl { text: st.value + "%"; font.bold: true; font.pixelSize: 15 }
             Rectangle {
                 Layout.fillWidth: true
                 height: 3
                 radius: 2
-                color: Qt.rgba(Rock.cream.r, Rock.cream.g, Rock.cream.b, 0.1)
+                color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.1)
                 Rectangle {
                     width: parent.width * Math.min(1, st.value / 100)
                     height: parent.height
                     radius: 2
-                    color: st.value > 85 ? Rock.orange : Rock.cyan
+                    color: st.value > 85 ? Theme.warn : Theme.accent2
                     Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
                 }
             }
@@ -338,13 +313,11 @@ BarPopup {
                     Layout.preferredWidth: 42
                     Layout.preferredHeight: 42
                     radius: 21
-                    color: Rock.pink
-                    border.width: 2
-                    border.color: Rock.ink
+                    color: Theme.accent
                     Lbl {
                         anchors.centerIn: parent
                         text: cc.userName.charAt(0).toUpperCase()
-                        color: Rock.cream
+                        color: Theme.textOnAccent
                         font.bold: true
                         font.pixelSize: 17
                     }
@@ -353,13 +326,7 @@ BarPopup {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     spacing: 1
-                    Lbl {
-                        text: cc.userName
-                        color: Rock.cream
-                        font.family: Rock.display
-                        font.weight: Font.Black
-                        font.pixelSize: 17
-                    }
+                    Lbl { text: cc.userName; font.bold: true; font.pixelSize: 14 }
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
@@ -367,13 +334,13 @@ BarPopup {
                         Lbl {
                             visible: UPower.displayDevice.isLaptopBattery
                             text: cc.batIcon()
-                            color: UPower.displayDevice.percentage < 0.2 ? Rock.orange : Rock.cyan
+                            color: UPower.displayDevice.percentage < 0.2 ? Theme.warn : Theme.accent2
                             font.pixelSize: 12
                         }
                         Lbl {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
-                            color: Rock.muted
+                            color: Theme.muted
                             font.pixelSize: 11
                             text: (UPower.displayDevice.isLaptopBattery
                                     ? Math.round(UPower.displayDevice.percentage * 100) + "% · "
@@ -390,9 +357,9 @@ BarPopup {
                 }
                 Rectangle {
                     implicitWidth: 38; implicitHeight: 38; radius: 19
-                    color: pwrArea.containsMouse ? Rock.ink : "transparent"
+                    color: pwrArea.containsMouse ? Theme.surface : "transparent"
                     Behavior on color { ColorAnimation { duration: 120 } }
-                    Lbl { anchors.centerIn: parent; text: "\uf011"; color: Rock.muted; font.pixelSize: 15 }
+                    Lbl { anchors.centerIn: parent; text: "\uf011"; color: Theme.muted; font.pixelSize: 15 }
                     MouseArea {
                         id: pwrArea
                         anchors.fill: parent
@@ -494,7 +461,7 @@ BarPopup {
                     Layout.fillWidth: true
                     implicitHeight: 44
                     radius: 16
-                    color: audioArea.containsMouse ? Qt.lighter(Rock.ink, 1.18) : Rock.ink
+                    color: audioArea.containsMouse ? Qt.lighter(Theme.surface, 1.18) : Theme.surface
                     Behavior on color { ColorAnimation { duration: 120 } }
 
                     MouseArea {
@@ -509,7 +476,7 @@ BarPopup {
                         anchors.leftMargin: 14
                         anchors.rightMargin: 8
                         spacing: 10
-                        Lbl { text: cc.sinkGlyph(); color: Rock.cyan; font.pixelSize: 14; Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter }
+                        Lbl { text: cc.sinkGlyph(); color: Theme.accent2; font.pixelSize: 14; Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter }
                         Lbl {
                             Layout.fillWidth: true
                             text: cc.sink ? (cc.sink.description || cc.sink.nickname || cc.sink.name) : "Нет устройства вывода"
@@ -520,10 +487,10 @@ BarPopup {
                             size: 30
                             visible: cc.source !== null
                             icon: cc.micMuted ? "\uf131" : "\uf130"
-                            iconColor: cc.micMuted ? Rock.orange : Rock.muted
+                            iconColor: cc.micMuted ? Theme.warn : Theme.muted
                             onClicked: if (cc.source && cc.source.audio) cc.source.audio.muted = !cc.source.audio.muted
                         }
-                        Lbl { text: "\uf054"; color: Rock.muted; font.pixelSize: 10 }
+                        Lbl { text: "\uf054"; color: Theme.muted; font.pixelSize: 10 }
                     }
                 }
             }

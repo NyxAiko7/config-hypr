@@ -4,7 +4,6 @@ Rectangle {
     id: btn
     property string icon
     property color iconColor: Theme.muted
-    property color hoverColor: Theme.surface
     property int size: 32
     property bool spin: false
     signal clicked()
@@ -12,7 +11,7 @@ Rectangle {
     implicitWidth: size
     implicitHeight: size
     radius: size / 2
-    color: area.containsMouse ? hoverColor : "transparent"
+    color: area.containsMouse ? Theme.surface : "transparent"
     Behavior on color { ColorAnimation { duration: 120 } }
 
     Lbl {

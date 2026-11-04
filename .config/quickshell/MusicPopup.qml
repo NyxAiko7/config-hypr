@@ -5,11 +5,8 @@ BarPopup {
     id: popup
     alignment: "center"
     property var player: null            // оставлено для совместимости с Bar.qml
-    fill: Rock.ink2
-    accent: Rock.pink
-    radius: 22
 
-    implicitWidth: 400
+    implicitWidth: 380
     implicitHeight: card.implicitHeight + 24
 
     MediaCard {

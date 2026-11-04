@@ -3,8 +3,8 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Mpris
 
-// Плеер: обложка слева; название, перемотка, громкость и кнопки справа.
-// Цвет акцентов берётся из обложки. Колесо мыши над карточкой — громкость.
+// Компактный плеер: обложка слева; название, перемотка и кнопки справа.
+// Цвет акцентов берётся из обложки.
 Rectangle {
     id: card
 
@@ -13,23 +13,26 @@ Rectangle {
     readonly property bool playing: p !== null && p.playbackState === MprisPlaybackState.Playing
     readonly property string artUrl: p ? String(p.trackArtUrl || "") : ""
 
-    property color tint: Rock.pink                   // средний цвет обложки
+    property color tint: Theme.accent                // средний цвет обложки
     property bool showRemaining: false
 
     // яркий вариант цвета обложки для акцентов
     readonly property color artAccent: {
-        if (tint.hslSaturation < 0.12) return Rock.pink
+        if (tint.hslSaturation < 0.12) return Theme.accent
         return Qt.hsla(Math.max(0, tint.hslHue), Math.max(0.5, Math.min(0.9, tint.hslSaturation)), 0.72, 1)
     }
 
     visible: p !== null
-    implicitHeight: col.implicitHeight + 28
-    radius: 18
-    color: Rock.paper
-    border.width: 3
-    border.color: Rock.ink
+    implicitHeight: col.implicitHeight + 24
+    radius: 20
+    color: Qt.tint(Theme.surface, Qt.rgba(tint.r, tint.g, tint.b, 0.08))
+    Behavior on color { ColorAnimation { duration: 450 } }
     Behavior on tint  { ColorAnimation { duration: 450 } }
 
+    function fmt(s) {
+        if (!isFinite(s) || s < 0) return "0:00"
+        return Math.floor(s / 60) + ":" + ("0" + Math.floor(s % 60)).slice(-2)
+    }
     function cycleLoop() {
         if (!p || !p.loopSupported) return
         if (p.loopState === MprisLoopState.None) p.loopState = MprisLoopState.Playlist
@@ -44,19 +47,6 @@ Rectangle {
         onTriggered: card.p.positionChanged()
     }
 
-    // колесо мыши над всей карточкой = громкость плеера
-    WheelHandler {
-        // прокручиваем только вертикальные колёса; горизонтальные игнорируем
-        function handleWheel(w) {
-            const dy = w.angleDelta.y
-            if (card.p && card.p.volumeSupported && dy !== 0) {
-                w.accepted = true
-                Media.setVol(card.p.volume + (dy > 0 ? 0.03 : -0.03))
-            }
-        }
-        onWheel: handleWheel(wheel)
-    }
-
     // ── средний цвет обложки (крошечный холст 16×16) ──
     Canvas {
         id: sampler
@@ -68,7 +58,7 @@ Rectangle {
         property string src: card.artUrl
 
         function refresh() {
-            if (src === "") { card.tint = Rock.pink; return }
+            if (src === "") { card.tint = Theme.accent; return }
             loadImage(src)
         }
         onSrcChanged: refresh()
@@ -89,10 +79,51 @@ Rectangle {
                 const wt = A * (sat * sat + 0.02) * (0.25 + mx) * (mx > 0.15 ? 1 : 0.1)
                 r += R * wt; g += G * wt; b += B * wt; w += wt
             }
-            card.tint = w > 0.01 ? Qt.rgba(r / w, g / w, b / w, 1) : Rock.pink
+            card.tint = w > 0.01 ? Qt.rgba(r / w, g / w, b / w, 1) : Theme.accent
         }
     }
 
+    // ── кнопка управления ──
+    component CBtn: Rectangle {
+        id: cb
+        property string icon
+        property bool big: false
+        property bool on: false
+        property string badge: ""
+        property color accentColor: Theme.accent
+        signal activated()
+        implicitWidth: big ? 40 : 30
+        implicitHeight: implicitWidth
+        radius: width / 2
+        color: big ? (cArea.containsMouse ? Qt.lighter(accentColor, 1.1) : accentColor)
+                   : (cArea.containsMouse ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.10) : "transparent")
+        Behavior on color { ColorAnimation { duration: 120 } }
+        Lbl {
+            anchors.centerIn: parent
+            text: cb.icon
+            color: cb.big ? Theme.textOnAccent : (cb.on ? cb.accentColor : Theme.text)
+            font.pixelSize: cb.big ? 14 : 12
+            opacity: (!cb.big && !cb.on) ? 0.85 : 1
+        }
+        Lbl {
+            visible: cb.badge !== ""
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.rightMargin: 4
+            anchors.topMargin: 1
+            text: cb.badge
+            color: cb.accentColor
+            font.pixelSize: 8
+            font.bold: true
+        }
+        MouseArea {
+            id: cArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: cb.activated()
+        }
+    }
 
     ColumnLayout {
         id: col
@@ -104,7 +135,7 @@ Rectangle {
             Layout.fillWidth: true
             spacing: 14
 
-            // ── обложка (клик = play/pause) ──
+            // ── обложка ──
             Item {
                 Layout.preferredWidth: 92
                 Layout.preferredHeight: 92
@@ -114,9 +145,7 @@ Rectangle {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: Rock.cream
-                    border.width: 2
-                    border.color: Rock.ink
+                    color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08)
                 }
                 Image {
                     id: art
@@ -130,82 +159,40 @@ Rectangle {
                     anchors.centerIn: parent
                     visible: !art.visible
                     text: "\uf001"
-                    color: Rock.ink2
+                    color: Theme.muted
                     font.pixelSize: 26
                 }
                 RoundMask { anchors.fill: parent; radius: 16; maskColor: card.color }
-
-                // оверлей-иконка при наведении
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 16
-                    color: Qt.rgba(0, 0, 0, 0.35)
-                    opacity: artArea.containsMouse ? 1 : 0
-                    Behavior on opacity { NumberAnimation { duration: 140 } }
-                    Lbl {
-                        anchors.centerIn: parent
-                        text: card.playing ? "\uf04c" : "\uf04b"
-                        color: Rock.cream
-                        font.pixelSize: 22
-                    }
-                }
-                MouseArea {
-                    id: artArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: if (card.p && card.p.canTogglePlaying) card.p.togglePlaying()
-                }
             }
 
-            // ── название, перемотка, громкость, кнопки ──
+            // ── название, перемотка, кнопки ──
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.alignment: Qt.AlignVCenter
                 spacing: 0
 
-                RowLayout {
+                Lbl {
                     Layout.fillWidth: true
-                    spacing: 6
-                    Lbl {
-                        Layout.fillWidth: true
-                        text: card.p ? (card.p.trackTitle || "Без названия") : ""
-                        color: Rock.ink
-                        font.family: Rock.display
-                        font.weight: Font.Black
-                        font.pixelSize: 16
-                        elide: Text.ElideRight
-                    }
-                    // «любимый трек»
-                    MediaBtn {
-                        visible: card.p !== null
-                        icon: Media.isLoved ? "\uf004" : "\uf08a"
-                        accentColor: Rock.pinkDeep
-                        on: Media.isLoved
-                        onActivated: Media.toggleLove()
-                    }
+                    text: card.p ? (card.p.trackTitle || "Без названия") : ""
+                    font.bold: true
+                    font.pixelSize: 14
+                    elide: Text.ElideRight
                 }
-                RowLayout {
+                Lbl {
                     Layout.fillWidth: true
-                    spacing: 6
-                    Lbl {
-                        Layout.fillWidth: true
-                        text: card.p ? card.p.trackArtist : ""
-                        color: Rock.pinkDeep
-                        font.pixelSize: 12
-                        font.bold: true
-                        elide: Text.ElideRight
-                    }
-                    Lbl {
-                        visible: text !== ""
-                        text: card.p ? (card.p.trackAlbum || "") : ""
-                        color: Rock.ink2
-                        opacity: 0.65
-                        font.pixelSize: 10
-                        elide: Text.ElideRight
-                        Layout.maximumWidth: 110
-                    }
+                    text: card.p ? card.p.trackArtist : ""
+                    color: card.artAccent
+                    font.pixelSize: 12
+                    elide: Text.ElideRight
+                }
+                Lbl {
+                    Layout.fillWidth: true
+                    visible: text !== ""
+                    text: card.p ? (card.p.trackAlbum || "") : ""
+                    color: Theme.muted
+                    font.pixelSize: 10
+                    elide: Text.ElideRight
                 }
 
                 Item { Layout.preferredHeight: 6 }
@@ -216,9 +203,9 @@ Rectangle {
                     spacing: 8
 
                     Lbl {
-                        Layout.preferredWidth: 34
-                        text: Fmt.hms(seek.dragRatio >= 0 && card.p ? seek.dragRatio * card.p.length : (card.p ? card.p.position : 0))
-                        color: Rock.ink2
+                        Layout.preferredWidth: 28
+                        text: card.fmt(seek.dragRatio >= 0 && card.p ? seek.dragRatio * card.p.length : (card.p ? card.p.position : 0))
+                        color: Theme.muted
                         font.pixelSize: 10
                     }
 
@@ -239,26 +226,20 @@ Rectangle {
                             width: parent.width
                             height: seek.hot ? 6 : 4
                             radius: height / 2
-                            color: Rock.a(Rock.ink, 0.16)
-                            border.width: 1
-                            border.color: Rock.a(Rock.ink, 0.35)
+                            color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.14)
                             Behavior on height { NumberAnimation { duration: 120 } }
                             Rectangle {
                                 width: parent.width * seek.shown
                                 height: parent.height
                                 radius: height / 2
                                 color: card.artAccent
-                                border.width: 1
-                                border.color: Rock.ink
                             }
                         }
                         Rectangle {
                             width: 12; height: 12; radius: 6
                             anchors.verticalCenter: parent.verticalCenter
                             x: Math.max(0, Math.min(parent.width - width, parent.width * seek.shown - width / 2))
-                            color: Rock.ink
-                            border.width: 2
-                            border.color: Rock.cream
+                            color: Theme.text
                             opacity: seek.hot ? 1 : 0
                             Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
@@ -276,19 +257,17 @@ Rectangle {
                                     pl.position = seek.dragRatio * pl.length
                                 seek.dragRatio = -1
                             }
-                            // двойной клик по полосе = ±5 сек в точку клика не тащим — просто рестарт
-                            onDoubleClicked: if (card.p && card.p.canSeek) card.p.position = 0
                         }
                     }
 
                     // клик по правому времени: «всего» ↔ «осталось»
                     Lbl {
-                        Layout.preferredWidth: 38
+                        Layout.preferredWidth: 32
                         horizontalAlignment: Text.AlignRight
                         text: card.p
-                            ? (card.showRemaining ? "-" + Fmt.hms(Math.max(0, card.p.length - card.p.position)) : Fmt.hms(card.p.length))
+                            ? (card.showRemaining ? "-" + card.fmt(Math.max(0, card.p.length - card.p.position)) : card.fmt(card.p.length))
                             : ""
-                        color: Rock.ink2
+                        color: Theme.muted
                         font.pixelSize: 10
                         MouseArea {
                             anchors.fill: parent
@@ -299,119 +278,39 @@ Rectangle {
                     }
                 }
 
-                Item { Layout.preferredHeight: 4 }
-
-                // ── громкость плеера ──
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 2
-                    spacing: 6
-                    visible: card.p !== null && card.p.volumeSupported
-
-                    Lbl {
-                        text: (card.p && card.p.volume <= 0) ? "\uf026" : (card.p && card.p.volume < 0.5 ? "\uf027" : "\uf028")
-                        color: Rock.ink2
-                        font.pixelSize: 10
-                        MouseArea {
-                            anchors.fill: parent
-                            anchors.margins: -4
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: if (card.p) Media.setVol(card.p.volume > 0 ? 0 : 0.5)
-                        }
-                    }
-                    Item {
-                        id: vol
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 14
-                        readonly property real shown: card.p ? Math.max(0, Math.min(1, card.p.volume)) : 0
-                        readonly property bool hot: volArea.containsMouse || volArea.pressed
-
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width
-                            height: vol.hot ? 5 : 3
-                            radius: height / 2
-                            color: Rock.a(Rock.ink, 0.14)
-                            border.width: 1
-                            border.color: Rock.a(Rock.ink, 0.3)
-                            Behavior on height { NumberAnimation { duration: 120 } }
-                            Rectangle {
-                                width: parent.width * vol.shown
-                                height: parent.height
-                                radius: height / 2
-                                color: Rock.a(card.artAccent, 0.85)
-                            }
-                        }
-                        Rectangle {
-                            width: 10; height: 10; radius: 5
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: Math.max(0, Math.min(parent.width - width, parent.width * vol.shown - width / 2))
-                            color: Rock.ink
-                            opacity: vol.hot ? 1 : 0
-                            Behavior on opacity { NumberAnimation { duration: 120 } }
-                        }
-                        MouseArea {
-                            id: volArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            function set(mx) { Media.setVol(Math.max(0, Math.min(1, mx / width))) }
-                            onPressed: m => set(m.x)
-                            onPositionChanged: m => { if (pressed) set(m.x) }
-                        }
-                    }
-                    Lbl {
-                        Layout.preferredWidth: 30
-                        horizontalAlignment: Text.AlignRight
-                        text: card.p ? Math.round(card.p.volume * 100) + "%" : ""
-                        color: Rock.ink2
-                        font.pixelSize: 9
-                    }
-                }
-
                 Item { Layout.preferredHeight: 2 }
 
                 // кнопки
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 2
-                    MediaBtn {
+                    CBtn {
                         visible: card.p !== null && card.p.shuffleSupported
                         icon: "\uf074"
-                        accentColor: Rock.pinkDeep
+                        accentColor: card.artAccent
                         on: card.p ? card.p.shuffle : false
                         onActivated: if (card.p) card.p.shuffle = !card.p.shuffle
                     }
                     Item { Layout.fillWidth: true }
-                    MediaBtn {
-                        icon: "\uf04a"                       // −5 секунд
-                        enabled: card.p ? card.p.canSeek : false
-                        onActivated: Media.seekBy(-5)
-                    }
-                    MediaBtn {
+                    CBtn {
                         icon: "\uf048"
                         onActivated: if (card.p && card.p.canGoPrevious) card.p.previous()
                     }
-                    MediaBtn {
+                    CBtn {
                         big: true
                         accentColor: card.artAccent
                         icon: card.playing ? "\uf04c" : "\uf04b"
                         onActivated: if (card.p && card.p.canTogglePlaying) card.p.togglePlaying()
                     }
-                    MediaBtn {
+                    CBtn {
                         icon: "\uf051"
                         onActivated: if (card.p && card.p.canGoNext) card.p.next()
                     }
-                    MediaBtn {
-                        icon: "\uf04e"                       // +5 секунд
-                        enabled: card.p ? card.p.canSeek : false
-                        onActivated: Media.seekBy(5)
-                    }
                     Item { Layout.fillWidth: true }
-                    MediaBtn {
+                    CBtn {
                         visible: card.p !== null && card.p.loopSupported
                         icon: "\uf021"
-                        accentColor: Rock.pinkDeep
+                        accentColor: card.artAccent
                         on: card.p ? card.p.loopState !== MprisLoopState.None : false
                         badge: (card.p && card.p.loopState === MprisLoopState.Track) ? "1" : ""
                         onActivated: card.cycleLoop()
@@ -434,17 +333,16 @@ Rectangle {
                     implicitWidth: chipLbl.implicitWidth + 20
                     implicitHeight: 22
                     radius: 11
-                    color: current ? Rock.a(Rock.pink, 0.18)
-                                   : (chipArea.containsMouse ? Rock.a(Rock.ink, 0.08) : "transparent")
-                    border.width: current ? 2 : 1
-                    border.color: current ? Rock.pinkDeep : Rock.a(Rock.ink, 0.35)
+                    color: current ? Qt.rgba(card.artAccent.r, card.artAccent.g, card.artAccent.b, 0.20)
+                                   : (chipArea.containsMouse ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08) : "transparent")
+                    border.width: 1
+                    border.color: current ? card.artAccent : Theme.hairline
                     Lbl {
                         id: chipLbl
                         anchors.centerIn: parent
                         text: String(chip.modelData.identity).substring(0, 14)
-                        color: chip.current ? Rock.pinkDeep : Rock.ink2
+                        color: chip.current ? card.artAccent : Theme.muted
                         font.pixelSize: 10
-                        font.bold: chip.current
                     }
                     MouseArea {
                         id: chipArea

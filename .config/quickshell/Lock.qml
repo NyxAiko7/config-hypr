@@ -1,19 +1,15 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pam
-import Quickshell.Services.UPower
 
-// Экран блокировки на ext-session-lock + PAM.
-// Оформление — кислотный «Bocchi the Rock» HUD: розовый, жёлтый, бирюза,
-// жирные контуры, полутон и наклейки.
+// Экран блокировки на ext-session-lock + PAM (замена hyprlock).
 // Запуск: quickshell ipc call lock lock   |  или UI.locked = true
 Scope {
     id: root
-
-    readonly property bool debug: false
 
     property string buffer: ""      // введённый пароль
     property string pending: ""     // пароль, ушедший в PAM
@@ -23,13 +19,6 @@ Scope {
     property bool reveal: false         // показать вводимый пароль
     property bool fpAvailable: false    // есть сканер и записанные пальцы
     property int fpFails: 0
-    property bool denyFlash: false
-    property int batPct: UPower.displayDevice.percentage >= 0
-        ? Math.round(UPower.displayDevice.percentage * 100) : -1
-    readonly property bool charging: UI.locked && (root.batPct < 100 || Power.watts > 0.5)
-
-    onShakeKeyChanged: { denyFlash = true; denyTimer.restart() }
-    Timer { id: denyTimer; interval: 420; onTriggered: root.denyFlash = false }
 
     // обои берём у pywal, иначе из переключателя обоев
     property string walPath: ""
@@ -42,24 +31,7 @@ Scope {
         onLoaded: root.walPath = text().trim()
     }
 
-    // ───────── уведомления, пока экран заблокирован ─────────
-    property int lockSeen: 0
-    property bool lockDirty: false
-    Connections {
-        target: Notifs
-        enabled: UI.locked
-        function onCountChanged() { if (Notifs.count > lockSeen) lockDirty = true }
-    }
-    Connections {
-        target: UI
-        function onLockedChanged() { if (UI.locked) { lockSeen = Notifs.count; lockDirty = false } }
-    }
-
-    // системные показатели обновляем только пока экран заблокирован
-    Connections {
-        target: UI
-        function onLockedChanged() { SysStats.active = UI.locked }
-    }
+    SystemClock { id: clock; precision: SystemClock.Minutes }
 
     function submit() {
         if (busy || buffer === "") return
@@ -82,14 +54,15 @@ Scope {
             'printf "%s\\000" "$QS_PW" | "$h" "$(id -un)" nullok']
         onExited: (code, status) => {
             chk.environment = ({})
-            if (root.debug) console.log("Lock: unix_chkpwd код", code)
+            console.log("Lock: unix_chkpwd код", code)
             if (code === 0) {
                 watchdog.stop()
                 root.pending = ""
                 root.busy = false
                 UI.locked = false
             } else if (code === 127) {
-                if (root.debug) console.log("Lock: unix_chkpwd не найден, пробую PAM")
+                // хелпера нет — пробуем обычный PAM
+                console.warn("Lock: unix_chkpwd не найден, пробую PAM")
                 watchdog.restart()
                 pam.start()
             } else {
@@ -132,18 +105,19 @@ Scope {
         config: "password.conf"
 
         onPamMessage: {
-            if (root.debug) console.log("Lock: pamMessage:", message, "| responseRequired:", responseRequired, "| isError:", messageIsError)
+            console.log("Lock: pamMessage:", message, "| responseRequired:", responseRequired, "| isError:", messageIsError)
             if (responseRequired) {
                 if (root.pending !== "") {
                     respond(root.pending)
                     root.pending = ""
                 } else {
+                    // PAM спрашивает ещё раз, а ответа у нас нет — не висим
                     abort()
                 }
             }
         }
         onCompleted: result => {
-            if (root.debug) console.log("Lock: completed:", result)
+            console.log("Lock: completed:", result)
             watchdog.stop()
             root.busy = false
             root.pending = ""
@@ -169,10 +143,7 @@ Scope {
         id: fpCheck
         command: ["sh", "-c", "command -v fprintd-list >/dev/null 2>&1 && fprintd-list \"$USER\" 2>/dev/null | grep -q '^ - #'"]
         running: true
-        onExited: code => {
-            root.fpAvailable = (code === 0)
-            if (root.debug) console.log("Lock: отпечаток доступен:", root.fpAvailable)
-        }
+        onExited: code => { root.fpAvailable = (code === 0); console.log("Lock: отпечаток доступен:", root.fpAvailable) }
     }
 
     function fpStart() {
@@ -191,9 +162,9 @@ Scope {
         configDirectory: Quickshell.shellPath("pam")
         config: "fprint.conf"
 
-        onPamMessage: if (root.debug) console.log("Lock: fprint:", message)
+        onPamMessage: console.log("Lock: fprint:", message)
         onCompleted: result => {
-            if (root.debug) console.log("Lock: fprint completed:", result)
+            console.log("Lock: fprint completed:", result)
             if (result === PamResult.Success) {
                 UI.locked = false
             } else if (UI.locked) {
@@ -224,7 +195,7 @@ Scope {
 
         WlSessionLockSurface {
             id: surface
-            color: Rock.ink
+            color: Theme.bg
 
             Item {
                 id: view
@@ -253,88 +224,283 @@ Scope {
                     event.accepted = true
                 }
 
-                property real enterP: 0
-                NumberAnimation on enterP {
-                    id: enterAnim
-                    from: 0; to: 1
-                    duration: 900
-                    easing.type: Easing.OutCubic
-                    running: UI.locked
-                    loops: 1
-                }
-                Connections {
-                    target: UI
-                    function onLockedChanged() {
-                        if (UI.locked) { view.enterP = 0; enterAnim.restart() }
-                    }
-                }
-
-                LockBackground {
+                // ── фон: размытые обои ──
+                Rectangle { anchors.fill: parent; color: Theme.bg }
+                Image {
+                    id: wall
                     anchors.fill: parent
-                    wallpaper: root.wallpaper
-                    enterProgress: view.enterP
-                    flash: root.denyFlash
+                    visible: false
+                    source: root.wallpaper !== "" ? "file://" + root.wallpaper : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    sourceSize.width: 1920
                 }
+                MultiEffect {
+                    anchors.fill: parent
+                    source: wall
+                    visible: wall.status === Image.Ready
+                    blurEnabled: true
+                    blur: 1.0
+                    blurMax: 64
+                    brightness: -0.12
+                    saturation: -0.1
+                }
+                Rectangle { anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0.38) }
 
-                LockHud {
-                    anchors {
-                        top: parent.top; left: parent.left; right: parent.right
-                        topMargin: 26; leftMargin: 38; rightMargin: 38
+                // ── часы ──
+                ColumnLayout {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: parent.height * 0.12
+                    spacing: 0
+                    Lbl {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: Qt.formatTime(clock.date, "HH:mm")
+                        font.pixelSize: 120
+                        font.bold: true
                     }
-                    enterProgress: view.enterP
-                    batPct: root.batPct
-                    charging: root.charging
-                    lockDirty: root.lockDirty
-                }
-
-                LockClock {
-                    anchors {
-                        left: parent.left; top: parent.top
-                        leftMargin: Math.max(46, parent.width * 0.055)
-                        topMargin: Math.max(126, parent.height * 0.17)
+                    Lbl {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: {
+                            const s = Qt.locale("ru_RU").toString(clock.date, "dddd, d MMMM")
+                            return s.charAt(0).toUpperCase() + s.slice(1)
+                        }
+                        color: Theme.muted
+                        font.pixelSize: 20
                     }
-                    enterProgress: view.enterP
                 }
 
-                LockWeather {
-                    anchors {
-                        left: parent.left; bottom: parent.bottom
-                        leftMargin: Math.max(46, parent.width * 0.055)
-                        bottomMargin: 38
+                // ── карточка с вводом ──
+                Rectangle {
+                    id: card
+                    anchors.centerIn: parent
+                    anchors.verticalCenterOffset: parent.height * 0.12
+                    width: 360
+                    height: cardCol.implicitHeight + 56
+                    radius: 28
+                    color: Qt.rgba(Theme.bg.r, Theme.bg.g, Theme.bg.b, 0.62)
+                    border.width: 1
+                    border.color: Theme.hairline
+
+                    transform: Translate { id: shake }
+                    SequentialAnimation {
+                        id: shakeAnim
+                        NumberAnimation { target: shake; property: "x"; to: -14; duration: 50 }
+                        NumberAnimation { target: shake; property: "x"; to: 14;  duration: 80 }
+                        NumberAnimation { target: shake; property: "x"; to: -9;  duration: 70 }
+                        NumberAnimation { target: shake; property: "x"; to: 9;   duration: 70 }
+                        NumberAnimation { target: shake; property: "x"; to: 0;   duration: 50 }
                     }
-                    enterProgress: view.enterP
-                }
-
-                LockMedia {
-                    anchors {
-                        right: parent.right; bottom: parent.bottom
-                        rightMargin: Math.max(46, parent.width * 0.055)
-                        bottomMargin: 38
+                    Connections {
+                        target: root
+                        function onShakeKeyChanged() { shakeAnim.restart() }
                     }
-                    enterProgress: view.enterP
-                }
 
-                LockAuthPanel {
-                    anchors {
-                        right: parent.right; verticalCenter: parent.verticalCenter
-                        rightMargin: Math.max(46, parent.width * 0.055)
-                        verticalCenterOffset: -30
+                    ColumnLayout {
+                        id: cardCol
+                        anchors.fill: parent
+                        anchors.margins: 28
+                        spacing: 14
+
+                        Rectangle {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.preferredWidth: 72; Layout.preferredHeight: 72; radius: 36
+                            color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18)
+                            border.width: 2
+                            border.color: Theme.accent
+                            Lbl { anchors.centerIn: parent; text: "\uf007"; color: Theme.accent; font.pixelSize: 28 }
+                        }
+                        Lbl {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: Quickshell.env("USER")
+                            font.pixelSize: 16
+                            font.bold: true
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 48
+                            radius: 24
+                            color: Theme.surface
+                            border.width: 1
+                            border.color: root.status !== "" ? Theme.warn : (root.busy ? Theme.accent2 : Theme.accent)
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
+                            clip: true
+
+                            Lbl {
+                                anchors.centerIn: parent
+                                visible: root.buffer === ""
+                                text: root.busy ? "Проверка…" : (root.fpAvailable ? "Пароль или палец" : "Введите пароль")
+                                color: Theme.muted
+                            }
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 8
+                                visible: !root.reveal
+                                Repeater {
+                                    model: Math.min(root.buffer.length, 18)
+                                    Rectangle {
+                                        width: 10; height: 10; radius: 5
+                                        color: Theme.accent
+                                    }
+                                }
+                            }
+                            Lbl {
+                                anchors.centerIn: parent
+                                width: parent.width - 120
+                                visible: root.reveal && root.buffer !== ""
+                                text: root.buffer
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideLeft
+                            }
+
+                            // раскладка (клик — переключить)
+                            Rectangle {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 34; height: 28; radius: 14
+                                color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18)
+                                Lbl { anchors.centerIn: parent; text: Kb.layout; color: Theme.accent; font.pixelSize: 11; font.bold: true }
+                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Kb.next() }
+                            }
+                            // показать/скрыть пароль (Tab)
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.rightMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 28; height: 28; radius: 14
+                                color: "transparent"
+                                Lbl { anchors.centerIn: parent; text: root.reveal ? "\uf070" : "\uf06e"; color: Theme.muted; font.pixelSize: 13 }
+                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.reveal = !root.reveal }
+                            }
+                        }
+
+                        // подсказка про палец
+                        RowLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            visible: root.fpAvailable && root.fpFails < 8
+                            spacing: 6
+                            Lbl { text: "\uf577"; color: Theme.accent2; font.pixelSize: 14 }
+                            Lbl { text: "Приложите палец к сканеру"; color: Theme.muted; font.pixelSize: 11 }
+                        }
+
+                        Lbl {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: root.status
+                            visible: root.status !== ""
+                            color: Theme.warn
+                            font.pixelSize: 12
+                        }
                     }
-                    enterProgress: view.enterP
-                    buffer: root.buffer
-                    busy: root.busy
-                    reveal: root.reveal
-                    status: root.status
-                    shakeKey: root.shakeKey
-                    fpAvailable: root.fpAvailable
-                    fpFails: root.fpFails
-                    batPct: root.batPct
-                    charging: root.charging
-                    onSubmitted: root.submit()
-                    onRevealRequested: root.reveal = !root.reveal
                 }
 
-                opacity: view.enterP
+                // ── музыка ──
+                Rectangle {
+                    id: music
+                    readonly property var p: Media.player
+                    readonly property bool has: p !== null && p !== undefined && !!p.trackTitle
+                    visible: has
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: weatherRow.visible ? 76 : 36
+                    width: 380
+                    height: 72
+                    radius: 22
+                    color: Qt.rgba(Theme.bg.r, Theme.bg.g, Theme.bg.b, 0.62)
+                    border.width: 1
+                    border.color: Theme.hairline
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        spacing: 12
+
+                        Rectangle {
+                            Layout.preferredWidth: 52; Layout.preferredHeight: 52
+                            radius: 14
+                            color: Theme.surface
+                            clip: true
+                            Lbl { anchors.centerIn: parent; text: "\uf001"; color: Theme.accent2; font.pixelSize: 20; visible: art.status !== Image.Ready }
+                            Image {
+                                id: art
+                                anchors.fill: parent
+                                source: music.p ? (music.p.trackArtUrl || "") : ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            Lbl {
+                                Layout.fillWidth: true
+                                text: music.p ? (music.p.trackTitle || "") : ""
+                                font.bold: true
+                                elide: Text.ElideRight
+                            }
+                            Lbl {
+                                Layout.fillWidth: true
+                                text: music.p ? (music.p.trackArtist || "") : ""
+                                color: Theme.muted
+                                font.pixelSize: 11
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        Repeater {
+                            model: [
+                                { icon: "\uf048", act: "prev" },
+                                { icon: "toggle",  act: "toggle" },
+                                { icon: "\uf051", act: "next" }
+                            ]
+                            delegate: Rectangle {
+                                id: mb
+                                required property var modelData
+                                Layout.preferredWidth: 34; Layout.preferredHeight: 34
+                                radius: 17
+                                color: mArea.containsMouse ? Theme.accent : (modelData.act === "toggle" ? Theme.surface : "transparent")
+                                Lbl {
+                                    anchors.centerIn: parent
+                                    text: mb.modelData.act === "toggle"
+                                        ? ((music.p && music.p.isPlaying) ? "\uf04c" : "\uf04b")
+                                        : mb.modelData.icon
+                                    color: mArea.containsMouse ? Theme.textOnAccent : Theme.text
+                                    font.pixelSize: 13
+                                }
+                                MouseArea {
+                                    id: mArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        const p = music.p
+                                        if (!p) return
+                                        if (mb.modelData.act === "toggle") { if (p.canTogglePlaying) p.togglePlaying() }
+                                        else if (mb.modelData.act === "next") { if (p.canGoNext) p.next() }
+                                        else { if (p.canGoPrevious) p.previous() }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── погода ──
+                RowLayout {
+                    id: weatherRow
+                    visible: Weather.ready
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 36
+                    spacing: 8
+                    Lbl { text: Weather.icon; color: Theme.accent; font.pixelSize: 20 }
+                    Lbl { text: Weather.temp + (Weather.desc !== "" ? "  ·  " + Weather.desc : ""); color: Theme.muted }
+                }
+
+                // плавное появление
+                opacity: 0
+                NumberAnimation on opacity { from: 0; to: 1; duration: 220; running: true }
             }
         }
     }
@@ -342,7 +508,7 @@ Scope {
     // quickshell ipc call lock lock
     IpcHandler {
         target: "lock"
-        function lock() { UI.session = false; UI.launcher = false; UI.locked = true }
-        function status() { return UI.locked }
+        function lock(): void { UI.session = false; UI.launcher = false; UI.locked = true }
+        function status(): bool { return UI.locked }
     }
 }

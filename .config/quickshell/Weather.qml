@@ -25,13 +25,6 @@ Singleton {
     property string pressure: ""
     property var days: []
     property var hourly: []
-    readonly property int nextPrecip: {
-        // максимальная вероятность осадков в ближайшие ~6 часов, начиная со «следующей точки»
-        let m = 0
-        for (let i = 1; i < Math.min(3, hourly.length); i++)
-            if (hourly[i].pop > m) m = hourly[i].pop
-        return m
-    }
     property double lastFetch: 0
     property double lastAlert: 0
     property real lat: NaN
@@ -161,7 +154,6 @@ Singleton {
                 when: k - start,
                 temp: Math.round(h.temperature_2m[k]),
                 icon: iconFor(h.weather_code[k], hr >= 6 && hr < 21),
-                pop: (h.precipitation_probability ? Math.round(h.precipitation_probability[k] || 0) : 0),
                 label: String(h.time[k]).slice(11, 13)
             })
         }
