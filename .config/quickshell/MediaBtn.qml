@@ -6,6 +6,7 @@ Rectangle {
     id: cb
     property string icon: ""
     property bool big: false
+    property bool sticker: false
     property bool on: false
     property string badge: ""
     property color accentColor: Rock.pink
@@ -15,8 +16,9 @@ Rectangle {
     implicitHeight: implicitWidth
     radius: width / 2
     color: big ? (cArea.containsMouse ? Qt.lighter(accentColor, 1.08) : accentColor)
-               : (cArea.containsMouse ? Rock.a(Rock.pink, 0.16) : "transparent")
-    border.width: big ? 2 : 0
+               : sticker ? (cArea.containsMouse ? Rock.cream : Rock.paper)
+                         : (cArea.containsMouse ? Rock.a(Rock.pink, 0.16) : "transparent")
+    border.width: (big || sticker) ? 2 : 0
     border.color: Rock.ink
     Behavior on color { ColorAnimation { duration: 120 } }
     Lbl {

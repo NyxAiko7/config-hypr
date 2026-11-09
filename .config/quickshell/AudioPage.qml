@@ -45,9 +45,12 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 48
         radius: 14
-        color: rArea.containsMouse ? Theme.surface : "transparent"
-        border.width: current ? 1 : 0
-        border.color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.5)
+        color: row.current
+               ? (rArea.containsMouse ? Qt.lighter(Rock.comic ? Rock.yellow : Rock.uiActive, 1.06)
+                                      : (Rock.comic ? Rock.yellow : Rock.uiActive))
+               : (rArea.containsMouse ? Rock.uiHover : Rock.uiSurface2)
+        border.width: Rock.uiBorder
+        border.color: Rock.uiEdge
         Behavior on color { ColorAnimation { duration: 120 } }
 
         RowLayout {
@@ -59,16 +62,17 @@ Item {
                 Layout.preferredWidth: 22
                 horizontalAlignment: Text.AlignHCenter
                 text: row.glyph
-                color: row.current ? Theme.accent : Theme.text
+                color: row.current ? Rock.pink : Rock.uiText
                 font.pixelSize: 15
             }
             Lbl {
                 Layout.fillWidth: true
                 text: page.label(row.node)
+                color: Rock.uiText
                 font.bold: row.current
                 elide: Text.ElideRight
             }
-            Lbl { visible: row.current; text: "\uf00c"; color: Theme.accent; font.pixelSize: 12 }
+            Lbl { visible: row.current; text: "\uf00c"; color: Rock.pink; font.pixelSize: 12 }
         }
         MouseArea {
             id: rArea
@@ -87,14 +91,16 @@ Item {
         Layout.fillWidth: true
         implicitHeight: 44
         radius: 14
-        color: "transparent"
+        color: Rock.uiSurface2
+        border.width: Rock.uiBorder
+        border.color: Rock.uiEdge
 
         RowLayout {
             anchors.fill: parent
             anchors.leftMargin: 14
             anchors.rightMargin: 14
             spacing: 12
-            Lbl { Layout.preferredWidth: 104; text: page.streamName(sr.node); font.pixelSize: 12; elide: Text.ElideRight }
+            Lbl { Layout.preferredWidth: 104; text: page.streamName(sr.node); color: Rock.uiText; font.pixelSize: 12; elide: Text.ElideRight }
             Item {
                 id: sbar
                 Layout.fillWidth: true
@@ -104,19 +110,19 @@ Item {
                     width: parent.width
                     height: 4
                     radius: 2
-                    color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.14)
+                    color: Qt.rgba(Rock.uiText.r, Rock.uiText.g, Rock.uiText.b, 0.14)
                     Rectangle {
                         width: parent.width * Math.min(1, sr.vol)
                         height: parent.height
                         radius: 2
-                        color: Theme.accent
+                        color: Rock.pink
                     }
                 }
                 Rectangle {
                     width: 10; height: 10; radius: 5
                     anchors.verticalCenter: parent.verticalCenter
                     x: Math.max(0, Math.min(parent.width - width, parent.width * Math.min(1, sr.vol) - width / 2))
-                    color: Theme.text
+                    color: Rock.uiText
                 }
                 MouseArea {
                     anchors.fill: parent
@@ -128,7 +134,7 @@ Item {
                     onPositionChanged: m => { if (pressed) setV(m.x) }
                 }
             }
-            Lbl { Layout.preferredWidth: 30; horizontalAlignment: Text.AlignRight; text: Math.round(sr.vol * 100); color: Theme.muted; font.pixelSize: 11 }
+            Lbl { Layout.preferredWidth: 30; horizontalAlignment: Text.AlignRight; text: Math.round(sr.vol * 100); color: Rock.uiSub; font.pixelSize: 11 }
         }
     }
 
@@ -139,9 +145,17 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
-            IconBtn { icon: "\uf053"; iconColor: Theme.text; onClicked: page.back() }
-            Lbl { Layout.fillWidth: true; text: "Звук"; font.bold: true; font.pixelSize: 15 }
-            IconBtn { icon: "\uf1de"; onClicked: Quickshell.execDetached(["pavucontrol"]) }
+            IconBtn { icon: "\uf053"; iconColor: Rock.uiSub; onClicked: page.back() }
+            Lbl {
+                Layout.fillWidth: true
+                text: I18n.t("Звук")
+                color: Rock.uiText
+                font.family: Rock.display
+                font.weight: Font.Black
+                font.pixelSize: 16
+                font.letterSpacing: 0.4
+            }
+            IconBtn { icon: "\uf1de"; iconColor: Rock.uiSub; hoverColor: Rock.a(Rock.uiText, 0.12); onClicked: Quickshell.execDetached(["pavucontrol"]) }
         }
 
         Flickable {
@@ -158,7 +172,7 @@ Item {
                 width: scroll.width
                 spacing: 4
 
-                Lbl { text: "ВЫВОД"; color: Theme.muted; font.pixelSize: 10; Layout.leftMargin: 6; Layout.topMargin: 4 }
+                Lbl { text: I18n.t("ВЫВОД"); color: Rock.uiSub; font.pixelSize: 10; Layout.leftMargin: 6; Layout.topMargin: 4 }
                 Repeater {
                     model: page.sinks
                     delegate: DeviceRow {
@@ -170,7 +184,7 @@ Item {
                     }
                 }
 
-                Lbl { text: "ВВОД"; color: Theme.muted; font.pixelSize: 10; Layout.leftMargin: 6; Layout.topMargin: 12 }
+                Lbl { text: I18n.t("ВВОД"); color: Rock.uiSub; font.pixelSize: 10; Layout.leftMargin: 6; Layout.topMargin: 12 }
                 Repeater {
                     model: page.sources
                     delegate: DeviceRow {
@@ -184,8 +198,8 @@ Item {
 
                 Lbl {
                     visible: page.streams.length > 0
-                    text: "ПРИЛОЖЕНИЯ"
-                    color: Theme.muted
+                    text: I18n.t("ПРИЛОЖЕНИЯ")
+                    color: Rock.uiSub
                     font.pixelSize: 10
                     Layout.leftMargin: 6
                     Layout.topMargin: 12

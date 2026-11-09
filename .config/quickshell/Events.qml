@@ -33,7 +33,7 @@ Scope {
     Connections {
         target: Kb
         function onLayoutChanged() {
-            if (root.ready) UI.flash("\uf11c", Kb.layout, "Раскладка", "", "layout", "")
+            if (root.ready) UI.flash("\uf11c", Kb.layout, I18n.t("Раскладка"), "", "layout", "")
         }
     }
 
@@ -45,10 +45,10 @@ Scope {
         if (d.state === UPowerDeviceState.Discharging) {
             if (pct <= 10 && batStage < 2) {
                 batStage = 2
-                UI.flash("\uf244", "Критический заряд", pct + "% — подключи питание", "", "battery", "cc")
+                UI.flash("\uf244", I18n.t("Критический заряд"), pct + I18n.t("% — подключи питание"), "", "battery", "cc")
             } else if (pct <= 20 && batStage < 1) {
                 batStage = 1
-                UI.flash("\uf243", "Низкий заряд", pct + "%", "", "battery", "cc")
+                UI.flash("\uf243", I18n.t("Низкий заряд"), pct + "%", "", "battery", "cc")
             }
         } else if (pct > 25) batStage = 0
     }
@@ -58,8 +58,8 @@ Scope {
             const d = UPower.displayDevice
             if (!root.ready || !d.isLaptopBattery) return
             const pct = Math.round(d.percentage * 100) + "%"
-            if (d.state === UPowerDeviceState.Charging) { root.batStage = 0; UI.flash("\uf0e7", "Зарядка", pct, "", "battery", "cc") }
-            else if (d.state === UPowerDeviceState.Discharging) UI.flash("\uf240", "От батареи", pct, "", "battery", "cc")
+            if (d.state === UPowerDeviceState.Charging) { root.batStage = 0; UI.flash("\uf0e7", I18n.t("Зарядка"), pct, "", "battery", "cc") }
+            else if (d.state === UPowerDeviceState.Discharging) UI.flash("\uf240", I18n.t("От батареи"), pct, "", "battery", "cc")
         }
         function onPercentageChanged() { root.checkBattery() }
     }
@@ -70,8 +70,8 @@ Scope {
         function onDndChanged() {
             if (root.ready)
                 UI.flash(Notifs.dnd ? "\uf1f6" : "\uf0f3",
-                         Notifs.dnd ? "Тишина включена" : "Уведомления включены",
-                         Notifs.dnd ? "Сообщения придут в историю" : "", "", "notif", "notifs")
+                         Notifs.dnd ? I18n.t("Тишина включена") : I18n.t("Уведомления включены"),
+                         Notifs.dnd ? I18n.t("Сообщения придут в историю") : "", "", "notif", "notifs")
         }
     }
 
@@ -80,8 +80,8 @@ Scope {
         target: Net
         function onConnectionChanged() {
             if (!root.ready) return
-            if (Net.connection !== "") UI.flash(Net.icon, Net.connection, "Подключено", "", "net", "wifi")
-            else UI.flash(Net.icon, "Сеть отключена", "", "", "net", "wifi")
+            if (Net.connection !== "") UI.flash(Net.icon, Net.connection, I18n.t("Подключено"), "", "net", "wifi")
+            else UI.flash(Net.icon, I18n.t("Сеть отключена"), "", "", "net", "wifi")
         }
     }
 
@@ -90,8 +90,8 @@ Scope {
         target: Net
         function onVpnChanged() {
             if (!root.ready || !Net.vpnInit) return
-            if (Net.vpn) UI.flash("\uf132", "VPN включён", Net.vpnName, "", "net", "wifi")
-            else UI.flash("\uf132", "VPN выключен", "", "", "net", "wifi")
+            if (Net.vpn) UI.flash("\uf132", I18n.t("VPN включён"), Net.vpnName, "", "net", "wifi")
+            else UI.flash("\uf132", I18n.t("VPN выключен"), "", "", "net", "wifi")
         }
     }
 
@@ -104,9 +104,9 @@ Scope {
                 const d = btConnected[n - 1]
                 const p = Bt.percent(d)
                 UI.flash(Bt.iconFor(d), Bt.nameOf(d),
-                         "Подключено" + (p >= 0 ? "  ·  " + p + "%" : ""), "", "bt", "bt")
+                         I18n.t("Подключено") + (p >= 0 ? "  ·  " + p + "%" : ""), "", "bt", "bt")
             } else if (n < prevBt) {
-                UI.flash("\uf293", "Устройство отключено", "", "", "bt", "bt")
+                UI.flash("\uf293", I18n.t("Устройство отключено"), "", "", "bt", "bt")
             }
         }
         prevBt = n
@@ -124,7 +124,7 @@ Scope {
             alive[key] = true
             if (p >= 0 && p <= 20 && !warnedBt[key]) {
                 warnedBt[key] = true
-                UI.flash(Bt.iconFor(d), Bt.nameOf(d), "Низкий заряд  ·  " + p + "%", "", "battery", "bt")
+                UI.flash(Bt.iconFor(d), Bt.nameOf(d), I18n.t("Низкий заряд  ·  ") + p + "%", "", "battery", "bt")
             } else if (p > 30) delete warnedBt[key]
         }
         for (const k in warnedBt) if (!alive[k]) delete warnedBt[k]

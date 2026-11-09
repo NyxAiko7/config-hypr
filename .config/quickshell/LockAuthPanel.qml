@@ -22,14 +22,14 @@ RockCard {
     signal revealRequested()
 
     preferredWidth: Math.min(398, (parent ? parent.width : 1920) * 0.31)
-    fill: Rock.cream
+    fill: Rock.comic ? Rock.cream : Rock.uiSurface
     edge: Rock.ink
     shadowColor: Rock.pink
     radius: 20
     borderWidth: 3
     padding: 20
     spacing: 12
-    rotation: -1.4
+    rotation: Rock.comic ? -1.4 : 0
     opacity: enterProgress
 
     transform: [
@@ -67,11 +67,11 @@ RockCard {
                     const cx = width / 2, cy = height / 2, r = width / 2 - 3
                     ctx.lineWidth = 4
                     ctx.lineCap = "round"
-                    ctx.strokeStyle = Rock.a(Rock.ink, 0.14)
+                    ctx.strokeStyle = Rock.a(Rock.uiText, 0.14)
                     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke()
                     if (frac > 0.001) {
                         ctx.strokeStyle = panel.batPct <= 20 && !panel.charging
-                            ? Rock.pinkDeep
+                            ? (Rock.sao ? Rock.danger : Rock.pinkDeep)
                             : (panel.charging ? Rock.cyan : Rock.pink)
                         ctx.beginPath()
                         ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac)
@@ -80,17 +80,36 @@ RockCard {
                 }
             }
 
+            Avatar {
+                anchors.centerIn: parent
+                width: 46; height: 46
+                radius: Rock.marisa ? 6 : 23
+                visible: PanelConfig.hasAvatar
+                source: PanelConfig.avatarUrl
+                letter: (Quickshell.env("USER") || "user").charAt(0).toUpperCase()
+                bg: Rock.marisa ? Rock.ink2 : Rock.pink
+                fg: Rock.marisa ? Rock.gold : (Rock.comic ? Rock.cream : Rock.ink)
+                borderWidth: Rock.marisa ? 2 : Rock.uiBorder
+                borderColor: Rock.marisa ? Rock.gold : Rock.uiEdge
+                fontFamily: Rock.display
+                fontSize: 18
+                fontWeight: Font.Black
+            }
+
             Rectangle {
                 anchors.centerIn: parent
-                width: 46; height: 46; radius: 23
-                color: Rock.pink
-                border.width: 3
-                border.color: Rock.ink
+                width: 46; height: 46; radius: Rock.marisa ? 6 : 23
+                visible: !PanelConfig.hasAvatar
+                color: Rock.marisa ? Rock.ink2 : Rock.pink
+                border.width: Rock.marisa ? 2 : Rock.uiBorder
+                border.color: Rock.marisa ? Rock.gold : Rock.uiEdge
                 Lbl {
                     anchors.centerIn: parent
-                    text: "\uf023"
-                    color: Rock.cream
+                    text: Rock.marisa ? "✦" : "\uf023"
+                    color: Rock.marisa ? Rock.gold
+                           : (Rock.comic ? Rock.cream : Rock.ink)
                     font.pixelSize: 18
+                    font.weight: Font.Black
                 }
             }
         }
@@ -99,7 +118,7 @@ RockCard {
             spacing: 0
             Layout.fillWidth: true
             Lbl {
-                text: "BOCCHI LOCK"
+                text: Rock.comic ? "BOCCHI LOCK" : Rock.marisa ? "GRIMOIRE LOCK" : Rock.sao ? "SYSTEM LOCK · AINCRAD" : "ASTRAL LOCK"
                 color: Rock.pinkDeep
                 font.family: Rock.display
                 font.pixelSize: 10
@@ -109,7 +128,7 @@ RockCard {
             Lbl {
                 Layout.fillWidth: true
                 text: Quickshell.env("USER") + "@" + (Quickshell.env("HOSTNAME") || "artix")
-                color: Rock.ink
+                color: Rock.uiText
                 font.family: Rock.display
                 font.pixelSize: 15
                 font.weight: Font.Black
@@ -117,9 +136,9 @@ RockCard {
             }
             Lbl {
                 Layout.fillWidth: true
-                text: panel.busy ? "Проверка…"
-                    : (panel.fpAvailable ? "Пароль или отпечаток" : "Введите пароль")
-                color: Rock.a(Rock.ink, 0.55)
+                text: panel.busy ? I18n.t("Проверка…")
+                    : (panel.fpAvailable ? I18n.t("Пароль или отпечаток") : I18n.t("Введите пароль"))
+                color: Rock.a(Rock.uiText, 0.55)
                 font.pixelSize: 10
                 elide: Text.ElideRight
             }
@@ -128,7 +147,7 @@ RockCard {
         Lbl {
             Layout.alignment: Qt.AlignVCenter
             text: panel.fpAvailable ? "\uf577" : "\uf084"
-            color: panel.fpAvailable ? Rock.pinkDeep : Rock.a(Rock.ink, 0.35)
+            color: panel.fpAvailable ? Rock.pinkDeep : Rock.a(Rock.uiText, 0.35)
             font.pixelSize: 17
         }
     }
@@ -137,7 +156,7 @@ RockCard {
         Layout.fillWidth: true
         height: 3
         radius: 1.5
-        color: Rock.ink
+        color: Rock.uiText
     }
 
     Rectangle {
@@ -145,21 +164,21 @@ RockCard {
         Layout.fillWidth: true
         Layout.preferredHeight: 56
         radius: 12
-        color: Rock.paper
-        border.width: 3
+        color: Rock.uiSurface2
+        border.width: Rock.uiBorder
         border.color: panel.status !== ""
             ? Rock.pinkDeep
-            : (panel.busy ? Rock.cyan : Rock.ink)
+            : (panel.busy ? Rock.cyan : Rock.uiEdge)
         Behavior on border.color { ColorAnimation { duration: 150 } }
 
         Rectangle {
             anchors.left: parent.left
             anchors.leftMargin: 8
             anchors.verticalCenter: parent.verticalCenter
-            width: 36; height: 30; radius: 8
-            color: Rock.cyan
-            border.width: 2
-            border.color: Rock.ink
+            width: 36; height: 30; radius: Rock.marisa ? 3 : 8
+            color: Rock.marisa ? Rock.pink : Rock.cyan
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
             Lbl {
                 anchors.centerIn: parent
                 text: Kb.layout
@@ -187,8 +206,8 @@ RockCard {
         Lbl {
             anchors.centerIn: parent
             visible: panel.buffer === ""
-            text: panel.busy ? "Проверка…" : "Введите пароль"
-            color: Rock.a(Rock.ink, 0.45)
+            text: panel.busy ? I18n.t("Проверка…") : I18n.t("Введите пароль")
+            color: Rock.a(Rock.uiText, 0.45)
             font.pixelSize: 12
             font.weight: Font.DemiBold
         }
@@ -203,7 +222,7 @@ RockCard {
                     width: 8; height: 8; radius: 4
                     color: Rock.pink
                     border.width: 1
-                    border.color: Rock.ink
+                    border.color: Rock.uiEdge
                 }
             }
         }
@@ -213,7 +232,7 @@ RockCard {
             width: parent.width - 140
             visible: panel.reveal && panel.buffer !== ""
             text: panel.buffer
-            color: Rock.ink
+            color: Rock.uiText
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideLeft
         }
@@ -227,7 +246,7 @@ RockCard {
             Lbl {
                 anchors.centerIn: parent
                 text: panel.reveal ? "\uf070" : "\uf06e"
-                color: Rock.ink
+                color: Rock.uiText
                 font.pixelSize: 12
             }
             MouseArea {
@@ -254,24 +273,25 @@ RockCard {
         Layout.preferredHeight: 50
 
         Rectangle {
+            visible: Rock.comic
             x: 4; y: 4
             width: parent.width; height: 42
             radius: 12
             color: Rock.pink
-            border.width: 3
-            border.color: Rock.ink
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
         }
         Rectangle {
             width: parent.width
             height: 42
             radius: 12
             color: enterArea.containsMouse ? Rock.a(Rock.yellow, 0.9) : Rock.yellow
-            border.width: 3
-            border.color: Rock.ink
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
             Behavior on color { ColorAnimation { duration: 120 } }
             Lbl {
                 anchors.centerIn: parent
-                text: panel.busy ? "ПРОВЕРКА…" : "РАЗБЛОКИРОВАТЬ  ↵"
+                text: panel.busy ? I18n.t("ПРОВЕРКА…") : I18n.t("РАЗБЛОКИРОВАТЬ  ↵")
                 color: Rock.ink
                 font.family: Rock.display
                 font.pixelSize: 12
@@ -291,24 +311,24 @@ RockCard {
     RowLayout {
         Layout.fillWidth: true
         spacing: 6
-        RockChip { offset: 1.5; padH: 8; padV: 2; radius: 6; fill: Rock.cream; shadowColor: Rock.cyan
+        RockChip { offset: 1.5; padH: 8; padV: 2; radius: 6; fill: Rock.comic ? Rock.cream : Rock.uiSurface2; shadowColor: Rock.cyan
             Lbl { text: "↵"; color: Rock.pinkDeep; font.pixelSize: 10; font.weight: Font.Black }
-            Lbl { text: "войти"; color: Rock.a(Rock.ink, 0.65); font.pixelSize: 9 }
+            Lbl { text: I18n.t("войти"); color: Rock.a(Rock.uiText, 0.65); font.pixelSize: 9 }
         }
-        RockChip { offset: 1.5; padH: 8; padV: 2; radius: 6; fill: Rock.cream; shadowColor: Rock.yellow
+        RockChip { offset: 1.5; padH: 8; padV: 2; radius: 6; fill: Rock.comic ? Rock.cream : Rock.uiSurface2; shadowColor: Rock.yellow
             Lbl { text: "Tab"; color: Rock.pinkDeep; font.pixelSize: 10; font.weight: Font.Black }
-            Lbl { text: "показать"; color: Rock.a(Rock.ink, 0.65); font.pixelSize: 9 }
+            Lbl { text: I18n.t("показать"); color: Rock.a(Rock.uiText, 0.65); font.pixelSize: 9 }
         }
-        RockChip { offset: 1.5; padH: 8; padV: 2; radius: 6; fill: Rock.cream; shadowColor: Rock.pink
+        RockChip { offset: 1.5; padH: 8; padV: 2; radius: 6; fill: Rock.comic ? Rock.cream : Rock.uiSurface2; shadowColor: Rock.pink
             Lbl { text: "Esc"; color: Rock.pinkDeep; font.pixelSize: 10; font.weight: Font.Black }
-            Lbl { text: "сброс"; color: Rock.a(Rock.ink, 0.65); font.pixelSize: 9 }
+            Lbl { text: I18n.t("сброс"); color: Rock.a(Rock.uiText, 0.65); font.pixelSize: 9 }
         }
         Item { Layout.fillWidth: true }
         RowLayout {
             visible: panel.fpAvailable && panel.fpFails < 8
             spacing: 4
             Lbl { text: "\uf577"; color: Rock.pinkDeep; font.pixelSize: 12 }
-            Lbl { text: "палец"; color: Rock.a(Rock.ink, 0.55); font.pixelSize: 9; font.weight: Font.Bold }
+            Lbl { text: I18n.t("палец"); color: Rock.a(Rock.uiText, 0.55); font.pixelSize: 9; font.weight: Font.Bold }
         }
     }
 

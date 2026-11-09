@@ -36,8 +36,8 @@ Singleton {
             tick.stop()
             if (root.recording) {
                 root.recording = false
-                Quickshell.execDetached(["notify-send", "-a", "Запись экрана",
-                    "Запись сохранена", "Папка ~/Videos/Recordings"])
+                Quickshell.execDetached(["notify-send", "-a", I18n.t("Запись экрана"),
+                    I18n.t("Запись сохранена"), I18n.t("Папка ~/Videos/Recordings")])
             }
         }
     }
@@ -50,7 +50,7 @@ Singleton {
             root.recording = true
             root.seconds = 0
             tick.start()
-            UI.flash("\uf03d", "Запись экрана", "Клик по значку слева — остановить", "", "rec", "")
+            UI.flash("\uf03d", I18n.t("Запись экрана"), I18n.t("Клик по значку слева — остановить"), "", "rec", "")
         }
     }
     Timer { id: tick; interval: 1000; repeat: true; onTriggered: root.seconds++ }

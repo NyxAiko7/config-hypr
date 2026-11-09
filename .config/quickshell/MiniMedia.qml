@@ -16,11 +16,6 @@ Pill {
     interactive: true
     visible: p !== null
 
-    function fmt(s) {
-        if (!isFinite(s) || s < 0) return "0:00"
-        return Math.floor(s / 60) + ":" + ("0" + Math.floor(s % 60)).slice(-2)
-    }
-
     onClicked: mouse => {
         if (mouse.button === Qt.MiddleButton) { if (p && p.canTogglePlaying) p.togglePlaying() }
         else if (mouse.button === Qt.RightButton) { if (p && p.canGoNext) p.next() }
@@ -53,16 +48,51 @@ Pill {
                 ctx.reset()
                 const c = width / 2, rad = c - 1.5
                 ctx.lineWidth = 2
-                ctx.strokeStyle = Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.16)
+                ctx.strokeStyle = Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.18)
                 ctx.beginPath()
                 ctx.arc(c, c, rad, 0, Math.PI * 2)
                 ctx.stroke()
+                if (Rock.marisa) {
+                    ctx.fillStyle = Rock.a(Rock.gold, 0.7)
+                    for (let i = 0; i < 8; i++) {
+                        const a = i * Math.PI / 4
+                        ctx.beginPath()
+                        ctx.arc(c + Math.cos(a) * rad, c + Math.sin(a) * rad, 0.9, 0, Math.PI * 2)
+                        ctx.fill()
+                    }
+                }
                 if (prog > 0.001) {
-                    ctx.strokeStyle = Theme.accent
+                    ctx.strokeStyle = Rock.marisa ? Rock.gold : Rock.yellow
                     ctx.lineCap = "round"
                     ctx.beginPath()
                     ctx.arc(c, c, rad, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2)
                     ctx.stroke()
+                }
+            }
+        }
+
+        Item {
+            anchors.fill: parent
+            visible: Rock.marisa
+
+            NumberAnimation on rotation {
+                running: chip.visible && chip.playing
+                from: 0
+                to: 360
+                duration: 14000
+                loops: Animation.Infinite
+            }
+
+            Repeater {
+                model: 4
+                delegate: Text {
+                    required property int index
+                    readonly property real ang: index * Math.PI / 2 - Math.PI / 4
+                    text: index % 2 === 0 ? "✦" : "✧"
+                    color: index % 2 === 0 ? Rock.gold : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55)
+                    font.pixelSize: index % 2 === 0 ? 6 : 5
+                    x: parent.width / 2 + Math.cos(ang) * (parent.width / 2 - 2) - width / 2
+                    y: parent.height / 2 + Math.sin(ang) * (parent.height / 2 - 2) - height / 2
                 }
             }
         }
@@ -74,7 +104,7 @@ Pill {
             opacity: chip.playing ? 1 : 0.5
             Behavior on opacity { NumberAnimation { duration: 200 } }
 
-            Rectangle { anchors.fill: parent; color: Theme.surface }
+            Rectangle { anchors.fill: parent; color: Rock.comic ? Rock.paper : Rock.uiSurface2 }
             Image {
                 id: cover
                 anchors.fill: parent
@@ -87,32 +117,32 @@ Pill {
                 anchors.centerIn: parent
                 visible: !cover.visible
                 text: "\uf001"
-                color: Theme.muted
+                color: Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55)
                 font.pixelSize: 9
             }
-            RoundMask { anchors.fill: parent; radius: 10; maskColor: Theme.bg }
+            RoundMask { anchors.fill: parent; radius: 10; maskColor: Rock.marisa ? Rock.uiSurface : Rock.ink2 }
         }
     }
 
     // сколько играет трек
     Lbl {
-        text: chip.fmt(chip.p ? chip.p.position : 0)
+        text: Fmt.clock(chip.p ? chip.p.position : 0)
         font.pixelSize: 11
         font.bold: true
-        color: chip.playing ? Theme.text : Theme.muted
+        color: chip.playing ? (Rock.marisa ? Rock.barText : Rock.cream) : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.5)
     }
 
     // название выезжает при наведении
     Lbl {
         id: titleLbl
-        opacity: chip.hovered ? 1 : 0
+        opacity: ((chip.playing || chip.hovered) && !PanelConfig.vertical) ? 1 : 0
         visible: opacity > 0.01
-        Layout.preferredWidth: chip.hovered ? Math.min(implicitWidth, 200) : 0
+        Layout.preferredWidth: (chip.playing || chip.hovered) ? Math.min(implicitWidth, chip.playing ? 160 : 200) : 0
         Behavior on opacity { NumberAnimation { duration: 160 } }
         Behavior on Layout.preferredWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         elide: Text.ElideRight
         clip: true
-        color: Theme.muted
+        color: Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.6)
         font.pixelSize: 11
         text: chip.p
             ? (chip.p.trackArtist ? chip.p.trackArtist + " – " : "") + (chip.p.trackTitle || "")

@@ -16,7 +16,7 @@ Singleton {
         if (i.indexOf("speaker") >= 0 || i.indexOf("audio") >= 0) return "\uf028"
         return "\uf293"
     }
-    function nameOf(d) { return d.name || d.deviceName || d.address || "Устройство" }
+    function nameOf(d) { return d.name || d.deviceName || d.address || I18n.t("Устройство") }
     // заряд в процентах, -1 если устройство его не сообщает
     function percent(d) {
         if (!d.batteryAvailable) return -1

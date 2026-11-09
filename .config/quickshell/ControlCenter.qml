@@ -8,7 +8,10 @@ import Quickshell.Services.UPower
 BarPopup {
     id: cc
     alignment: "right"
-    implicitWidth: 380
+    implicitWidth: 396
+    fill: Rock.uiSurface
+    accent: Rock.uiAccent
+    radius: Rock.comic ? 22 : Rock.marisa ? 8 : Rock.sao ? 4 : 18
 
     property string page: "main"      // "main" | "wifi" | "bt" | "audio"
     readonly property real maxH: (barWindow.screen ? barWindow.screen.height : 900) - 110
@@ -53,13 +56,13 @@ BarPopup {
         const sec = d.state === UPowerDeviceState.Charging ? d.timeToFull : d.timeToEmpty
         if (!sec || sec <= 0) return ""
         const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60)
-        return " (" + (h > 0 ? h + " ч " : "") + m + " мин)"
+        return " (" + (h > 0 ? h + I18n.t(" ч ") : "") + m + I18n.t(" мин)")
     }
     function powerText() {
         const d = UPower.displayDevice
         const w = Math.abs(d.changeRate)
-        let t = w >= 0.5 ? " · " + w.toFixed(1) + " Вт" : ""
-        if (d.healthSupported && d.healthPercentage > 0) t += " · здоровье " + Math.round(d.healthPercentage) + "%"
+        let t = w >= 0.5 ? " · " + w.toFixed(1) + I18n.t(" Вт") : ""
+        if (d.healthSupported && d.healthPercentage > 0) t += I18n.t(" · здоровье ") + Math.round(d.healthPercentage) + "%"
         return t
     }
     function batIcon() {
@@ -70,7 +73,7 @@ BarPopup {
     }
 
     // ───────── Плитка ─────────
-    component Tile: Rectangle {
+    component Tile: Item {
         id: tile
         property string icon
         property string title
@@ -81,73 +84,103 @@ BarPopup {
         signal rightClicked()
         signal expand()
 
-        implicitHeight: 62
-        radius: 18
-        color: active ? (tileArea.containsMouse ? Qt.lighter(Theme.accent, 1.08) : Theme.accent)
-                      : (tileArea.containsMouse ? Qt.lighter(Theme.surface, 1.18) : Theme.surface)
-        Behavior on color { ColorAnimation { duration: 140 } }
+        implicitHeight: 68
 
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: tile.expandable ? 34 : 10
-            spacing: 10
+        Rectangle {
+            visible: Rock.comic
+            x: 4
+            y: 4
+            width: tile.width - 4
+            height: tile.height - 4
+            radius: Rock.comic ? 16 : Rock.sao ? 4 : 16
+            color: Rock.pink
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
+        }
 
-            Rectangle {
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                radius: 17
-                color: tile.active
-                    ? Qt.rgba(Theme.textOnAccent.r, Theme.textOnAccent.g, Theme.textOnAccent.b, 0.14)
-                    : Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.08)
-                Lbl {
-                    anchors.centerIn: parent
-                    text: tile.icon
-                    color: tile.active ? Theme.textOnAccent : Theme.text
-                    font.pixelSize: 15
+        Rectangle {
+            id: card
+            width: tile.width - 4
+            height: tile.height - 4
+            radius: Rock.comic ? 16 : Rock.sao ? 4 : 16
+            color: tile.active
+                ? (tileArea.containsMouse ? Qt.lighter(Rock.uiActive, 1.06) : Rock.uiActive)
+                : (tileArea.containsMouse ? Rock.uiHover : Rock.uiSurface)
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
+            Behavior on color { ColorAnimation { duration: 140 } }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: tile.expandable ? 32 : 10
+                spacing: 9
+
+                Rectangle {
+                    Layout.preferredWidth: 34
+                    Layout.preferredHeight: 34
+                    radius: 10
+                    rotation: Rock.comic ? -4 : 0
+                    color: tile.active ? Rock.pink : Rock.cyan
+                    border.width: Rock.uiBorder
+                    border.color: Rock.uiEdge
+                    Lbl {
+                        anchors.centerIn: parent
+                        text: tile.icon
+                        color: tile.active ? (Rock.comic || Rock.marisa ? Rock.cream : Rock.ink) : Rock.ink
+                        font.family: Rock.display
+                        font.weight: Font.Black
+                        font.pixelSize: 15
+                        rotation: Rock.comic ? 4 : 0
+                    }
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 0
+                    Lbl {
+                        Layout.fillWidth: true
+                        text: tile.title
+                        color: Rock.uiText
+                        font.family: Rock.display
+                        font.weight: Font.Black
+                        font.pixelSize: 13
+                        elide: Text.ElideRight
+                    }
+                    Lbl {
+                        Layout.fillWidth: true
+                        text: tile.subtitle
+                        font.pixelSize: 10
+                        color: Rock.uiSub
+                        opacity: 0.66
+                        elide: Text.ElideRight
+                    }
                 }
             }
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 0
-                Lbl {
-                    Layout.fillWidth: true
-                    text: tile.title
-                    font.bold: true
-                    color: tile.active ? Theme.textOnAccent : Theme.text
-                    elide: Text.ElideRight
-                }
-                Lbl {
-                    Layout.fillWidth: true
-                    text: tile.subtitle
-                    font.pixelSize: 10
-                    color: tile.active ? Theme.textOnAccent : Theme.muted
-                    opacity: tile.active ? 0.72 : 1
-                    elide: Text.ElideRight
-                }
+            MouseArea {
+                id: tileArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: mouse => mouse.button === Qt.RightButton ? tile.rightClicked() : tile.clicked()
             }
         }
-        MouseArea {
-            id: tileArea
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: mouse => mouse.button === Qt.RightButton ? tile.rightClicked() : tile.clicked()
-        }
+
         Rectangle {
             visible: tile.expandable
-            anchors.right: parent.right
-            anchors.rightMargin: 6
-            anchors.verticalCenter: parent.verticalCenter
-            width: 26; height: 26; radius: 13
-            color: chevArea.containsMouse
-                ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.16) : "transparent"
+            anchors.right: card.right
+            anchors.rightMargin: 5
+            anchors.verticalCenter: card.verticalCenter
+            width: 24; height: 24; radius: 12
+            color: chevArea.containsMouse ? Rock.a(Rock.uiText, 0.12) : "transparent"
+            border.width: chevArea.containsMouse ? 1.5 : 0
+            border.color: Rock.uiEdge
             Lbl {
                 anchors.centerIn: parent
                 text: "\uf054"
-                color: tile.active ? Theme.textOnAccent : Theme.muted
-                font.pixelSize: 10
+                color: Rock.uiText
+                font.pixelSize: 9
             }
             MouseArea {
                 id: chevArea
@@ -164,28 +197,44 @@ BarPopup {
         id: sl
         property string icon
         property real value: 0
+        property color shadowColor: Rock.cyan
         signal moved(real v)
         signal iconClicked()
-        implicitHeight: 42
+        implicitHeight: 46
+
+        Rectangle {
+            visible: Rock.comic
+            x: 3
+            y: 4
+            width: sl.width - 3
+            height: 42
+            radius: 21
+            color: sl.shadowColor
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
+        }
 
         Rectangle {
             id: track
-            anchors.fill: parent
-            radius: height / 2
-            color: Theme.surface
+            width: sl.width - 3
+            height: 42
+            radius: 21
+            color: Rock.uiSurface
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
             clip: true
 
             Rectangle {
                 width: track.height + (track.width - track.height) * Math.max(0, Math.min(1, sl.value))
                 height: track.height
                 radius: height / 2
-                color: Theme.accent
+                color: Rock.pink
             }
             Lbl {
                 anchors.verticalCenter: parent.verticalCenter
                 x: (track.height - width) / 2
                 text: sl.icon
-                color: Theme.textOnAccent
+                color: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink
                 font.pixelSize: 15
             }
             Lbl {
@@ -193,8 +242,10 @@ BarPopup {
                 anchors.right: parent.right
                 anchors.rightMargin: 16
                 text: Math.round(sl.value * 100)
-                color: sl.value > 0.9 ? Theme.textOnAccent : Theme.muted
-                font.pixelSize: 11
+                color: Rock.uiText
+                font.family: Rock.display
+                font.weight: Font.Black
+                font.pixelSize: 12
             }
             MouseArea {
                 anchors.fill: parent
@@ -215,73 +266,143 @@ BarPopup {
     }
 
     // ───────── Кнопка быстрого действия ─────────
-    component QuickBtn: Rectangle {
+    component QuickBtn: Item {
         id: qb
         property string icon
         property string label
         property bool active: false
         signal activated()
-        implicitHeight: 58
-        radius: 16
-        color: active ? (qArea.containsMouse ? Qt.lighter(Theme.accent, 1.08) : Theme.accent)
-                      : (qArea.containsMouse ? Qt.lighter(Theme.surface, 1.18) : Theme.surface)
-        Behavior on color { ColorAnimation { duration: 140 } }
-        ColumnLayout {
-            anchors.centerIn: parent
-            spacing: 3
-            Lbl {
-                Layout.alignment: Qt.AlignHCenter
-                text: qb.icon
-                color: qb.active ? Theme.textOnAccent : Theme.text
-                font.pixelSize: 15
-            }
-            Lbl {
-                Layout.alignment: Qt.AlignHCenter
-                text: qb.label
-                color: qb.active ? Theme.textOnAccent : Theme.muted
-                font.pixelSize: 9
-            }
+        implicitHeight: 60
+
+        Rectangle {
+            visible: Rock.comic
+            x: 3
+            y: 4
+            width: qb.width - 3
+            height: qb.height - 4
+            radius: 14
+            color: Rock.pink
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
         }
-        MouseArea {
-            id: qArea
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: qb.activated()
+
+        Rectangle {
+            id: card
+            width: qb.width - 3
+            height: qb.height - 4
+            radius: 14
+            color: qb.active
+                ? (qArea.containsMouse ? Qt.lighter(Rock.uiActive, 1.06) : Rock.uiActive)
+                : (qArea.containsMouse ? Rock.uiHover : Rock.uiSurface)
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
+            Behavior on color { ColorAnimation { duration: 140 } }
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 1
+                Lbl {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: qb.icon
+                    color: qb.active ? Rock.pinkDeep : Rock.uiText
+                    font.family: Rock.display
+                    font.weight: Font.Black
+                    font.pixelSize: 15
+                }
+                Lbl {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: qb.label
+                    color: Rock.uiText
+                    font.family: Rock.display
+                    font.weight: Font.Black
+                    font.pixelSize: 8
+                }
+            }
+            MouseArea {
+                id: qArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: qb.activated()
+            }
         }
     }
 
     // ───────── Карточка статистики ─────────
-    component Stat: Rectangle {
+    component Stat: Item {
         id: st
         property string label
         property int value: 0
         property string sub: ""
-        implicitHeight: 64
-        radius: 16
-        color: Theme.surface
+        implicitHeight: 70
 
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 12
-            spacing: 6
-            RowLayout {
-                Layout.fillWidth: true
-                Lbl { text: st.label; color: Theme.muted; font.pixelSize: 10; Layout.fillWidth: true }
-                Lbl { text: st.sub; color: Theme.muted; font.pixelSize: 9; visible: st.sub !== "" }
-            }
-            Lbl { text: st.value + "%"; font.bold: true; font.pixelSize: 15 }
-            Rectangle {
-                Layout.fillWidth: true
-                height: 3
-                radius: 2
-                color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.1)
+        Rectangle {
+            visible: Rock.comic
+            x: 3
+            y: 4
+            width: st.width - 3
+            height: st.height - 4
+            radius: 14
+            color: Rock.cyan
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
+        }
+
+        Rectangle {
+            id: card
+            width: st.width - 3
+            height: st.height - 4
+            radius: 14
+            color: Rock.uiSurface
+            border.width: Rock.uiBorder
+            border.color: Rock.uiEdge
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 4
+                RowLayout {
+                    Layout.fillWidth: true
+                    Lbl {
+                        text: st.label
+                        color: Rock.uiSub
+                        font.pixelSize: 9
+                        font.weight: Font.Black
+                        font.letterSpacing: 0.8
+                        Layout.fillWidth: true
+                    }
+                    Lbl {
+                        text: st.sub
+                        color: Rock.pinkDeep
+                        font.pixelSize: 9
+                        font.weight: Font.Bold
+                        visible: st.sub !== ""
+                    }
+                }
+                Lbl {
+                    text: st.value + "%"
+                    color: Rock.uiText
+                    font.family: Rock.display
+                    font.weight: Font.Black
+                    font.pixelSize: 18
+                }
                 Rectangle {
-                    width: parent.width * Math.min(1, st.value / 100)
-                    height: parent.height
-                    radius: 2
-                    color: st.value > 85 ? Theme.warn : Theme.accent2
-                    Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                    Layout.fillWidth: true
+                    height: 5
+                    radius: 2.5
+                    color: Rock.a(Rock.uiText, 0.14)
+                    border.width: 1
+                    border.color: Rock.a(Rock.uiText, 0.3)
+                    Rectangle {
+                        width: (parent.width - 2) * Math.min(1, st.value / 100)
+                        height: parent.height - 2
+                        anchors.left: parent.left
+                        anchors.leftMargin: 1
+                        anchors.verticalCenter: parent.verticalCenter
+                        radius: 2
+                        color: st.value > 85 ? Rock.orange : Rock.cyan
+                        Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                    }
                 }
             }
         }
@@ -305,67 +426,148 @@ BarPopup {
             spacing: 14
 
             // ── Шапка ──
-            RowLayout {
+            Item {
                 Layout.fillWidth: true
-                spacing: 12
+                implicitHeight: headCard.height + 6
 
                 Rectangle {
-                    Layout.preferredWidth: 42
-                    Layout.preferredHeight: 42
-                    radius: 21
-                    color: Theme.accent
-                    Lbl {
-                        anchors.centerIn: parent
-                        text: cc.userName.charAt(0).toUpperCase()
-                        color: Theme.textOnAccent
-                        font.bold: true
-                        font.pixelSize: 17
+                    visible: Rock.comic
+                    x: 4
+                    y: 5
+                    width: headCard.width
+                    height: headCard.height
+                    radius: Rock.comic ? 16 : Rock.sao ? 4 : 16
+                    color: Rock.pink
+                    border.width: Rock.uiBorder
+                    border.color: Rock.uiEdge
+                }
+
+                Rectangle {
+                    id: headCard
+                    width: parent.width - 4
+                    height: 70
+                    radius: Rock.comic ? 16 : Rock.sao ? 4 : 16
+                    color: Rock.uiSurface2
+                    border.width: Rock.uiBorder
+                    border.color: Rock.uiEdge
+                }
+
+                Canvas {
+                    width: 96
+                    height: 56
+                    anchors.right: headCard.right
+                    anchors.top: headCard.top
+                    opacity: 0.16
+                    Component.onCompleted: requestPaint()
+                    onPaint: {
+                        const ctx = getContext("2d")
+                        ctx.reset()
+                        ctx.fillStyle = Rock.pinkDeep
+                        for (let y = 5; y < height; y += 7)
+                            for (let x = 5; x < width; x += 7) {
+                                ctx.beginPath()
+                                ctx.arc(x, y, 1.1, 0, Math.PI * 2)
+                                ctx.fill()
+                            }
                     }
                 }
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    spacing: 1
-                    Lbl { text: cc.userName; font.bold: true; font.pixelSize: 14 }
-                    RowLayout {
+
+                RowLayout {
+                    anchors.fill: headCard
+                    anchors.margins: 10
+                    spacing: 10
+
+                    Avatar {
+                        Layout.preferredWidth: 42
+                        Layout.preferredHeight: 42
+                        rotation: Rock.comic ? -5 : 0
+
+                        source: PanelConfig.avatarUrl
+                        letter: cc.userName.charAt(0).toUpperCase()
+                        bg: Rock.pink
+                        fg: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink
+                        borderWidth: Rock.uiBorder
+                        borderColor: Rock.uiEdge
+                        fontFamily: Rock.display
+                        fontWeight: Font.Black
+                        fontSize: 18
+                        textRotation: Rock.comic ? 5 : 0
+                    }
+
+                    ColumnLayout {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        spacing: 6
+                        spacing: -1
                         Lbl {
-                            visible: UPower.displayDevice.isLaptopBattery
-                            text: cc.batIcon()
-                            color: UPower.displayDevice.percentage < 0.2 ? Theme.warn : Theme.accent2
-                            font.pixelSize: 12
+                            Layout.fillWidth: true
+                            text: I18n.t("ЦЕНТР УПРАВЛЕНИЯ")
+                            color: Rock.uiText
+                            font.family: Rock.display
+                            font.weight: Font.Black
+                            font.pixelSize: 15
+                            font.letterSpacing: 0.3
+                            elide: Text.ElideRight
                         }
                         Lbl {
                             Layout.fillWidth: true
+                            text: (Rock.comic ? "KESSOKU CONTROL" : Rock.marisa ? "GRIMOIRE CONTROL" : Rock.sao ? "SYSTEM CONTROL" : "ASTRAL CONTROL") + " · " + cc.userName
+                            color: Rock.pinkDeep
+                            font.pixelSize: 8
+                            font.weight: Font.Black
+                            font.letterSpacing: 1.2
                             elide: Text.ElideRight
-                            color: Theme.muted
-                            font.pixelSize: 11
-                            text: (UPower.displayDevice.isLaptopBattery
-                                    ? Math.round(UPower.displayDevice.percentage * 100) + "% · "
-                                      + (UPower.displayDevice.state === UPowerDeviceState.Charging ? "заряжается" : "от батареи") + cc.etaText() + cc.powerText() + " · "
-                                    : "")
-                                + "работает " + SysStats.uptimeText
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            spacing: 4
+                            Lbl {
+                                visible: UPower.displayDevice.isLaptopBattery
+                                text: cc.batIcon()
+                                color: UPower.displayDevice.percentage < 0.2 ? Rock.pinkDeep : Rock.uiSub
+                                font.pixelSize: 10
+                            }
+                            Lbl {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                color: Rock.uiSub
+                                opacity: 0.72
+                                font.pixelSize: 9
+                                text: (UPower.displayDevice.isLaptopBattery
+                                        ? Math.round(UPower.displayDevice.percentage * 100) + "% · "
+                                          + (UPower.displayDevice.state === UPowerDeviceState.Charging ? I18n.t("заряжается") : I18n.t("от батареи")) + cc.etaText() + cc.powerText() + " · "
+                                        : "")
+                                    + I18n.t("работает ") + SysStats.uptimeText
+                            }
                         }
                     }
-                }
-                IconBtn {
-                    size: 38
-                    icon: "\uf1fc"
-                    onClicked: { cc.visible = false; UI.launcher = false; UI.session = false; UI.wallpaper = true }
-                }
-                Rectangle {
-                    implicitWidth: 38; implicitHeight: 38; radius: 19
-                    color: pwrArea.containsMouse ? Theme.surface : "transparent"
-                    Behavior on color { ColorAnimation { duration: 120 } }
-                    Lbl { anchors.centerIn: parent; text: "\uf011"; color: Theme.muted; font.pixelSize: 15 }
-                    MouseArea {
-                        id: pwrArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: { cc.visible = false; UI.launcher = false; UI.session = true }
+
+                    IconBtn {
+                        size: 30
+                        icon: "\uf013"
+                        iconColor: Rock.uiSub
+                        hoverColor: Rock.a(Rock.uiText, 0.12)
+                        onClicked: { cc.visible = false; UI.launcher = false; UI.session = false; UI.wallpaper = false; UI.settings = true }
+                    }
+                    IconBtn {
+                        size: 30
+                        icon: "\uf1fc"
+                        iconColor: Rock.uiSub
+                        hoverColor: Rock.a(Rock.uiText, 0.12)
+                        onClicked: { cc.visible = false; UI.launcher = false; UI.session = false; UI.settings = false; UI.wallpaper = true }
+                    }
+                    Rectangle {
+                        implicitWidth: 30; implicitHeight: 30; radius: 15
+                        color: pwrArea.containsMouse ? Rock.a(Rock.uiText, 0.12) : "transparent"
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Lbl { anchors.centerIn: parent; text: "\uf011"; color: Rock.uiSub; font.pixelSize: 14 }
+                        MouseArea {
+                            id: pwrArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: { cc.visible = false; UI.launcher = false; UI.session = true }
+                        }
                     }
                 }
             }
@@ -382,8 +584,8 @@ BarPopup {
                     Layout.preferredWidth: 1
                     icon: Net.icon
                     title: Net.kind === "ethernet" ? "Ethernet" : "Wi-Fi"
-                    subtitle: Net.kind === "ethernet" ? "Подключено"
-                            : (Net.connected ? Net.connection : (Net.wifiEnabled ? "Не подключено" : "Выключено"))
+                    subtitle: Net.kind === "ethernet" ? I18n.t("Подключено")
+                            : (Net.connected ? Net.connection : (Net.wifiEnabled ? I18n.t("Не подключено") : I18n.t("Выключено")))
                     active: Net.wifiEnabled || Net.kind === "ethernet"
                     onClicked: Net.toggleWifi()
                     expandable: true
@@ -395,12 +597,12 @@ BarPopup {
                     Layout.preferredWidth: 1
                     icon: "\uf293"
                     title: "Bluetooth"
-                    subtitle: !cc.btAdapter ? "Недоступно"
+                    subtitle: !cc.btAdapter ? I18n.t("Недоступно")
                         : (cc.btAdapter.enabled
                             ? (cc.btConnectedDevices.length > 0
                                 ? cc.btConnectedDevices.map(d => d.name || d.deviceName).join(", ")
-                                : "Включён")
-                            : "Выключен")
+                                : I18n.t("Включён"))
+                            : I18n.t("Выключен"))
                     active: cc.btAdapter ? cc.btAdapter.enabled : false
                     onClicked: if (cc.btAdapter) cc.btAdapter.enabled = !cc.btAdapter.enabled
                     expandable: true
@@ -411,8 +613,8 @@ BarPopup {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
                     icon: Notifs.dnd ? "\uf1f6" : "\uf0f3"
-                    title: "Тишина"
-                    subtitle: Notifs.dnd ? "Не беспокоить" : "Уведомления"
+                    title: I18n.t("Тишина")
+                    subtitle: Notifs.dnd ? I18n.t("Не беспокоить") : I18n.t("Уведомления")
                     active: Notifs.dnd
                     onClicked: Notifs.dnd = !Notifs.dnd
                     onRightClicked: UI.toggleCenter()
@@ -421,20 +623,39 @@ BarPopup {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
                     icon: "\uf0f4"
-                    title: "Не засыпать"
-                    subtitle: UI.caffeine ? "Экран не гаснет" : "Выключено"
+                    title: I18n.t("Не засыпать")
+                    subtitle: UI.caffeine ? I18n.t("Экран не гаснет") : I18n.t("Выключено")
                     active: UI.caffeine
                     onClicked: {
                         UI.caffeine = !UI.caffeine
-                        UI.flash("\uf0f4", "Не засыпать", UI.caffeine ? "Включено" : "Выключено", "", "info", "")
+                        UI.flash("\uf0f4", I18n.t("Не засыпать"), UI.caffeine ? I18n.t("Включено") : I18n.t("Выключено"), "", "info", "")
                     }
                 }
             }
 
             // ── Музыка ──
-            MediaCard {
+            Item {
                 Layout.fillWidth: true
-                active: cc.visible && cc.page === "main"
+                visible: mediaCard.visible
+                implicitHeight: mediaCard.visible ? mediaCard.height + 5 : 0
+
+                Rectangle {
+                    visible: Rock.comic
+                    x: 4
+                    y: 5
+                    width: mediaCard.width
+                    height: mediaCard.height
+                    radius: 18
+                    color: Rock.pink
+                    border.width: Rock.uiBorder
+                    border.color: Rock.uiEdge
+                }
+
+                MediaCard {
+                    id: mediaCard
+                    width: parent.width - 4
+                    active: cc.visible && cc.page === "main"
+                }
             }
 
             // ── Ползунки ──
@@ -453,44 +674,67 @@ BarPopup {
                     visible: Brightness.available
                     icon: "\uf185"
                     value: Brightness.value
+                    shadowColor: Rock.yellow
                     onMoved: v => Brightness.set(v)
                 }
 
                 // устройство вывода + микрофон
-                Rectangle {
+                Item {
                     Layout.fillWidth: true
-                    implicitHeight: 44
-                    radius: 16
-                    color: audioArea.containsMouse ? Qt.lighter(Theme.surface, 1.18) : Theme.surface
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    implicitHeight: 48
 
-                    MouseArea {
-                        id: audioArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: cc.page = "audio"
+                    Rectangle {
+                        visible: Rock.comic
+                        x: 3
+                        y: 4
+                        width: parent.width - 3
+                        height: 44
+                        radius: Rock.comic ? 16 : Rock.sao ? 4 : 16
+                        color: Rock.cyan
+                        border.width: Rock.uiBorder
+                        border.color: Rock.uiEdge
                     }
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 14
-                        anchors.rightMargin: 8
-                        spacing: 10
-                        Lbl { text: cc.sinkGlyph(); color: Theme.accent2; font.pixelSize: 14; Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter }
-                        Lbl {
-                            Layout.fillWidth: true
-                            text: cc.sink ? (cc.sink.description || cc.sink.nickname || cc.sink.name) : "Нет устройства вывода"
-                            font.pixelSize: 11
-                            elide: Text.ElideRight
+
+                    Rectangle {
+                        id: audioCard
+                        width: parent.width - 3
+                        height: 44
+                        radius: Rock.comic ? 16 : Rock.sao ? 4 : 16
+                        color: audioArea.containsMouse ? Rock.uiHover : Rock.uiSurface
+                        border.width: Rock.uiBorder
+                        border.color: Rock.uiEdge
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        MouseArea {
+                            id: audioArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: cc.page = "audio"
                         }
-                        IconBtn {
-                            size: 30
-                            visible: cc.source !== null
-                            icon: cc.micMuted ? "\uf131" : "\uf130"
-                            iconColor: cc.micMuted ? Theme.warn : Theme.muted
-                            onClicked: if (cc.source && cc.source.audio) cc.source.audio.muted = !cc.source.audio.muted
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 6
+                            spacing: 10
+                            Lbl { text: cc.sinkGlyph(); color: Rock.pinkDeep; font.pixelSize: 14; Layout.preferredWidth: 20; horizontalAlignment: Text.AlignHCenter }
+                            Lbl {
+                                Layout.fillWidth: true
+                                text: cc.sink ? (cc.sink.description || cc.sink.nickname || cc.sink.name) : I18n.t("Нет устройства вывода")
+                                color: Rock.uiSub
+                                font.pixelSize: 11
+                                elide: Text.ElideRight
+                            }
+                            IconBtn {
+                                size: 30
+                                visible: cc.source !== null
+                                icon: cc.micMuted ? "\uf131" : "\uf130"
+                                iconColor: cc.micMuted ? Rock.pinkDeep : Rock.uiSub
+                                hoverColor: Rock.a(Rock.uiText, 0.1)
+                                onClicked: if (cc.source && cc.source.audio) cc.source.audio.muted = !cc.source.audio.muted
+                            }
+                            Lbl { text: "\uf054"; color: Rock.uiSub; font.pixelSize: 10 }
                         }
-                        Lbl { text: "\uf054"; color: Theme.muted; font.pixelSize: 10 }
                     }
                 }
             }
@@ -504,23 +748,23 @@ BarPopup {
 
                 QuickBtn {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
-                    icon: "\uf125"; label: "Область"
+                    icon: "\uf125"; label: I18n.t("Область")
                     onActivated: { cc.visible = false; Quick.screenshot(true) }
                 }
                 QuickBtn {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
-                    icon: "\uf030"; label: "Экран"
+                    icon: "\uf030"; label: I18n.t("Экран")
                     onActivated: { cc.visible = false; Quick.screenshot(false) }
                 }
                 QuickBtn {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
-                    icon: "\uf03d"; label: Recorder.recording ? "Стоп" : "Запись"
+                    icon: "\uf03d"; label: Recorder.recording ? I18n.t("Стоп") : I18n.t("Запись")
                     active: Recorder.recording
                     onActivated: { cc.visible = false; Recorder.toggle(true) }
                 }
                 QuickBtn {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
-                    icon: "\uf1fb"; label: "Пипетка"
+                    icon: "\uf1fb"; label: I18n.t("Пипетка")
                     onActivated: { cc.visible = false; Quick.pick() }
                 }
                 QuickBtn {
@@ -531,7 +775,7 @@ BarPopup {
                 }
                 QuickBtn {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
-                    icon: "\uf186"; label: "Ночной"
+                    icon: "\uf186"; label: I18n.t("Ночной")
                     active: Quick.night
                     onActivated: Quick.toggleNight()
                 }
@@ -543,7 +787,7 @@ BarPopup {
                 }
                 QuickBtn {
                     Layout.fillWidth: true; Layout.preferredWidth: 1
-                    icon: "\uf0ea"; label: "Буфер"
+                    icon: "\uf0ea"; label: I18n.t("Буфер")
                     onActivated: { cc.visible = false; Clip.reload(); UI.openLauncher("clip") }
                 }
             }
@@ -558,7 +802,7 @@ BarPopup {
                     sub: SysStats.temp > 0 ? SysStats.temp + "°" : ""
                 }
                 Stat { Layout.fillWidth: true; Layout.preferredWidth: 1; label: "RAM"; value: SysStats.mem }
-                Stat { Layout.fillWidth: true; Layout.preferredWidth: 1; label: "ДИСК"; value: SysStats.disk }
+                Stat { Layout.fillWidth: true; Layout.preferredWidth: 1; label: I18n.t("ДИСК"); value: SysStats.disk }
             }
         }
     }
@@ -584,5 +828,33 @@ BarPopup {
         visible: cc.page === "audio"
         active: cc.visible && cc.page === "audio"
         onBack: cc.page = "main"
+    }
+
+    // ───────── Скотч на постере ─────────
+    Rectangle {
+        visible: Rock.comic
+        x: 22
+        y: 2
+        width: 64
+        height: 14
+        radius: 2
+        color: Rock.a(Rock.yellow, 0.82)
+        border.width: 1
+        border.color: Rock.a(Rock.uiText, 0.28)
+        rotation: -7
+        z: 10
+    }
+    Rectangle {
+        visible: Rock.comic
+        x: parent.width - 86
+        y: 2
+        width: 64
+        height: 14
+        radius: 2
+        color: Rock.a(Rock.cyan, 0.78)
+        border.width: 1
+        border.color: Rock.a(Rock.uiText, 0.28)
+        rotation: 6
+        z: 10
     }
 }

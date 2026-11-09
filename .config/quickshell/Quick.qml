@@ -13,20 +13,20 @@ Singleton {
     // ── режимы питания (power-profiles-daemon: powerprofilesctl) ──
     property string profile: ""            // power-saver | balanced | performance
     readonly property string profileName:
-        profile === "power-saver" ? "Экономия" : (profile === "performance" ? "Мощность" : (profile === "balanced" ? "Баланс" : "Питание"))
+        profile === "power-saver" ? I18n.t("Экономия") : (profile === "performance" ? I18n.t("Мощность") : (profile === "balanced" ? I18n.t("Баланс") : I18n.t("Питание")))
     readonly property string profileIcon:
         profile === "power-saver" ? "\uf06c" : (profile === "performance" ? "\uf135" : "\uf0e4")
 
     function cycleProfile() {
         if (profile === "") {
-            UI.flash("\uf0e4", "Режимы питания", "нужен power-profiles-daemon", "", "info", "")
+            UI.flash("\uf0e4", I18n.t("Режимы питания"), I18n.t("нужен power-profiles-daemon"), "", "info", "")
             return
         }
         const order = ["power-saver", "balanced", "performance"]
         const next = order[(order.indexOf(profile) + 1) % order.length]
         Quickshell.execDetached(["powerprofilesctl", "set", next])
         profile = next
-        UI.flash(profileIcon, "Режим: " + profileName, "", "", "info", "")
+        UI.flash(profileIcon, I18n.t("Режим: ") + profileName, "", "", "info", "")
         recheckProfile.restart()
     }
 

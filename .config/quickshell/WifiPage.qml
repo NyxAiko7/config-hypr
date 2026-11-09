@@ -13,33 +13,35 @@ Item {
         property string icon
         property string value
         property string label
-        property color valueColor: Theme.text
+        property color valueColor: Rock.uiText
         implicitHeight: 56
         radius: 14
-        color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06)
+        color: Rock.uiSurface2
+        border.width: Rock.uiBorder
+        border.color: Rock.uiEdge
         ColumnLayout {
             anchors.centerIn: parent
             spacing: 1
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 5
-                Lbl { text: ms.icon; color: Theme.accent2; font.pixelSize: 11 }
+                Lbl { text: ms.icon; color: Rock.cyan; font.pixelSize: 11 }
                 Lbl { text: ms.value; color: ms.valueColor; font.bold: true; font.pixelSize: 13 }
             }
-            Lbl { Layout.alignment: Qt.AlignHCenter; text: ms.label; color: Theme.muted; font.pixelSize: 9 }
+            Lbl { Layout.alignment: Qt.AlignHCenter; text: ms.label; color: Rock.uiSub; font.pixelSize: 9 }
         }
     }
 
     // строка «подпись — значение»
     readonly property string statusLine: {
         const parts = []
-        if (Net.connectivity === "limited") parts.push("Нет доступа в интернет")
-        else if (Net.connectivity === "portal") parts.push("Нужна авторизация")
-        else parts.push("Подключено")
+        if (Net.connectivity === "limited") parts.push(I18n.t("Нет доступа в интернет"))
+        else if (Net.connectivity === "portal") parts.push(I18n.t("Нужна авторизация"))
+        else parts.push(I18n.t("Подключено"))
         if (Net.kind === "wifi") {
             if (Net.band !== "") parts.push(Net.band)
             if (Net.security !== "") parts.push(Net.security)
-        } else if (Net.kind === "ethernet") parts.push("Кабель")
+        } else if (Net.kind === "ethernet") parts.push(I18n.t("Кабель"))
         return parts.join("  ·  ")
     }
 
@@ -55,10 +57,24 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
-            IconBtn { icon: "\uf053"; iconColor: Theme.text; onClicked: page.back() }
-            Lbl { Layout.fillWidth: true; text: "Wi-Fi"; font.bold: true; font.pixelSize: 15 }
-            IconBtn { icon: "\uf021"; spin: Net.scanning; onClicked: Net.scan() }
-            Toggle { checked: Net.wifiEnabled; onToggled: Net.toggleWifi() }
+            IconBtn { icon: "\uf053"; iconColor: Rock.uiSub; onClicked: page.back() }
+            Lbl {
+                Layout.fillWidth: true
+                text: "Wi-Fi"
+                color: Rock.uiText
+                font.family: Rock.display
+                font.weight: Font.Black
+                font.pixelSize: 16
+                font.letterSpacing: 0.4
+            }
+            IconBtn { icon: "\uf021"; spin: Net.scanning; iconColor: Rock.uiSub; hoverColor: Rock.a(Rock.uiText, 0.12); onClicked: Net.scan() }
+            Toggle {
+                checked: Net.wifiEnabled
+                uncheckedColor: Rock.uiSurface2
+                borderColor: Rock.uiEdge
+                uncheckedKnob: Rock.uiText
+                onToggled: Net.toggleWifi()
+            }
         }
 
         // ошибка подключения
@@ -67,23 +83,42 @@ Item {
             Layout.fillWidth: true
             implicitHeight: 36
             radius: 12
-            color: Qt.rgba(Theme.warn.r, Theme.warn.g, Theme.warn.b, 0.16)
+            color: Qt.rgba(Rock.orange.r, Rock.orange.g, Rock.orange.b, 0.16)
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 12
                 anchors.rightMargin: 8
-                Lbl { Layout.fillWidth: true; text: Net.lastError; color: Theme.warn; font.pixelSize: 11; elide: Text.ElideRight }
-                IconBtn { size: 24; icon: "\uf00d"; iconColor: Theme.warn; onClicked: Net.lastError = "" }
+                Lbl { Layout.fillWidth: true; text: Net.lastError; color: Rock.orange; font.pixelSize: 11; elide: Text.ElideRight }
+                IconBtn { size: 24; icon: "\uf00d"; iconColor: Rock.orange; onClicked: Net.lastError = "" }
             }
         }
 
         // ── текущее соединение: самое главное ──
-        Rectangle {
+        Item {
             visible: Net.connected && (Net.kind === "ethernet" || Net.wifiEnabled)
             Layout.fillWidth: true
-            implicitHeight: info.implicitHeight + 24
-            radius: 18
-            color: Theme.surface
+            implicitHeight: connCard.height + 6
+
+            Rectangle {
+                visible: Rock.comic
+                x: 4
+                y: 5
+                width: connCard.width
+                height: connCard.height
+                radius: 18
+                color: Rock.pink
+                border.width: Rock.uiBorder
+                border.color: Rock.uiEdge
+            }
+
+            Rectangle {
+                id: connCard
+                width: parent.width - 4
+                height: info.implicitHeight + 24
+                radius: Rock.comic ? 18 : Rock.marisa ? 7 : Rock.sao ? 4 : 13
+                color: Rock.uiSurface2
+                border.width: Rock.uiBorder
+                border.color: Rock.uiEdge
 
             ColumnLayout {
                 id: info
@@ -98,18 +133,18 @@ Item {
                         Layout.preferredWidth: 40
                         Layout.preferredHeight: 40
                         radius: 20
-                        color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18)
-                        Lbl { anchors.centerIn: parent; text: Net.icon; color: Theme.accent; font.pixelSize: 17 }
+                        color: Qt.rgba(Rock.pink.r, Rock.pink.g, Rock.pink.b, 0.18)
+                        Lbl { anchors.centerIn: parent; text: Net.icon; color: Rock.pink; font.pixelSize: 17 }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
                         spacing: 0
-                        Lbl { Layout.fillWidth: true; text: Net.connection; font.bold: true; font.pixelSize: 14; elide: Text.ElideRight }
+                        Lbl { Layout.fillWidth: true; text: Net.connection; color: Rock.uiText; font.bold: true; font.pixelSize: 14; elide: Text.ElideRight }
                         Lbl {
                             Layout.fillWidth: true
                             text: page.statusLine
-                            color: Net.connectivity === "limited" || Net.connectivity === "portal" ? Theme.warn : Theme.muted
+                            color: Net.connectivity === "limited" || Net.connectivity === "portal" ? Rock.orange : Rock.uiSub
                             font.pixelSize: 10
                             elide: Text.ElideRight
                         }
@@ -120,8 +155,8 @@ Item {
                         implicitWidth: sigLbl.implicitWidth + 16
                         implicitHeight: 24
                         radius: 12
-                        color: Qt.rgba(Theme.accent2.r, Theme.accent2.g, Theme.accent2.b, 0.16)
-                        Lbl { id: sigLbl; anchors.centerIn: parent; text: Net.strength + "%"; color: Theme.accent2; font.pixelSize: 11; font.bold: true }
+                        color: Qt.rgba(Rock.cyan.r, Rock.cyan.g, Rock.cyan.b, 0.16)
+                        Lbl { id: sigLbl; anchors.centerIn: parent; text: Net.strength + "%"; color: Rock.cyan; font.pixelSize: 11; font.bold: true }
                     }
                 }
 
@@ -131,19 +166,19 @@ Item {
                     spacing: 8
                     MiniStat {
                         Layout.fillWidth: true; Layout.preferredWidth: 1
-                        icon: "\uf063"; label: "Приём"
+                        icon: "\uf063"; label: I18n.t("Приём")
                         value: Net.fmtRate(Net.rxRate)
                     }
                     MiniStat {
                         Layout.fillWidth: true; Layout.preferredWidth: 1
-                        icon: "\uf062"; label: "Отдача"
+                        icon: "\uf062"; label: I18n.t("Отдача")
                         value: Net.fmtRate(Net.txRate)
                     }
                     MiniStat {
                         Layout.fillWidth: true; Layout.preferredWidth: 1
-                        icon: "\uf012"; label: "Пинг"
-                        value: Net.latency >= 0 ? Net.latency + " мс" : "—"
-                        valueColor: Net.latency < 0 ? Theme.warn : (Net.latency > 150 ? Theme.warn : Theme.text)
+                        icon: "\uf012"; label: I18n.t("Пинг")
+                        value: Net.latency >= 0 ? Net.latency + I18n.t(" мс") : "—"
+                        valueColor: Net.latency < 0 ? Rock.orange : (Net.latency > 150 ? Rock.orange : Rock.uiText)
                     }
                 }
 
@@ -156,17 +191,17 @@ Item {
                         Layout.preferredWidth: 1
                         implicitHeight: 32
                         radius: 12
-                        color: ipArea.containsMouse ? Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.12)
-                                                    : Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06)
+                        color: ipArea.containsMouse ? Qt.rgba(Rock.uiText.r, Rock.uiText.g, Rock.uiText.b, 0.08)
+                                                    : Qt.rgba(Rock.uiText.r, Rock.uiText.g, Rock.uiText.b, 0.04)
                         Behavior on color { ColorAnimation { duration: 120 } }
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 12
                             anchors.rightMargin: 10
                             spacing: 8
-                            Lbl { text: "IP"; color: Theme.muted; font.pixelSize: 10 }
-                            Lbl { Layout.fillWidth: true; text: Net.ip !== "" ? Net.ip : "—"; font.pixelSize: 11; elide: Text.ElideRight }
-                            Lbl { text: "\uf0c5"; color: Theme.muted; font.pixelSize: 10 }
+                            Lbl { text: "IP"; color: Rock.uiSub; font.pixelSize: 10 }
+                            Lbl { Layout.fillWidth: true; text: Net.ip !== "" ? Net.ip : "—"; color: Rock.uiText; font.pixelSize: 11; elide: Text.ElideRight }
+                            Lbl { text: "\uf0c5"; color: Rock.uiSub; font.pixelSize: 10 }
                         }
                         MouseArea {
                             id: ipArea
@@ -175,7 +210,7 @@ Item {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
                                 Net.copyIp()
-                                UI.flash("\uf0c5", "IP скопирован", Net.ip, "", "info", "")
+                                UI.flash("\uf0c5", I18n.t("IP скопирован"), Net.ip, "", "info", "")
                             }
                         }
                     }
@@ -184,17 +219,18 @@ Item {
                         Layout.preferredWidth: 1
                         implicitHeight: 32
                         radius: 12
-                        color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06)
+                        color: Qt.rgba(Rock.uiText.r, Rock.uiText.g, Rock.uiText.b, 0.04)
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 12
                             anchors.rightMargin: 10
                             spacing: 8
-                            Lbl { text: "Канал"; color: Theme.muted; font.pixelSize: 10 }
-                            Lbl { Layout.fillWidth: true; text: Net.linkSpeed !== "" ? Net.linkSpeed : "—"; font.pixelSize: 11; elide: Text.ElideRight }
+                            Lbl { text: I18n.t("Канал"); color: Rock.uiSub; font.pixelSize: 10 }
+                            Lbl { Layout.fillWidth: true; text: Net.linkSpeed !== "" ? Net.linkSpeed : "—"; color: Rock.uiText; font.pixelSize: 11; elide: Text.ElideRight }
                         }
                     }
                 }
+            }
             }
         }
 
@@ -206,15 +242,15 @@ Item {
             ColumnLayout {
                 anchors.centerIn: parent
                 spacing: 8
-                Lbl { Layout.alignment: Qt.AlignHCenter; text: "\uf1eb"; color: Theme.muted; font.pixelSize: 30; opacity: 0.5 }
-                Lbl { Layout.alignment: Qt.AlignHCenter; text: "Wi-Fi выключен"; color: Theme.muted }
+                Lbl { Layout.alignment: Qt.AlignHCenter; text: "\uf1eb"; color: Rock.uiSub; font.pixelSize: 30; opacity: 0.5 }
+                Lbl { Layout.alignment: Qt.AlignHCenter; text: I18n.t("Wi-Fi выключен"); color: Rock.uiSub }
             }
         }
 
         Lbl {
             visible: Net.wifiEnabled
-            text: "ДОСТУПНЫЕ СЕТИ"
-            color: Theme.muted
+            text: I18n.t("ДОСТУПНЫЕ СЕТИ")
+            color: Rock.uiSub
             font.pixelSize: 10
             Layout.leftMargin: 6
         }
@@ -232,8 +268,8 @@ Item {
             Lbl {
                 anchors.centerIn: parent
                 visible: list.count === 0
-                text: Net.scanning ? "Поиск сетей…" : "Сети не найдены"
-                color: Theme.muted
+                text: Net.scanning ? I18n.t("Поиск сетей…") : I18n.t("Сети не найдены")
+                color: Rock.uiSub
             }
 
             delegate: Rectangle {
@@ -243,9 +279,12 @@ Item {
                 width: list.width
                 height: 56
                 radius: 14
-                color: rowArea.containsMouse ? Theme.surface : "transparent"
-                border.width: modelData.inUse ? 1 : 0
-                border.color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.5)
+                color: row.modelData.inUse
+                       ? (rowArea.containsMouse ? Qt.lighter(Rock.comic ? Rock.yellow : Rock.uiActive, 1.06)
+                                                : (Rock.comic ? Rock.yellow : Rock.uiActive))
+                       : (rowArea.containsMouse ? Rock.uiHover : Rock.uiSurface2)
+                border.width: Rock.uiBorder
+                border.color: Rock.uiEdge
                 Behavior on color { ColorAnimation { duration: 120 } }
 
                 MouseArea {
@@ -271,7 +310,7 @@ Item {
                     Lbl {
                         Layout.preferredWidth: 22
                         text: "\uf1eb"
-                        color: row.modelData.inUse ? Theme.accent : Theme.text
+                        color: row.modelData.inUse ? Rock.pink : Rock.uiText
                         font.pixelSize: 16
                         opacity: row.modelData.signal >= 75 ? 1 : (row.modelData.signal >= 50 ? 0.8 : (row.modelData.signal >= 25 ? 0.55 : 0.35))
                     }
@@ -288,30 +327,34 @@ Item {
                             Layout.fillWidth: true
                             font.pixelSize: 10
                             elide: Text.ElideRight
-                            color: row.modelData.inUse || row.busy ? Theme.accent : Theme.muted
-                            text: (row.busy ? "Подключение…"
-                                 : row.modelData.inUse ? "Подключено"
-                                 : row.modelData.saved ? "Сохранена"
-                                 : (row.modelData.secured ? "Защищена" : "Открытая"))
+                            color: row.modelData.inUse || row.busy ? Rock.pink : Rock.uiSub
+                            text: (row.busy ? I18n.t("Подключение…")
+                                 : row.modelData.inUse ? I18n.t("Подключено")
+                                 : row.modelData.saved ? I18n.t("Сохранена")
+                                 : (row.modelData.secured ? I18n.t("Защищена") : I18n.t("Открытая")))
                                 + "  ·  " + row.modelData.signal + "%"
                         }
                     }
                     Lbl {
                         visible: row.modelData.secured
                         text: "\uf023"
-                        color: Theme.muted
+                        color: Rock.uiSub
                         font.pixelSize: 11
                     }
                     IconBtn {
                         visible: row.modelData.inUse
                         size: 30
                         icon: "\uf127"
+                        iconColor: Rock.uiSub
+                        hoverColor: Rock.a(Rock.uiText, 0.12)
                         onClicked: Net.disconnectCurrent()
                     }
                     IconBtn {
                         visible: row.modelData.saved
                         size: 30
                         icon: "\uf1f8"
+                        iconColor: Rock.uiSub
+                        hoverColor: Rock.a(Rock.uiText, 0.12)
                         onClicked: Net.forget(row.modelData.ssid)
                     }
                 }

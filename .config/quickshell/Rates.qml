@@ -30,7 +30,7 @@ Singleton {
             return
         }
         pending = { from: from, to: to, amount: amount }
-        UI.flash("\uf51e", "Обновляю курсы…", from + " → " + to, "", "info", "")
+        UI.flash("\uf51e", I18n.t("Обновляю курсы…"), from + " → " + to, "", "info", "")
         load()
     }
     property var pending: null
@@ -63,7 +63,7 @@ Singleton {
             const r = rate(p.from, p.to)
             if (r > 0) { UI.flash("\uf51e", Apps.fmtNum(p.amount * r) + " " + p.to, p.from + " → " + p.to, "", "info", ""); return }
         }
-        UI.flash("\uf51e", "Курсы недоступны", "нет сети или нужен curl", "", "info", "")
+        UI.flash("\uf51e", I18n.t("Курсы недоступны"), I18n.t("нет сети или нужен curl"), "", "info", "")
     }
 
     Process {

@@ -33,7 +33,7 @@ RowLayout {
             }
         }
         Lbl {
-            text: "ON AIR · BOCCHI MODE"
+            text: Rock.comic ? "ON AIR · BOCCHI MODE" : Rock.marisa ? "SPELL CARD · MARISA MODE" : Rock.sao ? "SYSTEM · AINCRAD MODE" : "STELLAR · ASTRAL MODE"
             color: Rock.ink
             font.family: Rock.display
             font.pixelSize: 11
@@ -43,11 +43,11 @@ RowLayout {
     }
 
     RockChip {
-        fill: Rock.cream
+        fill: Rock.comic ? Rock.cream : Rock.uiSurface2
         shadowColor: Rock.cyan
         Lbl {
             text: Quickshell.env("USER") + "@" + (Quickshell.env("HOSTNAME") || "artix")
-            color: Rock.ink
+            color: Rock.uiText
             font.pixelSize: 10
             font.weight: Font.DemiBold
             font.letterSpacing: 0.4
@@ -58,34 +58,34 @@ RowLayout {
 
     RockChip {
         visible: UPower.displayDevice.isLaptopBattery
-        fill: Rock.cream
+        fill: Rock.comic ? Rock.cream : Rock.uiSurface2
         shadowColor: Rock.yellow
         spacing: 5
         Lbl {
             text: hud.charging ? "\uf583" : "\uf240"
-            color: hud.charging ? Rock.pinkDeep : Rock.ink
+            color: hud.charging ? Rock.pinkDeep : Rock.uiText
             font.pixelSize: 12
         }
         Lbl {
             text: hud.batPct >= 0 ? hud.batPct + "%" : "?"
-            color: hud.batPct <= 20 && !hud.charging ? Rock.pinkDeep : Rock.ink
+            color: hud.batPct <= 20 && !hud.charging ? (Rock.sao ? Rock.danger : Rock.pinkDeep) : Rock.uiText
             font.pixelSize: 11
             font.weight: Font.Bold
         }
     }
 
     RockChip {
-        fill: Rock.cream
+        fill: Rock.comic ? Rock.cream : Rock.uiSurface2
         shadowColor: Rock.pink
         spacing: 6
         Lbl {
             text: Net.icon
-            color: Net.connected ? Rock.pinkDeep : Rock.ink
+            color: Net.connected ? Rock.pinkDeep : Rock.uiText
             font.pixelSize: 12
         }
         Lbl {
             text: Net.connected ? "ONLINE" : "OFFLINE"
-            color: Rock.ink
+            color: Rock.uiText
             font.pixelSize: 9
             font.weight: Font.Bold
             font.letterSpacing: 1.2
@@ -94,17 +94,17 @@ RowLayout {
 
     RockChip {
         visible: SysStats.temp > 0
-        fill: Rock.cream
+        fill: Rock.comic ? Rock.cream : Rock.uiSurface2
         shadowColor: Rock.cyan
         spacing: 5
         Lbl {
             text: SysStats.temp >= 78 ? "\uf76b" : (SysStats.temp >= 68 ? "\uf76a" : "\uf768")
-            color: SysStats.temp >= 78 ? Rock.pinkDeep : Rock.ink
+            color: SysStats.temp >= 78 ? Rock.pinkDeep : Rock.uiText
             font.pixelSize: 12
         }
         Lbl {
             text: SysStats.temp + "°C"
-            color: Rock.ink
+            color: Rock.uiText
             font.pixelSize: 10
             font.weight: Font.Bold
         }
@@ -115,7 +115,7 @@ RowLayout {
         fill: Rock.pink
         shadowColor: Rock.yellow
         spacing: 5
-        Lbl { text: "\uf0f3"; color: Rock.cream; font.pixelSize: 12 }
-        Lbl { text: Notifs.count; color: Rock.cream; font.pixelSize: 10; font.weight: Font.Black }
+        Lbl { text: "\uf0f3"; color: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink; font.pixelSize: 12 }
+        Lbl { text: Notifs.count; color: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink; font.pixelSize: 10; font.weight: Font.Black }
     }
 }

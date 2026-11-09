@@ -7,6 +7,7 @@ Singleton {
     id: root
 
     property bool active: false
+    readonly property bool desktop: PanelConfig.widgetsEnabled && PanelConfig.widgetClock
     property int cpu: 0
     property int mem: 0
     property int disk: 0
@@ -16,7 +17,7 @@ Singleton {
 
     readonly property string uptimeText: {
         const h = Math.floor(uptimeSec / 3600), m = Math.floor((uptimeSec % 3600) / 60)
-        return h > 0 ? h + " ч " + m + " мин" : m + " мин"
+        return h > 0 ? h + I18n.t(" ч ") + m + I18n.t(" мин") : m + I18n.t(" мин")
     }
 
     Process {
@@ -53,7 +54,7 @@ Singleton {
     }
     Timer {
         interval: 2000
-        running: root.active
+        running: root.active || root.desktop
         repeat: true
         triggeredOnStart: true
         onTriggered: { cpuProc.running = true; memProc.running = true; miscProc.running = true }

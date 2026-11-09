@@ -1,0 +1,33 @@
+{
+  "position": "top",
+  "language": "ru",
+  "preset": "custom",
+  "density": "compact",
+  "modules": {
+    "bt": true,
+    "wifi": true,
+    "net": true,
+    "notif": true,
+    "music": true,
+    "weather": true,
+    "pomodoro": false,
+    "record": false
+  },
+  "showWorkspaces": true,
+  "showTitle": false,
+  "showTray": true,
+  "showWallpaper": true,
+  "showSettings": true,
+  "showKeyboard": true,
+  "showVolume": true,
+  "showBattery": true,
+  "widgetsEnabled": true,
+  "widgetClock": true,
+  "widgetPlayer": true,
+  "islandRadius": 21,
+  "surfaceOpacity": 90,
+  "fontSize": 12,
+  "avatar": "/home/aiko/jpy89vq2r8rh1.jpeg",
+  "lockAfterMin": 300,
+  "sleepAfterMin": 600
+}

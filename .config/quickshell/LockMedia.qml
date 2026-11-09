@@ -18,7 +18,7 @@ Item {
     visible: has
     width: card.width + 9
     height: card.height + 9
-    rotation: 1.4
+    rotation: Rock.comic ? 1.4 : 0
     opacity: enterProgress
     transform: Translate { y: (1 - root.enterProgress) * 36 }
 
@@ -44,6 +44,7 @@ Item {
     }
 
     Rectangle {
+        visible: Rock.comic
         x: 8; y: 8
         width: card.width
         height: card.height
@@ -53,14 +54,46 @@ Item {
         border.color: Rock.ink
     }
 
+    // тень страницы на пергаменте
+    Rectangle {
+        visible: Rock.marisa
+        x: 7
+        y: 8
+        width: card.width
+        height: card.height
+        radius: card.radius
+        color: Rock.a(Rock.ink, 0.14)
+        border.width: 1
+        border.color: Rock.a(Rock.ink, 0.16)
+    }
+
     Rectangle {
         id: card
         width: Math.min(480, (root.parent ? root.parent.width : 1920) * 0.36)
         height: 166
-        radius: 18
-        color: Rock.ink2
-        border.width: 3
-        border.color: Rock.ink
+        radius: Rock.comic ? 18 : Rock.marisa ? 8 : Rock.sao ? 4 : 14
+        color: Rock.comic ? Rock.ink2 : Rock.uiSurface
+        border.width: Rock.uiBorder
+        border.color: Rock.uiEdge
+
+        SaoGrid {
+            anchors.fill: parent
+            step: 22
+        }
+
+        MarisaFrame {
+            anchors.fill: parent
+            inset: 7
+            frameRadius: Math.max(2, card.radius - 5)
+            runes: false
+        }
+
+        SaoFrame {
+            anchors.fill: parent
+            inset: 4
+            cut: 9
+            segments: 18
+        }
 
         RowLayout {
             anchors.fill: parent
@@ -73,17 +106,17 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 14
+                    radius: Rock.comic ? 14 : Rock.marisa ? 6 : 11
                     color: Rock.pink
-                    border.width: 3
-                    border.color: Rock.ink
+                    border.width: Rock.uiBorder
+                    border.color: Rock.uiEdge
                     clip: true
 
                     Lbl {
                         anchors.centerIn: parent
                         visible: art.status !== Image.Ready
                         text: "\uf001"
-                        color: Rock.cream
+                        color: Rock.marisa ? Rock.uiText : Rock.cream
                         font.pixelSize: 34
                     }
                     Image {
@@ -97,7 +130,7 @@ Item {
                     RoundMask {
                         anchors.fill: parent
                         radius: 14
-                        maskColor: Rock.ink2
+                        maskColor: Rock.comic ? Rock.ink2 : Rock.uiSurface
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -110,8 +143,8 @@ Item {
                         anchors { right: parent.right; bottom: parent.bottom; margins: 8 }
                         width: 34; height: 20; radius: 10
                         color: Rock.ink
-                        border.width: 2
-                        border.color: Rock.cream
+                        border.width: Rock.uiBorder
+                        border.color: Rock.uiEdge
                         Row {
                             anchors.centerIn: parent
                             spacing: 2
@@ -128,6 +161,12 @@ Item {
                         }
                     }
                 }
+
+                MarisaDisc {
+                    anchors.fill: parent
+                    playing: root.playing
+                    artSource: root.p ? (root.p.trackArtUrl || "") : ""
+                }
             }
 
             ColumnLayout {
@@ -136,7 +175,7 @@ Item {
                 spacing: 2
 
                 Lbl {
-                    text: "СЕЙЧАС ИГРАЕТ"
+                    text: Rock.marisa ? I18n.t("ЗВУЧИТ ЗАКЛИНАНИЕ") : Rock.sao ? I18n.t("СИСТЕМА · СЕЙЧАС ИГРАЕТ") : I18n.t("СЕЙЧАС ИГРАЕТ")
                     color: Rock.yellow
                     font.family: Rock.display
                     font.pixelSize: 9
@@ -146,7 +185,7 @@ Item {
                 Lbl {
                     Layout.fillWidth: true
                     text: root.p ? (root.p.trackTitle || "") : ""
-                    color: Rock.cream
+                    color: Rock.marisa ? Rock.uiText : Rock.cream
                     font.family: Rock.display
                     font.pixelSize: 16
                     font.weight: Font.Black
@@ -155,7 +194,7 @@ Item {
                 Lbl {
                     Layout.fillWidth: true
                     text: root.p ? (root.p.trackArtist || "") : ""
-                    color: Rock.a(Rock.cream, 0.6)
+                    color: Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.6)
                     font.pixelSize: 11
                     elide: Text.ElideRight
                 }
@@ -170,9 +209,9 @@ Item {
                         width: parent.width
                         height: 7
                         radius: 3.5
-                        color: Rock.a(Rock.cream, 0.16)
+                        color: Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.16)
                         border.width: 1
-                        border.color: Rock.a(Rock.cream, 0.1)
+                        border.color: Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.1)
                         Rectangle {
                             width: parent.width * (root.trackLen > 0
                                 ? Math.max(0, Math.min(1, root.trackPos / root.trackLen)) : 0)
@@ -199,11 +238,11 @@ Item {
 
                 RowLayout {
                     Layout.fillWidth: true
-                    Lbl { text: Fmt.hms(root.trackPos); color: Rock.a(Rock.cream, 0.55); font.pixelSize: 9 }
+                    Lbl { text: Fmt.hms(root.trackPos); color: Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.55); font.pixelSize: 9 }
                     Item { Layout.fillWidth: true }
                     Lbl {
                         text: "-" + Fmt.hms(Math.max(0, root.trackLen - root.trackPos))
-                        color: Rock.a(Rock.cream, 0.55)
+                        color: Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.55)
                         font.pixelSize: 9
                     }
                 }
@@ -226,9 +265,9 @@ Item {
                             radius: width / 2
                             color: big
                                 ? (mArea.containsMouse ? Rock.pinkDeep : Rock.pink)
-                                : (mArea.containsMouse ? Rock.a(Rock.cream, 0.12) : "transparent")
-                            border.width: 2
-                            border.color: big ? Rock.ink : Rock.a(Rock.cream, 0.3)
+                                : (mArea.containsMouse ? Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.12) : "transparent")
+                            border.width: Rock.uiBorder
+                            border.color: big ? Rock.uiEdge : Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.3)
                             Behavior on color { ColorAnimation { duration: 120 } }
 
                             Lbl {
@@ -237,7 +276,7 @@ Item {
                                     ? ((root.p && root.p.playbackState === MprisPlaybackState.Playing)
                                         ? "\uf04c" : "\uf04b")
                                     : btn.modelData.icon
-                                color: btn.big ? Rock.cream : Rock.a(Rock.cream, 0.8)
+                                color: btn.big ? (Rock.comic ? Rock.marisa ? Rock.uiText : Rock.cream : Rock.ink) : Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.8)
                                 font.pixelSize: btn.big ? 14 : 11
                             }
                             MouseArea {

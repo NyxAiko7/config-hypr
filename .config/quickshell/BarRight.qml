@@ -9,7 +9,7 @@ import Quickshell.Services.SystemTray
 // Правый остров: трей, VPN, обои, раскладка, статус, уведомления.
 BarIsland {
     id: rightIsland
-    fill: Rock.ink2
+    fill: Rock.marisa ? Rock.barFill : Rock.ink2
     shadowColor: Rock.cyan
     tilt: 0.8
 
@@ -32,7 +32,7 @@ BarIsland {
     // потребление/зарядка в ваттах ("" если данных нет)
     function watts() {
         const w = Math.abs(rightIsland.bat.changeRate)
-        return w >= 0.5 ? w.toFixed(1) + " Вт" : ""
+        return w >= 0.5 ? w.toFixed(1) + I18n.t(" Вт") : ""
     }
     function batIcon() {
         if (rightIsland.bat.state === UPowerDeviceState.Charging) return "\uf0e7"
@@ -44,7 +44,7 @@ BarIsland {
         if (rightIsland.bat.state === UPowerDeviceState.Charging) return Rock.cyan
         if (rightIsland.bat.percentage < 0.1) return Rock.pink
         if (rightIsland.bat.percentage < 0.2) return Rock.pink
-        return Rock.cream
+        return Rock.marisa ? Rock.barText : Rock.cream
     }
 
     // Трей
@@ -96,7 +96,7 @@ BarIsland {
         Lbl {
             Layout.maximumWidth: 90
             text: Net.vpnName
-            color: Rock.a(Rock.cream, 0.55)
+            color: Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55)
             font.pixelSize: 11
             elide: Text.ElideRight
         }
@@ -106,7 +106,7 @@ BarIsland {
     Pill {
         interactive: true
         onClicked: { UI.launcher = false; UI.session = false; UI.wallpaper = !UI.wallpaper }
-        Lbl { text: "\uf1fc"; color: Rock.a(Rock.cream, 0.55); font.pixelSize: Theme.iconSize }
+        Lbl { text: "\uf1fc"; color: Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55); font.pixelSize: Theme.iconSize }
     }
 
     // Раскладка клавиатуры
@@ -115,7 +115,7 @@ BarIsland {
         onClicked: Kb.next()
         Lbl {
             text: Kb.layout
-            color: Rock.cream
+            color: Rock.marisa ? Rock.barText : Rock.cream
             font.family: Rock.display
             font.weight: Font.Black
             font.pixelSize: 11
@@ -151,19 +151,19 @@ BarIsland {
         }
         Lbl {
             text: Net.icon
-            color: Net.connected ? Rock.cream : Rock.a(Rock.cream, 0.4)
+            color: Net.connected ? Rock.marisa ? Rock.barText : Rock.cream : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.4)
             font.pixelSize: Theme.iconSize
         }
         Lbl {
             visible: rightIsland.btAdapter !== null
             text: "\uf293"
             color: Bt.connected.length > 0 ? Rock.cyan
-                 : (rightIsland.btAdapter && rightIsland.btAdapter.enabled ? Rock.cream : Rock.a(Rock.cream, 0.4))
+                 : (rightIsland.btAdapter && rightIsland.btAdapter.enabled ? Rock.marisa ? Rock.barText : Rock.cream : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.4))
             font.pixelSize: Theme.iconSize
         }
         Lbl {
             text: rightIsland.volIcon()
-            color: (rightIsland.sink && rightIsland.sink.audio && rightIsland.sink.audio.muted) ? Rock.a(Rock.cream, 0.4) : Rock.cream
+            color: (rightIsland.sink && rightIsland.sink.audio && rightIsland.sink.audio.muted) ? Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.4) : Rock.marisa ? Rock.barText : Rock.cream
             font.pixelSize: Theme.iconSize
         }
         RowLayout {
@@ -171,17 +171,17 @@ BarIsland {
             spacing: 5
             Lbl {
                 text: rightIsland.batIcon()
-                color: rightIsland.bat.percentage < 0.2 ? Rock.pink : Rock.cream
+                color: rightIsland.bat.percentage < 0.2 ? Rock.pink : Rock.marisa ? Rock.barText : Rock.cream
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 text: Math.round(rightIsland.bat.percentage * 100)
-                color: Rock.a(Rock.cream, 0.55)
+                color: Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55)
             }
             Lbl {
                 visible: text !== ""
                 text: rightIsland.watts()
-                color: rightIsland.bat.state === UPowerDeviceState.Charging ? Rock.cyan : Rock.a(Rock.cream, 0.55)
+                color: rightIsland.bat.state === UPowerDeviceState.Charging ? Rock.cyan : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55)
                 font.pixelSize: 10
             }
         }
@@ -198,7 +198,7 @@ BarIsland {
         }
         Lbl {
             text: Notifs.dnd ? "\uf1f6" : "\uf0f3"
-            color: Notifs.dnd ? Rock.pink : (Notifs.count > 0 ? Rock.yellow : Rock.a(Rock.cream, 0.45))
+            color: Notifs.dnd ? Rock.pink : (Notifs.count > 0 ? Rock.yellow : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.45))
             font.pixelSize: Theme.iconSize
         }
         Lbl {

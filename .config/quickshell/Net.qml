@@ -66,9 +66,9 @@ Singleton {
 
     function fmtRate(b) {
         if (!isFinite(b) || b < 0) b = 0
-        if (b < 1024) return Math.round(b) + " Б/с"
-        if (b < 1024 * 1024) return Math.round(b / 1024) + " КБ/с"
-        return (b / 1048576).toFixed(1) + " МБ/с"
+        if (b < 1024) return Math.round(b) + I18n.t(" Б/с")
+        if (b < 1024 * 1024) return Math.round(b / 1024) + I18n.t(" КБ/с")
+        return (b / 1048576).toFixed(1) + I18n.t(" МБ/с")
     }
 
     // ───────── обновление ─────────
@@ -163,7 +163,7 @@ Singleton {
         dns = gotDns
         if (kind === "ethernet") {
             const n = parseInt(speed)
-            linkSpeed = n > 0 ? (n >= 1000 ? (n / 1000) + " Гбит/с" : n + " Мбит/с") : ""
+            linkSpeed = n > 0 ? (n >= 1000 ? (n / 1000) + I18n.t(" Гбит/с") : n + I18n.t(" Мбит/с")) : ""
         }
     }
 
@@ -209,10 +209,10 @@ Singleton {
 
     function friendly(err) {
         const e = String(err)
-        if (e.indexOf("Secrets were required") >= 0 || e.indexOf("password") >= 0) return "Неверный пароль"
-        if (e.indexOf("No network with SSID") >= 0) return "Сеть не найдена"
-        if (e.indexOf("timeout") >= 0 || e.indexOf("Timeout") >= 0) return "Время подключения истекло"
-        return e.replace(/^Error:\s*/, "").trim() || "Не удалось подключиться"
+        if (e.indexOf("Secrets were required") >= 0 || e.indexOf("password") >= 0) return I18n.t("Неверный пароль")
+        if (e.indexOf("No network with SSID") >= 0) return I18n.t("Сеть не найдена")
+        if (e.indexOf("timeout") >= 0 || e.indexOf("Timeout") >= 0) return I18n.t("Время подключения истекло")
+        return e.replace(/^Error:\s*/, "").trim() || I18n.t("Не удалось подключиться")
     }
 
     function connectTo(ssid, password) {
@@ -299,10 +299,10 @@ Singleton {
                     const f = root.splitTerse(lines[i])
                     root.strength = parseInt(f[1]) || 0
                     const sec = (f[2] || "").trim()
-                    root.security = (sec === "" || sec === "--") ? "Открытая" : sec.split(" ").slice(-1)[0]
+                    root.security = (sec === "" || sec === "--") ? I18n.t("Открытая") : sec.split(" ").slice(-1)[0]
                     const mhz = parseInt(f[3]) || 0
-                    root.band = mhz === 0 ? "" : (mhz < 3000 ? "2.4 ГГц" : (mhz < 5900 ? "5 ГГц" : "6 ГГц"))
-                    root.linkSpeed = (f[4] || "").replace("Mbit/s", "Мбит/с").trim()
+                    root.band = mhz === 0 ? "" : (mhz < 3000 ? I18n.t("2.4 ГГц") : (mhz < 5900 ? I18n.t("5 ГГц") : I18n.t("6 ГГц")))
+                    root.linkSpeed = (f[4] || "").replace("Mbit/s", I18n.t("Мбит/с")).trim()
                     break
                 }
             }
@@ -329,7 +329,7 @@ Singleton {
                         return
                     }
                 }
-                UI.flash("\uf132", "VPN", "Профиль NetworkManager не найден", "", "info", "")
+                UI.flash("\uf132", "VPN", I18n.t("Профиль NetworkManager не найден"), "", "info", "")
             }
         }
     }

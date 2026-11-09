@@ -16,11 +16,11 @@ PanelWindow {
 
     // Artix: без systemd, поэтому loginctl (elogind) с запасными вариантами
     readonly property var actions: [
-        { icon: "\uf023", label: "Блокировка",    key: "L", lock: true, cmd: [], danger: false },
-        { icon: "\uf2f5", label: "Выход",         key: "E", cmd: ["hyprctl", "dispatch", "exit"], danger: false },
-        { icon: "\uf186", label: "Сон",           key: "S", cmd: ["sh", "-c", "loginctl suspend || systemctl suspend"], danger: false },
-        { icon: "\uf021", label: "Перезагрузка",  key: "R", cmd: ["sh", "-c", "loginctl reboot || reboot"], danger: true },
-        { icon: "\uf011", label: "Выключение",    key: "P", cmd: ["sh", "-c", "loginctl poweroff || poweroff"], danger: true }
+        { icon: "\uf023", label: I18n.t("Блокировка"),    key: "L", lock: true, cmd: [], danger: false },
+        { icon: "\uf2f5", label: I18n.t("Выход"),         key: "E", cmd: ["hyprctl", "dispatch", "exit"], danger: false },
+        { icon: "\uf186", label: I18n.t("Сон"),           key: "S", cmd: ["sh", "-c", "loginctl suspend || systemctl suspend"], danger: false },
+        { icon: "\uf021", label: I18n.t("Перезагрузка"),  key: "R", cmd: ["sh", "-c", "loginctl reboot || reboot"], danger: true },
+        { icon: "\uf011", label: I18n.t("Выключение"),    key: "P", cmd: ["sh", "-c", "loginctl poweroff || poweroff"], danger: true }
     ]
 
     function run(a) {
@@ -54,12 +54,48 @@ PanelWindow {
         anchors.centerIn: parent
         width: row.implicitWidth + 48
         height: row.implicitHeight + 48
-        radius: 24
-        color: Theme.popupBg
-        border.width: 1
-        border.color: Theme.hairline
+        radius: Rock.sao ? 6 : Rock.marisa ? 8 : 24
+        color: Rock.marisa || Rock.sao ? Rock.uiSurface : Theme.popupBg
+        border.width: Rock.sao ? 1 : 1
+        border.color: Rock.sao ? Rock.uiEdge : Rock.marisa ? Rock.uiEdge : Theme.hairline
 
         MouseArea { anchors.fill: parent }
+
+        SaoGrid {
+            anchors.fill: parent
+            step: 26
+        }
+
+        MarisaPattern {
+            anchors.fill: parent
+            opacity: 0.42
+        }
+
+        MarisaTrim {
+            visible: Rock.marisa
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            anchors.bottomMargin: 3
+            height: 3
+            cell: 3
+        }
+
+        MarisaFrame {
+            anchors.fill: parent
+            inset: 6
+            frameRadius: Math.max(2, Rock.uiRadiusSm)
+            runes: false
+        }
+
+        SaoFrame {
+            anchors.fill: parent
+            inset: 5
+            cut: 11
+            segments: 28
+        }
 
         RowLayout {
             id: row
@@ -73,10 +109,16 @@ PanelWindow {
                     required property var modelData
                     implicitWidth: 104
                     implicitHeight: 112
-                    radius: 18
-                    color: area.containsMouse
-                        ? (modelData.danger ? Theme.warn : Theme.accent)
-                        : Theme.surface
+                    radius: Rock.sao ? 4 : Rock.marisa ? 3 : 18
+                    color: Rock.marisa || Rock.sao
+                        ? (area.containsMouse
+                            ? (modelData.danger ? (Rock.sao ? Rock.danger : Theme.warn) : Rock.uiActive)
+                            : Rock.uiSurface2)
+                        : (area.containsMouse
+                            ? (modelData.danger ? Theme.warn : Theme.accent)
+                            : Theme.surface)
+                    border.width: Rock.marisa || Rock.sao ? 1 : 0
+                    border.color: Rock.uiEdge
                     Behavior on color { ColorAnimation { duration: 140 } }
 
                     ColumnLayout {
@@ -85,19 +127,25 @@ PanelWindow {
                         Lbl {
                             Layout.alignment: Qt.AlignHCenter
                             text: btn.modelData.icon
-                            color: area.containsMouse ? Theme.textOnAccent : Theme.text
+                            color: Rock.marisa || Rock.sao
+                                ? (area.containsMouse ? Rock.uiOnActive : Rock.uiText)
+                                : (area.containsMouse ? Theme.textOnAccent : Theme.text)
                             font.pixelSize: 26
                         }
                         Lbl {
                             Layout.alignment: Qt.AlignHCenter
                             text: btn.modelData.label
-                            color: area.containsMouse ? Theme.textOnAccent : Theme.text
+                            color: Rock.marisa || Rock.sao
+                                ? (area.containsMouse ? Rock.uiOnActive : Rock.uiText)
+                                : (area.containsMouse ? Theme.textOnAccent : Theme.text)
                             font.pixelSize: 12
                         }
                         Lbl {
                             Layout.alignment: Qt.AlignHCenter
                             text: btn.modelData.key
-                            color: area.containsMouse ? Theme.textOnAccent : Theme.muted
+                            color: Rock.marisa || Rock.sao
+                                ? Rock.a(Rock.uiText, 0.55)
+                                : (area.containsMouse ? Theme.textOnAccent : Theme.muted)
                             opacity: 0.7
                             font.pixelSize: 10
                         }

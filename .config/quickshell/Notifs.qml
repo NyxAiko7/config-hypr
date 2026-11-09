@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
 
-// Демон уведомлений: показывает их в динамическом острове и хранит историю.
+// Демон уведомлений: показывает их всплывающей плашкой-«полароидом» и хранит историю.
 // Важно: должен быть единственным демоном (swaync, mako, dunst — выключить).
 Singleton {
     id: root
@@ -12,17 +12,16 @@ Singleton {
     readonly property var list: server.trackedNotifications
     readonly property int count: server.trackedNotifications.values.length
 
-    // ── показ в острове ──
-    property var current: null            // что сейчас в острове
+    // ── показ во всплывающей плашке ──
+    property var current: null            // что сейчас в плашке
     property var queue: []                // ждут своей очереди
-    property bool hold: false             // курсор над островом
+    property bool hold: false             // курсор над плашкой
     property int key: 0                   // растёт с каждым показом
     property int duration: 6500           // 0 = не закрывать само (критичные)
     property int remaining: 0
     property double deadline: 0
     readonly property int pending: queue.length
 
-    // ── время для подписей «5 мин» ──
     property double now: Date.now()
     property var arrived: ({})
     Timer { interval: 30000; running: true; repeat: true; onTriggered: root.now = Date.now() }
@@ -34,7 +33,7 @@ Singleton {
         const order = []
         for (let i = vals.length - 1; i >= 0; i--) {
             const n = vals[i]
-            const k = n.appName || "Прочее"
+            const k = n.appName || I18n.t("Прочее")
             if (!map[k]) { map[k] = { app: k, items: [] }; order.push(k) }
             map[k].items.push(n)
         }
@@ -47,12 +46,12 @@ Singleton {
         const t = arrived[n.id]
         if (!t) return ""
         const s = Math.floor((now - t) / 1000)
-        if (s < 60) return "сейчас"
+        if (s < 60) return I18n.t("сейчас")
         const m = Math.floor(s / 60)
-        if (m < 60) return m + " мин"
+        if (m < 60) return m + I18n.t(" мин")
         const h = Math.floor(m / 60)
-        if (h < 24) return h + " ч"
-        return Math.floor(h / 24) + " д"
+        if (h < 24) return h + I18n.t(" ч")
+        return Math.floor(h / 24) + I18n.t(" д")
     }
 
     function appIconSource(n) {
@@ -112,7 +111,7 @@ Singleton {
         else queue = queue.concat([n])
     }
 
-    // убрать из острова (в истории остаётся) и показать следующее
+    // убрать плашку (в истории остаётся) и показать следующее
     function next() {
         const old = current
         current = null
@@ -150,7 +149,7 @@ Singleton {
 
     Timer { id: showTimer; onTriggered: root.next() }
 
-    // приложение само закрыло уведомление, пока оно в острове
+    // приложение само закрыло уведомление, пока оно на экране
     Connections {
         target: root.current
         function onClosed() { root.next() }

@@ -13,22 +13,43 @@ import Quickshell.Services.SystemTray
 PanelWindow {
     id: bar
 
+    readonly property bool v: PanelConfig.vertical
+    readonly property bool atBottom: PanelConfig.atBottom
+    readonly property bool atLeft: PanelConfig.atLeft
+    readonly property bool atRight: PanelConfig.atRight
+    readonly property int vThickness: Theme.barHeight + 2
+
     WlrLayershell.namespace: "qs-bar"
-    anchors { top: true; left: true; right: true }
-    margins { top: 8; left: 10; right: 10 }
+    anchors {
+        top: !atBottom
+        bottom: v || atBottom
+        left: !atRight
+        right: !atLeft
+    }
+    margins {
+        top: v ? 10 : (atBottom ? 0 : 8)
+        bottom: v ? 10 : (atBottom ? 8 : 0)
+        left: atLeft ? 8 : (v ? 0 : 10)
+        right: atRight ? 8 : (v ? 0 : 10)
+    }
 
     // окно выше самой панели — чтобы остров мог расти вниз.
-    // Резервируется только высота панели, а клики принимают лишь сами острова.
-    implicitHeight: 380
+    // Резервируется только высота панели; клики принимают острова,
+    // а пустое пространство между ними перехватывается только когда
+    // открыто какое-то меню — клик мимо закрывает его.
+    implicitWidth: v ? 470 : 0
+    implicitHeight: v ? 0 : 470
     exclusionMode: ExclusionMode.Normal
     WlrLayershell.keyboardFocus: launcherHere ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.layer: launcherHere ? WlrLayer.Overlay : WlrLayer.Top
-    exclusiveZone: Theme.barHeight
+    exclusiveZone: v ? vThickness : Theme.barHeight
     color: "transparent"
     mask: Region {
         item: leftIsland
         Region { item: centerIsland }
         Region { item: rightIsland }
+        Region { item: notifToast }
+        Region { item: dismissRect }
     }
 
     property var sink: Pipewire.defaultAudioSink
@@ -55,7 +76,11 @@ PanelWindow {
 
     PwObjectTracker { objects: [bar.sink] }
     IdleInhibitor { window: bar; enabled: UI.caffeine }
-    SystemClock { id: clock; precision: SystemClock.Minutes }
+    // часы всегда с точностью до секунд — тогда «ss» не нулится
+    SystemClock { id: barClock; precision: SystemClock.Seconds }
+
+    // секунды и дата в часах показываем только когда играет музыка
+    readonly property bool showSeconds: miniPill.playing
 
     MusicPopup    { id: musicPopup;    barWindow: bar; anchorItem: miniPill; player: bar.player }
     CalendarPopup { id: calendarPopup; barWindow: bar; anchorItem: clockPill }
@@ -63,18 +88,57 @@ PanelWindow {
     ControlCenter { id: controlCenter; barWindow: bar; anchorItem: statusPill }
     NotifCenter   { id: notifCenter;   barWindow: bar; anchorItem: bellPill }
 
-    // открыть центр уведомлений из любого места (IPC, события)
+    readonly property var musicPanel:   musicPopup
+    readonly property var calendarPanel: calendarPopup
+    readonly property var controlPanel:  controlCenter
+    readonly property var notifPanel:    notifCenter
+
+    readonly property bool anyPopupOpen: musicPanel.visible || calendarPanel.visible
+                                         || weatherPopup.visible || controlPanel.visible
+                                         || notifPanel.visible || UI.anyPopupOpen
+
+    // клик по пустому месту панели — закрыть всё открытое
+    function closeAllPopups() {
+        musicPopup.visible = false
+        calendarPopup.visible = false
+        weatherPopup.visible = false
+        controlCenter.visible = false
+        notifCenter.visible = false
+        helpPopup.visible = false
+        UI.launcher = false
+        UI.settings = false
+        // подложка-оверлей (обои/сессия) сама ловит клики мимо — не трогаем,
+        // иначе её окно перехватит второй клик и панель «застрянет»
+    }
+
     Connections {
         target: UI
-        function onToggleCenter() { notifCenter.toggle() }
+        function onToggleCenter() { notifPanel.toggle() }
+        function onToggleHelp() { helpPopup.toggle() }
+        // клик мимо по панели: закрываем меню, только если оверлея нет
+        function onClosePopups() { if (!UI.wallpaper && !UI.session) bar.closeAllPopups() }
+    }
+
+    function toastX(t) {
+        if (bar.v) {
+            return bar.atRight
+                ? (bar.width - t.width - 18 + (Notifs.current !== null ? t.slide : t.width + 70))
+                : (bar.vThickness + 22 - (Notifs.current !== null ? t.slide : -(t.width + 70)))
+        }
+        return (bar.width - t.width - 18) + (Notifs.current !== null ? t.slide : t.width + 70)
+    }
+
+    function toastY(t) {
+        if (bar.v) return 18
+        return bar.atBottom ? (bar.height - Theme.barHeight - t.height - 14) : (Theme.barHeight + 14)
     }
 
     function runEventAction(a) {
-        if (a === "media") musicPopup.toggle()
-        else if (a === "bt") { controlCenter.page = "bt"; controlCenter.toggle() }
-        else if (a === "wifi") { controlCenter.page = "wifi"; controlCenter.toggle() }
-        else if (a === "cc") controlCenter.toggle()
-        else if (a === "notifs") notifCenter.toggle()
+        if (a === "media") musicPanel.toggle()
+        else if (a === "bt") { controlPanel.page = "bt"; controlPanel.toggle() }
+        else if (a === "wifi") { controlPanel.page = "wifi"; controlPanel.toggle() }
+        else if (a === "cc") controlPanel.toggle()
+        else if (a === "notifs") notifPanel.toggle()
         else if (a === "wallpaper") UI.wallpaper = true
         else if (a === "weather") weatherPopup.toggle()
     }
@@ -101,36 +165,54 @@ PanelWindow {
     // потребление/зарядка в ваттах ("" если данных нет)
     function watts() {
         const w = Math.abs(bat.changeRate)
-        return w >= 0.5 ? w.toFixed(1) + " Вт" : ""
+        return w >= 0.5 ? w.toFixed(1) + I18n.t(" Вт") : ""
     }
     function batIcon() {
         if (bat.state === UPowerDeviceState.Charging) return "\uf0e7"
         const icons = ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"]
         return icons[Math.min(4, Math.floor(bat.percentage * 5))]
     }
+    // цвет заряда: критично / мало / зарядка / нормально
+    function batColor() {
+        if (bat.state === UPowerDeviceState.Charging) return Theme.accent2
+        if (bat.percentage < 0.1) return Theme.warn
+        if (bat.percentage < 0.2) return Theme.warn
+        return Theme.text
+    }
 
-    // ── Остров: скруглённая плашка, содержимое лежит в ряд ──
-    component Island: Rectangle {
-        default property alias content: inner.data
-        height: Theme.barHeight
-        width: inner.implicitWidth + 12
-        radius: Theme.islandRadius
-        color: Theme.bg
-        border.width: 1
-        border.color: Theme.hairline
+    // ───────── Клик мимо: закрыть открытое меню ─────────
+    // Прозрачная полоса по всей ширине панели; участвует в mask только
+    // когда что-то открыто — в остальное время клики проходят насквозь.
+    Item {
+        id: dismissRect
+        visible: bar.anyPopupOpen
+        width: bar.v ? Theme.barHeight : parent.width
+        height: bar.v ? parent.height : Theme.barHeight
+        x: bar.v ? (bar.atRight ? parent.width - width : 0) : 0
+        y: bar.v ? 0 : (bar.atBottom ? parent.height - height : 0)
 
-        RowLayout {
-            id: inner
-            anchors.centerIn: parent
-            spacing: 2
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+            onClicked: {
+                UI.launcher = false
+                UI.closePopups()
+            }
         }
     }
 
     // ───────── Левый остров ─────────
-    Island {
+    BarIsland {
         id: leftIsland
-        anchors.left: parent.left
-        anchors.top: parent.top
+        anchors.left: (!bar.v || bar.atLeft) ? parent.left : undefined
+        anchors.right: (bar.v && bar.atRight) ? parent.right : undefined
+        anchors.top: bar.atBottom ? undefined : parent.top
+        anchors.bottom: bar.atBottom ? parent.bottom : undefined
+        anchors.topMargin: bar.atBottom ? 0 : (bar.v ? 0 : Theme.islandInset)
+        anchors.bottomMargin: bar.atBottom ? Theme.islandInset : 0
+        fill: Rock.islandFill
+        shadowColor: Rock.gold
+        tilt: 0
 
         // Лаунчер
         Pill {
@@ -141,25 +223,52 @@ PanelWindow {
             }
             Lbl {
                 text: "\uf303"
-                color: Theme.accent
+                color: Rock.pinkDeep
                 font.pixelSize: 15
+                scale: parent.hovered ? 1.12 : 1.0
+                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
             }
         }
 
-        // Рабочие столы — точки
+        // Рабочие столы — точки с подсветкой занятых
         Pill {
+            visible: PanelConfig.showWorkspaces
             Repeater {
                 model: Hyprland.workspaces
                 delegate: Rectangle {
                     required property var modelData
+                    readonly property bool occupied: modelData.windows !== undefined
+                        && modelData.windows.values.length > 0
                     visible: modelData.id > 0
-                    Layout.preferredWidth: modelData.focused ? 20 : 6
-                    Layout.preferredHeight: 6
-                    radius: 3
-                    color: modelData.focused ? Theme.accent : Theme.muted
-                    opacity: modelData.focused ? 1 : 0.6
+                    Layout.preferredWidth: Rock.marisa ? (modelData.focused ? 19 : 12)
+                                           : Rock.sao ? (modelData.focused ? 14 : 10)
+                                                      : (modelData.focused ? 20 : 6)
+                    Layout.preferredHeight: Rock.marisa ? 16 : Rock.sao ? 10 : 6
+                    radius: Rock.marisa ? 0 : Rock.sao ? 1 : 3
+                    rotation: Rock.sao ? 45 : 0
+                    border.width: Rock.sao ? 1 : 0
+                    border.color: Rock.sao
+                        ? (modelData.focused ? Rock.gold
+                           : (occupied ? Rock.a(Rock.gold, 0.55) : Rock.a(Rock.gold, 0.22)))
+                        : "transparent"
+                    // занятые (есть окна) горят бирюзой, пустые — тусклым контуром.
+                    // В гримуаре Марисы рабочие столы — звёзды: зажжённая, пустая или занятая.
+                    color: Rock.marisa ? "transparent"
+                           : Rock.sao ? (modelData.focused ? Rock.a(Rock.gold, 0.28) : "transparent")
+                                      : (modelData.focused ? Rock.pinkDeep
+                                         : (occupied ? Rock.cyan : Rock.a(Rock.uiText, 0.22)))
+                    opacity: Rock.marisa || Rock.sao ? 1 : (modelData.focused ? 1 : 0.9)
                     Behavior on Layout.preferredWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
                     Behavior on color { ColorAnimation { duration: 220 } }
+                    Text {
+                        anchors.centerIn: parent
+                        visible: Rock.marisa
+                        text: modelData.focused ? "✦" : (parent.occupied ? "✧" : "·")
+                        color: modelData.focused ? Rock.gold
+                               : (parent.occupied ? Rock.a(Rock.barText, 0.55) : Rock.a(Rock.barText, 0.22))
+                        font.pixelSize: modelData.focused ? 16 : 11
+                        font.weight: Font.Black
+                    }
                     MouseArea {
                         anchors.fill: parent
                         anchors.margins: -5
@@ -172,14 +281,14 @@ PanelWindow {
 
         // Идёт запись экрана (клик — остановить)
         Pill {
-            visible: Recorder.recording
+            visible: Recorder.recording && PanelConfig.modules.record
             interactive: true
             onClicked: Recorder.stop()
             Rectangle {
                 Layout.preferredWidth: 8
                 Layout.preferredHeight: 8
                 radius: 4
-                color: Theme.warn
+                color: Rock.pinkDeep
                 SequentialAnimation on opacity {
                     loops: Animation.Infinite
                     running: Recorder.recording
@@ -187,11 +296,12 @@ PanelWindow {
                     NumberAnimation { to: 1; duration: 700 }
                 }
             }
-            Lbl { text: Recorder.text(); color: Theme.warn; font.bold: true }
+            Lbl { visible: !bar.v; text: Recorder.text(); color: Rock.pinkDeep; font.bold: true }
         }
 
         // Таймер фокуса: клик — старт/стоп, ПКМ — следующая фаза
         Pill {
+            visible: PanelConfig.modules.pomodoro
             interactive: true
             onClicked: mouse => {
                 if (mouse.button === Qt.RightButton) { if (Pomodoro.running) Pomodoro.skip(); else Pomodoro.start("break") }
@@ -200,14 +310,14 @@ PanelWindow {
             }
             Lbl {
                 text: Pomodoro.mode === "break" ? "\uf0f4" : "\uf017"
-                color: Pomodoro.mode === "focus" ? Theme.accent : (Pomodoro.mode === "break" ? Theme.accent2 : Theme.muted)
+                color: Pomodoro.mode === "focus" ? Rock.pinkDeep : (Pomodoro.mode === "break" ? Rock.cyan : Rock.a(Rock.uiText, 0.4))
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
-                visible: Pomodoro.running
+                visible: Pomodoro.running && !bar.v
                 text: Pomodoro.text()
                 font.bold: true
-                color: Pomodoro.mode === "focus" ? Theme.accent : Theme.accent2
+                color: Pomodoro.mode === "focus" ? Rock.pinkDeep : Rock.cyan
             }
         }
 
@@ -220,84 +330,179 @@ PanelWindow {
             source: bar.activeIcon
             sourceSize: Qt.size(32, 32)
             smooth: true
-            visible: status === Image.Ready
+            visible: PanelConfig.showTitle && status === Image.Ready
         }
         Lbl {
+            visible: PanelConfig.showTitle && !bar.v
             Layout.leftMargin: winIcon.visible ? 0 : 6
             Layout.rightMargin: 8
             Layout.maximumWidth: 220
             text: ToplevelManager.activeToplevel ? ToplevelManager.activeToplevel.title : ""
-            color: Theme.muted
+            color: Rock.a(Rock.uiText, 0.58)
+            font.weight: Font.DemiBold
             elide: Text.ElideRight
         }
     }
 
-    // ═════════ Центральный остров: часы · погода · события · УВЕДОМЛЕНИЯ ═════════
-    Rectangle {
+    // ═════════ Центральный остров: часы · погода · события ═════════
+    Item {
         id: centerIsland
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.top
+        anchors.left: (bar.v && bar.atLeft) ? parent.left : undefined
+        anchors.right: (bar.v && bar.atRight) ? parent.right : undefined
+        anchors.horizontalCenter: bar.v ? undefined : parent.horizontalCenter
+        anchors.top: (!bar.v && !bar.atBottom) ? parent.top : undefined
+        anchors.bottom: (!bar.v && bar.atBottom) ? parent.bottom : undefined
+        anchors.verticalCenter: bar.v ? parent.verticalCenter : undefined
+        anchors.topMargin: (!bar.v && !bar.atBottom) ? Theme.islandInset : 0
+        anchors.bottomMargin: (!bar.v && bar.atBottom) ? Theme.islandInset : 0
 
         property real ttlFrac: 0
-        property var lastNotif: null
 
         readonly property bool launchMode: bar.launcherHere
-        readonly property bool notifMode: !launchMode && Notifs.current !== null
-        readonly property bool eventMode: !launchMode && !notifMode && UI.eventActive
-        readonly property var nn: Notifs.current !== null ? Notifs.current : lastNotif
+        readonly property bool eventMode: !launchMode && UI.eventActive
+        readonly property color eventAccent: Rock.uiAccent
+        readonly property string eventCategory: {
+            switch (UI.eventKind) {
+            case "media":     return I18n.t("СЕЙЧАС ИГРАЕТ")
+            case "level":     return Levels.kind === "brightness" ? I18n.t("ЭКРАН") : I18n.t("ЗВУК")
+            case "theme":     return I18n.t("ОФОРМЛЕНИЕ")
+            case "wallpaper": return I18n.t("ОБОИ")
+            case "battery":   return I18n.t("ПИТАНИЕ")
+            case "net":
+            case "wifi":      return I18n.t("СЕТЬ")
+            case "bt":        return "BLUETOOTH"
+            case "layout":    return I18n.t("РАСКЛАДКА")
+            case "notif":     return I18n.t("УВЕДОМЛЕНИЯ")
+            case "weather":   return I18n.t("ПОГОДА")
+            case "rec":       return I18n.t("ЗАПИСЬ")
+            default:          return I18n.t("СИСТЕМА")
+            }
+        }
+        readonly property string eventTitle: UI.eventKind === "level"
+            ? (Levels.kind === "brightness" ? I18n.t("Яркость") : (Levels.muted ? I18n.t("Без звука") : I18n.t("Громкость")))
+            : UI.eventText
+        readonly property string eventSubtitle: UI.eventKind === "level"
+            ? (Rock.comic ? "KESSOKU MIX" : Rock.marisa ? "SPARK LEVEL" : "ASTRAL LEVEL")
+            : UI.eventSub
 
-        // в режиме уведомления остров растёт в основном вширь и совсем чуть вниз
-        readonly property real notifW: Math.max(340, Math.min(Math.min(560, bar.width - 760), notifBox.implicitWidth + 36))
-
-        readonly property real launchW: Math.max(420, Math.min(580, bar.width - 760))
+        readonly property real launchW: {
+            const avail = bar.v ? bar.width : (bar.screen ? bar.screen.width : bar.width)
+            return Math.max(420, Math.min(580, avail - (bar.v ? 40 : 760)))
+        }
 
         width: launchMode ? launchW
-             : (notifMode ? notifW : (eventMode ? eventRow.implicitWidth + 24 : clockGroup.implicitWidth + 24))
-        height: launchMode ? launchBox.implicitHeight + 12
-              : (notifMode ? notifBox.implicitHeight + 18 : Theme.barHeight)
-        radius: launchMode ? 22 : (notifMode ? 22 : Theme.islandRadius)
-        color: Theme.bg
-        clip: true
-        border.width: 1
-        border.color: (launchMode || notifMode || eventMode)
-            ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.4)
-            : Theme.hairline
+             : (eventMode ? eventRow.width + 30
+             : Math.max(bar.v ? 40 : 0, clockGroup.implicitWidth + (bar.v ? 16 : 28)))
+        height: launchMode ? launchBox.implicitHeight + 16
+              : (eventMode ? Math.max(Theme.islandHeight, eventRow.implicitHeight + 22)
+              : (bar.v ? Math.max(Theme.islandHeight, clockGroup.implicitHeight + 16)
+                       : Theme.islandHeight))
+        property real radiusNow: launchMode ? Rock.panelRadius + 5
+                                  : (eventMode ? Rock.panelRadius + 2 : Rock.panelRadius)
+        readonly property bool cream: launchMode
+        clip: false
 
         Behavior on width  { NumberAnimation { duration: 360; easing.type: Easing.OutBack; easing.overshoot: 0.6 } }
         Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.OutBack; easing.overshoot: 0.6 } }
-        Behavior on radius { NumberAnimation { duration: 260 } }
-        Behavior on border.color { ColorAnimation { duration: 250 } }
+        Behavior on radiusNow { NumberAnimation { duration: 260 } }
 
-        Connections {
-            target: Notifs
-            function onCurrentChanged() { if (Notifs.current) centerIsland.lastNotif = Notifs.current }
-            function onKeyChanged() { ttlAnim.restart() }
+        IslandSurface {
+            anchors.fill: parent
+            radius: centerIsland.radiusNow
+            fill: centerIsland.launchMode ? Rock.uiSurface : Rock.islandFill
+            shadowColor: Rock.gold
+            shadowOffset: 0
+            active: centerIsland.launchMode || centerIsland.eventMode
+            pulse: centerIsland.eventMode
         }
+
+        // подвеска-звезда под островом — только в гримуаре Марисы
+        Item {
+            visible: Rock.marisa && !bar.v && !centerIsland.launchMode && !centerIsland.eventMode
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.bottom
+            anchors.topMargin: -1
+            width: 16
+            height: 18
+
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 1
+                height: 6
+                color: Rock.a(Rock.gold, 0.65)
+            }
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 1
+                width: 12
+                height: 12
+                radius: 2
+                rotation: 45
+                color: Rock.ink2
+                border.width: 1
+                border.color: Rock.gold
+            }
+            Text {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: 4
+                text: "M"
+                color: Rock.gold
+                font.family: Rock.display
+                font.pixelSize: 9
+                font.weight: Font.Black
+            }
+        }
+
+        // HUD-маяк Aincrad под островом
+        Item {
+            visible: Rock.sao && !bar.v && !centerIsland.launchMode && !centerIsland.eventMode
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.bottom
+            anchors.topMargin: -1
+            width: 18
+            height: 20
+
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 1
+                height: 7
+                color: Rock.a(Rock.gold, 0.7)
+            }
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 2
+                width: 9
+                height: 9
+                rotation: 45
+                color: Rock.a(Rock.gold, 0.18)
+                border.width: 1
+                border.color: Rock.gold
+            }
+            Rectangle {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: 6
+                width: 3
+                height: 3
+                rotation: 45
+                color: Rock.starlight
+            }
+        }
+
         Connections {
             target: UI
             function onEventKeyChanged() { ttlAnim.restart() }
         }
 
-        // Клики по острову, пока он в режиме уведомления или события.
+        // Клики по острову, пока он в режиме события.
         // Лежит ниже содержимого, поэтому кнопки внутри работают сами.
         MouseArea {
             anchors.fill: parent
-            enabled: centerIsland.notifMode || centerIsland.eventMode
+            enabled: centerIsland.eventMode
             acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             cursorShape: Qt.PointingHandCursor
             onClicked: mouse => {
-                if (centerIsland.notifMode) {
-                    // ЛКМ — действие по умолчанию (и убрать), ПКМ — скрыть в историю, СКМ — удалить
-                    const n = Notifs.current
-                    if (mouse.button === Qt.RightButton) Notifs.hide()
-                    else if (mouse.button === Qt.MiddleButton) Notifs.dismissCurrent()
-                    else {
-                        const d = Notifs.defaultAction(n)
-                        if (d) { d.invoke(); Notifs.dismissCurrent() }
-                        else Notifs.hide()
-                    }
-                    return
-                }
                 if (mouse.button === Qt.RightButton) { UI.dismissEvent(); return }
                 if (mouse.button === Qt.MiddleButton) {
                     if (UI.eventKind === "media" && Media.player && Media.player.canTogglePlaying)
@@ -312,19 +517,19 @@ PanelWindow {
 
         // наведение удерживает показ (работает и над кнопками внутри)
         HoverHandler {
-            enabled: centerIsland.notifMode || centerIsland.eventMode
-            onHoveredChanged: {
-                if (centerIsland.notifMode) Notifs.hold = hovered
-                else UI.eventHold = hovered && UI.eventActive
-            }
+            enabled: centerIsland.eventMode
+            onHoveredChanged: UI.eventHold = hovered && UI.eventActive
         }
 
         // ───────── обычный режим ─────────
-        RowLayout {
+        GridLayout {
             id: clockGroup
             anchors.centerIn: parent
-            spacing: 2
-            opacity: (centerIsland.launchMode || centerIsland.notifMode || centerIsland.eventMode) ? 0 : 1
+            flow: bar.v ? GridLayout.TopToBottom : GridLayout.LeftToRight
+            columns: bar.v ? 1 : 1000
+            rowSpacing: bar.v ? 5 : 2
+            columnSpacing: bar.v ? 5 : 2
+            opacity: (centerIsland.launchMode || centerIsland.eventMode) ? 0 : 1
             visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: 180 } }
 
@@ -332,8 +537,8 @@ PanelWindow {
             Pill {
                 id: btPill
                 interactive: true
-                visible: Bt.connected.length > 0
-                onClicked: { controlCenter.page = "bt"; controlCenter.toggle() }
+                visible: Bt.connected.length > 0 && PanelConfig.modules.bt
+                onClicked: { controlPanel.page = "bt"; controlPanel.toggle() }
                 Repeater {
                     model: Bt.connected
                     delegate: RowLayout {
@@ -342,13 +547,13 @@ PanelWindow {
                         spacing: 5
                         Lbl {
                             text: Bt.iconFor(btItem.modelData)
-                            color: Theme.accent
+                            color: Rock.cyan
                             font.pixelSize: Theme.iconSize
                         }
                         Lbl {
                             visible: Bt.percent(btItem.modelData) >= 0
                             text: Bt.percent(btItem.modelData) + "%"
-                            color: Bt.percent(btItem.modelData) <= 20 ? Theme.warn : Theme.muted
+                            color: Bt.percent(btItem.modelData) <= 20 ? Rock.pink : Rock.a(Rock.barText, 0.55)
                             font.pixelSize: 11
                         }
                     }
@@ -357,308 +562,403 @@ PanelWindow {
 
             MiniMedia {
                 id: miniPill
-                onOpenRequested: musicPopup.toggle()
+                visible: PanelConfig.modules.music && miniPill.p !== null
+                onOpenRequested: musicPanel.toggle()
             }
 
             Pill {
                 id: clockPill
                 interactive: true
-                onClicked: calendarPopup.toggle()
+                onClicked: calendarPanel.toggle()
+                // Часы как на локскрине: объёмное время с цветными слоями,
+                // рядом — жёлтый стикер с датой и розовый с секундами.
                 Lbl {
-                    text: Qt.formatDateTime(clock.date, "HH:mm")
-                    font.bold: true
+                    visible: Rock.marisa
+                    text: "✦"
+                    color: Rock.gold
+                    font.pixelSize: 9
                 }
-                Lbl {
-                    text: Qt.formatDateTime(clock.date, "ddd, d MMM")
-                    color: Theme.muted
+                Item {
+                    Layout.preferredWidth: clockTime.width
+                    Layout.preferredHeight: clockTime.height
+
+                    Text {
+                        x: 2; y: 2
+                        text: clockTime.text
+                        color: Rock.marisa ? Rock.pink : Rock.pinkDeep
+                        font.family: Rock.display
+                        font.pixelSize: bar.v ? 12 : 16
+                        font.weight: Font.Black
+                        font.letterSpacing: -0.5
+                    }
+                    Text {
+                        x: 1; y: 1
+                        text: clockTime.text
+                        color: Rock.marisa ? Rock.gold : Rock.cyan
+                        font.family: Rock.display
+                        font.pixelSize: bar.v ? 12 : 16
+                        font.weight: Font.Black
+                        font.letterSpacing: -0.5
+                    }
+                    Text {
+                        id: clockTime
+                        text: Qt.formatDateTime(barClock.date, "HH:mm")
+                        color: Rock.marisa ? Rock.barText : Rock.cream
+                        font.family: Rock.display
+                        font.pixelSize: bar.v ? 12 : 16
+                        font.weight: Font.Black
+                        font.letterSpacing: -0.5
+                    }
+                }
+
+                RockChip {
+                    visible: !bar.v && !Rock.marisa
+                    fill: Rock.yellow
+                    shadowColor: Rock.pink
+                    offset: 1.5
+                    padH: 8
+                    padV: 2
+                    radius: 6
+                    Lbl {
+                        text: Qt.formatDateTime(barClock.date, "ddd d").toUpperCase()
+                        color: Rock.ink
+                        font.family: Rock.display
+                        font.pixelSize: 9
+                        font.weight: Font.Black
+                        font.letterSpacing: 0.6
+                    }
+                }
+                RockChip {
+                    visible: !bar.v && !Rock.marisa
+                    fill: Rock.pink
+                    shadowColor: Rock.cyan
+                    offset: 1.5
+                    padH: 7
+                    padV: 2
+                    radius: 6
+                    Lbl {
+                        text: Qt.formatDateTime(barClock.date, "ss")
+                        color: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink
+                        font.pixelSize: 10
+                        font.weight: Font.Black
+                    }
+                }
+
+                ColumnLayout {
+                    visible: Rock.marisa && !bar.v
+                    spacing: -3
+                    Lbl {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: Qt.formatDateTime(barClock.date, "ddd").toUpperCase()
+                        color: Rock.barSub
+                        font.family: Rock.display
+                        font.pixelSize: 7
+                        font.bold: true
+                        font.letterSpacing: 1.4
+                    }
+                    Lbl {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: Qt.formatDateTime(barClock.date, "d MMM")
+                        color: Rock.barText
+                        font.family: Rock.display
+                        font.pixelSize: 8
+                        font.italic: true
+                    }
+                }
+                Item {
+                    visible: Rock.marisa && !bar.v
+                    Layout.preferredWidth: 20
+                    Layout.preferredHeight: 20
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 16
+                        height: 16
+                        radius: 2
+                        rotation: 45
+                        color: Rock.a(Rock.pink, 0.16)
+                        border.width: 1
+                        border.color: Rock.pinkDeep
+                    }
+                    Text {
+                        anchors.centerIn: parent
+                        text: Qt.formatDateTime(barClock.date, "ss")
+                        color: Rock.pinkDeep
+                        font.family: Rock.display
+                        font.pixelSize: 8
+                        font.bold: true
+                    }
                 }
             }
             Pill {
                 id: weatherPill
                 interactive: true
-                visible: Weather.ready
+                visible: Weather.ready && PanelConfig.modules.weather
                 onClicked: weatherPopup.toggle()
-                Lbl { text: Weather.icon; color: Theme.accent2; font.pixelSize: 14 }
-                Lbl { text: Weather.temp + "°" }
+                Lbl {
+                    text: Weather.icon
+                    color: Rock.cyan
+                    font.pixelSize: 14
+                    scale: parent.hovered ? 1.15 : 1.0
+                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                }
+                Lbl {
+                    text: Weather.temp + "°"
+                    color: Rock.marisa ? Rock.barText : Rock.cream
+                    font.family: Rock.display
+                    font.weight: Font.Black
+                    font.pixelSize: 13
+                }
+                // вероятность осадков в ближайшие часы — если есть, то сразу видно
+                Lbl {
+                    visible: Weather.nextPrecip > 0
+                    text: "\uf043 " + Weather.nextPrecip + "%"
+                    color: Weather.nextPrecip >= 40 ? Rock.pink : Rock.a(Rock.barText, 0.55)
+                    font.pixelSize: 10
+                }
             }
         }
 
         // ───────── режим события ─────────
-        RowLayout {
+        ColumnLayout {
             id: eventRow
             anchors.centerIn: parent
-            spacing: 10
+            width: Math.min(400, Math.max(320, bar.screen ? bar.screen.width * 0.24 : 360))
+            spacing: 9
             opacity: centerIsland.eventMode ? 1 : 0
             visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: 220 } }
 
-            Item {
-                Layout.preferredWidth: 22
-                Layout.preferredHeight: 22
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 6
-                    color: Theme.surface
-                    visible: evArt.status !== Image.Ready
-                }
-                Image {
-                    id: evArt
-                    anchors.fill: parent
-                    source: UI.eventArt
-                    fillMode: Image.PreserveAspectCrop
-                    visible: status === Image.Ready
-                }
-                Lbl {
-                    anchors.centerIn: parent
-                    visible: evArt.status !== Image.Ready
-                    text: UI.eventIcon
-                    color: Theme.accent
-                    font.pixelSize: 13
-                }
-            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
 
-            ColumnLayout {
-                visible: UI.eventKind !== "level"
-                spacing: -1
-                Lbl {
-                    Layout.maximumWidth: 260
-                    text: UI.eventText
-                    font.bold: true
-                    elide: Text.ElideRight
-                }
-                Lbl {
-                    visible: UI.eventSub !== ""
-                    Layout.maximumWidth: 260
-                    text: UI.eventSub
-                    color: Theme.muted
-                    font.pixelSize: 10
-                    elide: Text.ElideRight
-                }
-            }
+                Item {
+                    Layout.preferredWidth: 42
+                    Layout.preferredHeight: 42
+                    Layout.alignment: Qt.AlignTop
 
-            // уровень громкости / яркости
-            Item {
-                visible: UI.eventKind === "level"
-                Layout.preferredWidth: 150
-                Layout.preferredHeight: 6
-                Layout.alignment: Qt.AlignVCenter
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 3
-                    color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.14)
-                }
-                Rectangle {
-                    width: parent.width * Math.max(0, Math.min(1, Levels.muted ? 0 : Levels.value))
-                    height: parent.height
-                    radius: 3
-                    color: Levels.muted ? Theme.muted : Theme.accent
-                    Behavior on width { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                }
-            }
-            Lbl {
-                visible: UI.eventKind === "level"
-                Layout.preferredWidth: 26
-                horizontalAlignment: Text.AlignRight
-                text: Levels.muted ? "–" : Math.round(Levels.value * 100)
-                color: Theme.muted
-                font.pixelSize: 11
-            }
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Rock.comic ? 10 : Rock.marisa ? 4 : 14
+                        color: Rock.comic ? Rock.yellow : Rock.a(Rock.gold, 0.10)
+                        border.width: Rock.comic ? 2 : 1
+                        border.color: Rock.comic ? Rock.ink : Rock.marisa ? Rock.cream : Rock.a(Rock.gold, 0.55)
+                        visible: evArt.status !== Image.Ready || UI.eventKind === "level"
+                    }
 
-            // эквалайзер для музыки
-            Row {
-                visible: UI.eventKind === "media"
-                Layout.alignment: Qt.AlignVCenter
-                spacing: 2
-                Repeater {
-                    model: 4
-                    delegate: Item {
-                        id: eq
-                        required property int index
-                        width: 3
-                        height: 16
-                        Rectangle {
-                            id: barRect
-                            anchors.bottom: parent.bottom
-                            width: 3
-                            radius: 1.5
-                            height: 5
-                            color: Theme.accent
-                            SequentialAnimation on height {
-                                loops: Animation.Infinite
-                                running: centerIsland.eventMode && UI.eventKind === "media"
-                                NumberAnimation { to: 15; duration: 260 + eq.index * 70; easing.type: Easing.InOutSine }
-                                NumberAnimation { to: 4;  duration: 300 + eq.index * 60; easing.type: Easing.InOutSine }
+                    Image {
+                        id: evArt
+                        anchors.fill: parent
+                        anchors.margins: 2
+                        source: UI.eventArt
+                        fillMode: Image.PreserveAspectCrop
+                        visible: status === Image.Ready && UI.eventKind !== "level"
+                    }
+
+                    Lbl {
+                        anchors.centerIn: parent
+                        visible: evArt.status !== Image.Ready || UI.eventKind === "level"
+                        text: UI.eventIcon
+                        color: Rock.comic ? Rock.ink : Rock.marisa ? Rock.cream : Rock.gold
+                        font.pixelSize: 18
+                    }
+
+                    Rectangle {
+                        visible: !Rock.comic
+                        width: 7
+                        height: 7
+                        radius: 1.5
+                        rotation: 45
+                        color: Rock.marisa ? Rock.yellow : Rock.gold
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.topMargin: -3
+                        anchors.leftMargin: -3
+                        border.width: 1
+                        border.color: Rock.a(Rock.cream, 0.7)
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 1
+
+                    Lbl {
+                        Layout.fillWidth: true
+                        text: centerIsland.eventCategory
+                        color: centerIsland.eventAccent
+                        font.pixelSize: 8
+                        font.bold: true
+                        font.letterSpacing: 1.2
+                        elide: Text.ElideRight
+                    }
+
+                    Lbl {
+                        Layout.fillWidth: true
+                        text: centerIsland.eventTitle
+                        color: Rock.cream
+                        font.family: Rock.display
+                        font.weight: Font.Black
+                        font.pixelSize: 14
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                    }
+
+                    Lbl {
+                        Layout.fillWidth: true
+                        visible: text !== ""
+                        text: centerIsland.eventSubtitle
+                        color: Rock.a(Rock.cream, 0.52)
+                        font.pixelSize: 10
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.alignment: Qt.AlignVCenter
+                    spacing: 2
+
+                    Lbl {
+                        visible: UI.eventKind === "level"
+                        Layout.alignment: Qt.AlignRight
+                        text: Levels.muted ? "—" : Math.round(Levels.value * 100)
+                        color: centerIsland.eventAccent
+                        font.family: Rock.display
+                        font.weight: Font.Black
+                        font.pixelSize: 22
+                    }
+
+                    Lbl {
+                        visible: UI.eventKind === "level"
+                        Layout.alignment: Qt.AlignRight
+                        text: "%"
+                        color: Rock.a(Rock.cream, 0.4)
+                        font.pixelSize: 8
+                        font.bold: true
+                    }
+
+                    Row {
+                        visible: UI.eventKind === "media"
+                        Layout.alignment: Qt.AlignRight
+                        spacing: 3
+                        Repeater {
+                            model: 4
+                            delegate: Item {
+                                id: eq
+                                required property int index
+                                width: 3
+                                height: 16
+                                Rectangle {
+                                    anchors.bottom: parent.bottom
+                                    width: 3
+                                    radius: 1.5
+                                    height: 5
+                                    color: Rock.yellow
+                                    SequentialAnimation on height {
+                                        loops: Animation.Infinite
+                                        running: centerIsland.eventMode && UI.eventKind === "media"
+                                        NumberAnimation { to: 15; duration: 260 + eq.index * 70; easing.type: Easing.InOutSine }
+                                        NumberAnimation { to: 4;  duration: 300 + eq.index * 60; easing.type: Easing.InOutSine }
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
 
-            // время трека в событии
-            Lbl {
-                visible: UI.eventKind === "media" && Media.player !== null
-                Layout.alignment: Qt.AlignVCenter
-                text: bar.fmtTime(Media.player ? Media.player.position : 0) + " / " + bar.fmtTime(Media.player ? Media.player.length : 0)
-                color: Theme.muted
-                font.pixelSize: 10
-            }
-
-            // палитра при смене темы
-            Row {
-                visible: UI.eventKind === "theme"
-                Layout.alignment: Qt.AlignVCenter
-                spacing: 4
-                Repeater {
-                    model: [Theme.accent, Theme.accent2, Theme.text, Theme.surface]
-                    delegate: Rectangle {
-                        required property var modelData
-                        width: 14; height: 14; radius: 7
-                        color: modelData
-                        border.width: 1
-                        border.color: Theme.hairline
+                    Lbl {
+                        visible: UI.eventKind === "media" && Media.player !== null
+                        Layout.alignment: Qt.AlignRight
+                        text: bar.fmtTime(Media.player ? Media.player.position : 0) + " / " + bar.fmtTime(Media.player ? Media.player.length : 0)
+                        color: Rock.a(Rock.cream, 0.55)
+                        font.pixelSize: 9
                     }
                 }
             }
-        }
 
-        // ───────── режим УВЕДОМЛЕНИЯ: компактно, в две строки ─────────
-        RowLayout {
-            id: notifBox
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 9
-            width: centerIsland.notifW - 36
-            spacing: 12
-            opacity: centerIsland.notifMode ? 1 : 0
-            visible: opacity > 0.01
-            Behavior on opacity { NumberAnimation { duration: 220 } }
-
-            // аватар (или значок приложения); у аватара значок приложения — крошечным бейджем
             Item {
-                id: avatar
-                Layout.preferredWidth: 34
-                Layout.preferredHeight: 34
-                Layout.alignment: Qt.AlignVCenter
-                readonly property bool hasPic: picImg.status === Image.Ready
+                visible: UI.eventKind === "level"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 11
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 11
-                    color: Theme.surface
-                    visible: !avatar.hasPic
+                    radius: 5.5
+                    color: Rock.a(Rock.cream, 0.10)
+                    border.width: 1
+                    border.color: Rock.a(Rock.cream, 0.20)
                 }
-                Image {
-                    id: picImg
-                    anchors.fill: parent
-                    source: Notifs.contentImage(centerIsland.nn)
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    visible: avatar.hasPic
-                }
-                RoundMask {
-                    anchors.fill: parent
-                    radius: 11
-                    maskColor: Theme.bg
-                    visible: avatar.hasPic
-                }
-                Image {
-                    id: appIcon
-                    width: avatar.hasPic ? 14 : 22
-                    height: width
-                    x: avatar.hasPic ? avatar.width - width + 3 : (avatar.width - width) / 2
-                    y: avatar.hasPic ? avatar.height - height + 3 : (avatar.height - height) / 2
-                    source: Notifs.appIconSource(centerIsland.nn)
-                    sourceSize: Qt.size(44, 44)
-                    smooth: true
-                    visible: status === Image.Ready
-                }
-                Lbl {
-                    anchors.centerIn: parent
-                    visible: !avatar.hasPic && appIcon.status !== Image.Ready
-                    text: "\uf0f3"
-                    color: Theme.accent
-                    font.pixelSize: 14
-                }
-            }
 
-            // строка 1: кто написал  ·····  приложение · время
-            // строка 2: сообщение
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                Layout.alignment: Qt.AlignVCenter
-                spacing: 0
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-                    Lbl {
-                        Layout.fillWidth: true
-                        text: centerIsland.nn ? centerIsland.nn.summary : ""
-                        font.bold: true
-                        font.pixelSize: 13
-                        elide: Text.ElideRight
+                Rectangle {
+                    visible: !Rock.sao
+                    width: Math.max(0, parent.width * Math.min(1, Levels.muted ? 0 : Levels.value))
+                    height: parent.height
+                    radius: 5.5
+                    opacity: Levels.muted ? 0.45 : 1
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop {
+                            position: 0.0
+                            color: Rock.comic ? Rock.pink : Rock.marisa ? Rock.yellow : Rock.a(Rock.gold, 0.72)
+                        }
+                        GradientStop {
+                            position: 1.0
+                            color: Rock.comic ? Rock.yellow : Rock.marisa ? Rock.gold : Rock.gold
+                        }
                     }
-                    Lbl {
-                        Layout.maximumWidth: 120
-                        text: centerIsland.nn ? (centerIsland.nn.appName || "") : ""
-                        color: Theme.accent
-                        font.pixelSize: 10
-                        elide: Text.ElideRight
-                    }
-                    Lbl {
-                        text: Notifs.timeAgo(centerIsland.nn)
-                        color: Theme.muted
-                        font.pixelSize: 10
-                    }
-                    Lbl {
-                        visible: Notifs.pending > 0
-                        text: "+" + Notifs.pending
-                        color: Theme.accent
-                        font.pixelSize: 10
-                        font.bold: true
-                    }
+                    Behavior on width { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                 }
-                Lbl {
-                    Layout.fillWidth: true
-                    visible: text !== ""
-                    text: centerIsland.nn ? String(centerIsland.nn.body).replace(/\s*\n\s*/g, "  ") : ""
-                    opacity: 0.75
-                    font.pixelSize: 12
-                    elide: Text.ElideRight
-                }
-            }
 
-            // действия приложения — небольшие кнопки справа
-            RowLayout {
-                Layout.alignment: Qt.AlignVCenter
-                spacing: 6
-                visible: Notifs.actionList(centerIsland.nn).length > 0
                 Repeater {
-                    model: Notifs.actionList(centerIsland.nn).slice(0, 2)
+                    model: 9
+                    visible: !Rock.sao
                     delegate: Rectangle {
-                        id: actBtn
+                        required property int index
+                        x: parent.width * (index + 1) / 10 - width / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 1
+                        height: 5
+                        color: Rock.a(Rock.cream, 0.18)
+                    }
+                }
+            }
+
+            Item {
+                visible: UI.eventKind === "media" && Media.player !== null
+                Layout.fillWidth: true
+                Layout.preferredHeight: 3
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 1.5
+                    color: Rock.a(Rock.cream, 0.12)
+                }
+
+                Rectangle {
+                    width: Math.max(0, parent.width * (Media.player && Media.player.length > 0
+                        ? Math.min(1, Media.player.position / Media.player.length) : 0))
+                    height: parent.height
+                    radius: 1.5
+                    color: centerIsland.eventAccent
+                    Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                }
+            }
+
+            Row {
+                visible: UI.eventKind === "theme"
+                Layout.alignment: Qt.AlignLeft
+                spacing: 4
+                Repeater {
+                    model: [Rock.pink, Rock.cyan, Rock.yellow, Rock.cream]
+                    delegate: Rectangle {
                         required property var modelData
-                        implicitWidth: actLbl.implicitWidth + 20
-                        implicitHeight: 26
-                        radius: 13
-                        color: actArea.containsMouse ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
-                        Behavior on color { ColorAnimation { duration: 100 } }
-                        Lbl {
-                            id: actLbl
-                            anchors.centerIn: parent
-                            text: actBtn.modelData.text
-                            color: Theme.textOnAccent
-                            font.pixelSize: 10
-                            font.bold: true
-                        }
-                        MouseArea {
-                            id: actArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: { actBtn.modelData.invoke(); Notifs.dismissCurrent() }
-                        }
+                        width: 14
+                        height: 14
+                        radius: Rock.marisa ? 2 : 7
+                        color: modelData
+                        border.width: 2
+                        border.color: Rock.ink
                     }
                 }
             }
@@ -669,14 +969,21 @@ PanelWindow {
             id: launchBox
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
-            anchors.topMargin: 6
+            anchors.topMargin: 8
             width: centerIsland.launchW - 24
-            spacing: 4
-            opacity: centerIsland.launchMode ? 1 : 0
+            spacing: 6
+            opacity: (centerIsland.launchMode && !Rock.sao) ? 1 : 0
             visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: 180 } }
 
             readonly property string mode: UI.launcherMode
+            readonly property string glyph: mode === "clip" ? "\uf0ea" : (mode === "windows" ? "\uf2d0" : "\uf303")
+            readonly property string title: Rock.marisa
+                ? (mode === "clip" ? I18n.t("СВИТОК") : (mode === "windows" ? I18n.t("ОКНА") : I18n.t("ЗАКЛИНАНИЯ")))
+                : Rock.sao
+                ? (mode === "clip" ? I18n.t("АРХИВ") : (mode === "windows" ? I18n.t("ОКНА") : I18n.t("ЗАПУСК")))
+                : (mode === "clip" ? I18n.t("БУФЕР") : (mode === "windows" ? I18n.t("ОКНА") : I18n.t("ЗАПУСК")))
+            readonly property string subtitle: (Rock.marisa ? "SPELL " : Rock.sao ? "LINK " : "KESSOKU ") + (mode === "clip" ? "CLIP" : (mode === "windows" ? "WINDOWS" : "LAUNCHER"))
             readonly property var results: mode === "clip" ? Clip.search(searchInput.text)
                                          : (mode === "windows" ? Wins.search(searchInput.text)
                                                                : Apps.search(searchInput.text))
@@ -691,7 +998,7 @@ PanelWindow {
             Connections {
                 target: centerIsland
                 function onLaunchModeChanged() {
-                    if (centerIsland.launchMode) {
+                    if (centerIsland.launchMode && !Rock.sao) {
                         if (UI.launcherMode === "clip") Clip.reload()
                         searchInput.text = ""
                         resultList.currentIndex = 0
@@ -700,66 +1007,164 @@ PanelWindow {
                 }
             }
 
-            // строка поиска
             RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 32
-                spacing: 10
+                spacing: 8
 
                 Lbl {
-                    text: launchBox.mode === "clip" ? "\uf0ea" : (launchBox.mode === "windows" ? "\uf2d0" : "\uf002")
-                    color: Theme.accent
-                    font.pixelSize: 13
-                    Layout.leftMargin: 6
+                    text: launchBox.glyph
+                    color: Rock.pinkDeep
+                    font.pixelSize: 16
+                    rotation: Rock.comic ? -8 : 0
+                    Layout.leftMargin: 4
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: -2
+                    Lbl {
+                        Layout.fillWidth: true
+                        text: launchBox.title
+                        color: Rock.uiText
+                        font.family: Rock.display
+                        font.weight: Font.Black
+                        font.pixelSize: 18
+                        font.letterSpacing: 0.4
+                        elide: Text.ElideRight
+                    }
+                    Lbl {
+                        Layout.fillWidth: true
+                        text: launchBox.subtitle
+                        color: Rock.pinkDeep
+                        font.pixelSize: 8
+                        font.weight: Font.Black
+                        font.letterSpacing: 1.8
+                        elide: Text.ElideRight
+                    }
+                }
+                RockChip {
+                    fill: Rock.yellow
+                    shadowColor: Rock.pink
+                    offset: 2
+                    radius: 5
+                    padH: 6
+                    padV: 2
+                    Lbl {
+                        text: Rock.comic ? "BOCCHI MODE" : Rock.marisa ? "GRIMOIRE MODE" : Rock.sao ? "LINK START" : "ASTRAL MODE"
+                        color: Rock.ink
+                        font.family: Rock.display
+                        font.weight: Font.Black
+                        font.pixelSize: 7
+                        font.letterSpacing: 0.6
+                    }
+                }
+            }
+
+            // строка поиска
+            Item {
+                Layout.fillWidth: true
+                implicitHeight: searchCard.height + 6
+
+                Rectangle {
+                    visible: Rock.comic
+                    x: 4
+                    y: 5
+                    width: searchCard.width
+                    height: searchCard.height
+                    radius: 12
+                    color: Rock.cyan
+                    border.width: 2
+                    border.color: Rock.ink
                 }
 
-                TextInput {
-                    id: searchInput
-                    Layout.fillWidth: true
-                    color: Theme.text
-                    font.family: Theme.font
-                    font.pixelSize: 14
-                    selectionColor: Theme.accent
-                    selectedTextColor: Theme.textOnAccent
-                    selectByMouse: true
-                    clip: true
-                    onTextChanged: resultList.currentIndex = 0
+                Rectangle {
+                    id: searchCard
+                    width: parent.width - 4
+                    height: 40
+                    radius: Rock.comic ? 12 : Rock.marisa ? 4 : 10
+                    color: Rock.comic ? Rock.paper : Rock.uiSurface2
+                    border.width: Rock.uiBorder
+                    border.color: Rock.uiEdge
 
-                    Keys.onPressed: event => {
-                        const ctrl = event.modifiers & Qt.ControlModifier
-                        const n = launchBox.results.length
-                        if (event.key === Qt.Key_Escape) {
-                            UI.launcher = false; event.accepted = true
-                        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab
-                                   || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
-                            resultList.currentIndex = Math.min(n - 1, resultList.currentIndex + 1); event.accepted = true
-                        } else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab
-                                   || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P))) {
-                            resultList.currentIndex = Math.max(0, resultList.currentIndex - 1); event.accepted = true
-                        } else if (event.key === Qt.Key_Delete && launchBox.mode === "windows") {
-                            // Delete — закрыть выбранное окно
-                            if (n > 0) { Wins.close(launchBox.results[resultList.currentIndex]); UI.launcher = false }
-                            event.accepted = true
-                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            if (n > 0) launchBox.launch(launchBox.results[resultList.currentIndex])
-                            event.accepted = true
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 7
+                        anchors.rightMargin: 10
+                        spacing: 9
+
+                        Rectangle {
+                            Layout.preferredWidth: 26
+                            Layout.preferredHeight: 26
+                            radius: Rock.comic ? 8 : Rock.marisa ? 3 : 7
+                            rotation: Rock.comic ? -4 : 0
+                            color: Rock.pink
+                            border.width: Rock.uiBorder
+                            border.color: Rock.uiEdge
+                            Lbl {
+                                anchors.centerIn: parent
+                                text: launchBox.glyph
+                                color: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink
+                                font.pixelSize: 12
+                                rotation: Rock.comic ? 4 : 0
+                            }
+                        }
+
+                        TextInput {
+                            id: searchInput
+                            Layout.fillWidth: true
+                            color: Rock.uiText
+                            font.family: Rock.mono
+                            font.pixelSize: 14
+                            selectionColor: Rock.uiAccent
+                            selectedTextColor: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink
+                            selectByMouse: true
+                            clip: true
+                            onTextChanged: resultList.currentIndex = 0
+
+                            Keys.onPressed: event => {
+                                const ctrl = event.modifiers & Qt.ControlModifier
+                                const n = launchBox.results.length
+                                if (event.key === Qt.Key_Escape) {
+                                    UI.launcher = false; event.accepted = true
+                                } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab
+                                           || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
+                                    resultList.currentIndex = Math.min(n - 1, resultList.currentIndex + 1); event.accepted = true
+                                } else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab
+                                           || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P))) {
+                                    resultList.currentIndex = Math.max(0, resultList.currentIndex - 1); event.accepted = true
+                                } else if (event.key === Qt.Key_Delete && launchBox.mode === "windows") {
+                                    // Delete — закрыть выбранное окно
+                                    if (n > 0) { Wins.close(launchBox.results[resultList.currentIndex]); UI.launcher = false }
+                                    event.accepted = true
+                                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                    if (n > 0) launchBox.launch(launchBox.results[resultList.currentIndex])
+                                    event.accepted = true
+                                }
+                            }
+
+                            Lbl {
+                                visible: searchInput.text === ""
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: launchBox.mode === "clip"
+                                    ? (Rock.marisa ? I18n.t("Раскрыть свиток…") : Rock.sao ? I18n.t("Открыть архив данных…") : I18n.t("Буфер обмена…"))
+                                    : (launchBox.mode === "windows"
+                                        ? (Rock.marisa ? I18n.t("Позвать окно…") : Rock.sao ? I18n.t("Выбрать окно…") : I18n.t("Переключить окно…"))
+                                        : (Rock.marisa ? I18n.t("Назови заклинание, 2+2, ? поиск, > команда")
+                                                       : Rock.sao ? I18n.t("Имя приложения, 2+2, ? поиск, > команда")
+                                                                  : I18n.t("Приложение, 2+2, ? поиск, > команда")))
+                                color: Rock.a(Rock.uiText, 0.45)
+                                font.pixelSize: 13
+                            }
+                        }
+
+                        Lbl {
+                            visible: launchBox.results.length > 0
+                            text: "\u21b5"
+                            color: Rock.uiSub
+                            font.pixelSize: 12
+                            font.weight: Font.Black
                         }
                     }
-
-                    Lbl {
-                        visible: searchInput.text === ""
-                        text: launchBox.mode === "clip" ? "Буфер обмена…" : (launchBox.mode === "windows" ? "Переключить окно…" : "Приложение, 2+2, ? поиск, > команда")
-                        color: Theme.muted
-                        font.pixelSize: 14
-                    }
-                }
-
-                Lbl {
-                    visible: launchBox.results.length > 0
-                    text: "\u21b5"
-                    color: Theme.muted
-                    font.pixelSize: 12
-                    Layout.rightMargin: 6
                 }
             }
 
@@ -767,64 +1172,123 @@ PanelWindow {
             ListView {
                 id: resultList
                 Layout.fillWidth: true
-                Layout.preferredHeight: count * 40
-                interactive: false
+                Layout.preferredHeight: Math.min(count, 7) * 44
+                interactive: count > 7
                 clip: true
                 model: launchBox.results
                 currentIndex: 0
                 highlightMoveDuration: 80
+                boundsBehavior: Flickable.StopAtBounds
+                onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
-                delegate: Rectangle {
+                delegate: Item {
                     id: row
                     required property var modelData
                     required property int index
-                    width: resultList.width
-                    height: 40
-                    radius: 14
-                    color: ListView.isCurrentItem
-                        ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18)
-                        : "transparent"
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                    readonly property bool current: ListView.isCurrentItem
+                    readonly property color tileColor: [Rock.pink, Rock.cyan, Rock.yellow, Rock.purple][row.index % 4]
 
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 12
-                        spacing: 12
-                        Item {
-                            Layout.preferredWidth: 22
-                            Layout.preferredHeight: 22
-                            Image {
-                                anchors.fill: parent
-                                source: row.modelData.icon ? Quickshell.iconPath(row.modelData.icon) : ""
-                                sourceSize: Qt.size(44, 44)
-                                smooth: true
-                                visible: status === Image.Ready
+                    width: resultList.width
+                    height: 44
+
+                    Rectangle {
+                        visible: Rock.comic
+                        x: 4
+                        y: 5
+                        width: card.width
+                        height: card.height
+                        radius: 10
+                        color: row.current ? Rock.pink : Rock.a(Rock.ink, 0.10)
+                        border.width: row.current ? 2 : 0
+                        border.color: Rock.ink
+                    }
+
+                    Rectangle {
+                        id: card
+                        width: parent.width - 4
+                        height: 39
+                        radius: Rock.comic ? 10 : Rock.marisa ? 4 : 9
+                        color: row.current ? (Rock.comic ? Rock.yellow : Rock.uiActive)
+                                           : (rowArea.containsMouse ? Rock.uiHover : (Rock.comic ? Rock.cream : Rock.uiSurface2))
+                        border.width: Rock.uiBorder
+                        border.color: row.current ? Rock.uiEdge : Rock.a(Rock.uiText, 0.25)
+                        Behavior on color { ColorAnimation { duration: 100 } }
+
+                        Rectangle {
+                            visible: row.current
+                            width: 6
+                            height: parent.height - 10
+                            radius: 3
+                            anchors.left: parent.left
+                            anchors.leftMargin: 5
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: Rock.uiAccent
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: row.current ? 16 : 10
+                            anchors.rightMargin: 10
+                            spacing: 9
+
+                            Rectangle {
+                                Layout.preferredWidth: 26
+                                Layout.preferredHeight: 26
+                                radius: Rock.comic ? 8 : Rock.marisa ? 3 : 7
+                                rotation: Rock.comic ? (row.index % 2 === 0 ? -3 : 3) : 0
+                                color: row.tileColor
+                                border.width: Rock.uiBorder
+                                border.color: Rock.uiEdge
+
+                                Image {
+                                    anchors.fill: parent
+                                    anchors.margins: 3
+                                    source: row.modelData.icon ? Quickshell.iconPath(row.modelData.icon) : ""
+                                    sourceSize: Qt.size(44, 44)
+                                    smooth: true
+                                    visible: status === Image.Ready
+                                }
+                                Lbl {
+                                    anchors.centerIn: parent
+                                    visible: !!row.modelData.glyph && !row.modelData.icon
+                                    text: row.modelData.glyph || ""
+                                    color: Rock.comic ? (row.index % 4 === 2 ? Rock.ink : Rock.cream) : (Rock.marisa ? (row.index % 4 === 2 ? Rock.ink : Rock.cream) : Rock.ink)
+                                    font.pixelSize: 13
+                                    rotation: Rock.comic ? (row.index % 2 === 0 ? 3 : -3) : 0
+                                }
+                            }
+
+                            Lbl {
+                                Layout.fillWidth: true
+                                text: row.modelData.name
+                                color: Rock.uiText
+                                font.family: Rock.display
+                                font.weight: Font.Black
+                                font.pixelSize: 13
+                                elide: Text.ElideRight
                             }
                             Lbl {
-                                anchors.centerIn: parent
-                                visible: !!row.modelData.glyph && !row.modelData.icon
-                                text: row.modelData.glyph || ""
-                                color: Theme.accent
-                                font.pixelSize: 15
+                                Layout.maximumWidth: 190
+                                text: row.modelData.comment || row.modelData.genericName || ""
+                                color: Rock.a(Rock.uiText, 0.55)
+                                font.pixelSize: 10
+                                elide: Text.ElideRight
+                            }
+                            Lbl {
+                                Layout.preferredWidth: 18
+                                horizontalAlignment: Text.AlignRight
+                                text: ("0" + (row.index + 1)).slice(-2)
+                                color: row.current ? Rock.pinkDeep : Rock.a(Rock.uiText, 0.32)
+                                font.family: Rock.display
+                                font.weight: Font.Black
+                                font.pixelSize: 8
                             }
                         }
-                        Lbl {
-                            Layout.fillWidth: true
-                            text: row.modelData.name
-                            font.pixelSize: 13
-                            elide: Text.ElideRight
-                        }
-                        Lbl {
-                            Layout.maximumWidth: 200
-                            text: row.modelData.comment || row.modelData.genericName || ""
-                            color: Theme.muted
-                            font.pixelSize: 11
-                            elide: Text.ElideRight
-                        }
                     }
+
                     MouseArea {
-                        anchors.fill: parent
+                        id: rowArea
+                        anchors.fill: card
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onEntered: resultList.currentIndex = row.index
@@ -832,38 +1296,99 @@ PanelWindow {
                     }
                 }
             }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 1
+                spacing: 5
+
+                Lbl { text: "↑↓"; color: Rock.pinkDeep; font.pixelSize: 9; font.weight: Font.Black }
+                Lbl { text: I18n.t("выбор"); color: Rock.a(Rock.uiText, 0.5); font.pixelSize: 9 }
+                Item { Layout.fillWidth: true }
+                Lbl { text: "↵"; color: Rock.pinkDeep; font.pixelSize: 9; font.weight: Font.Black }
+                Lbl { text: I18n.t("запуск"); color: Rock.a(Rock.uiText, 0.5); font.pixelSize: 9 }
+                Lbl { text: "·"; color: Rock.a(Rock.uiText, 0.3); font.pixelSize: 9 }
+                Lbl { text: "esc"; color: Rock.pinkDeep; font.pixelSize: 9; font.weight: Font.Black }
+            }
         }
 
-        // полоска оставшегося времени (для уведомлений и событий)
+        // скотч на постере лаунчера
         Rectangle {
-            visible: (centerIsland.eventMode && UI.eventKind !== "level") || (centerIsland.notifMode && Notifs.duration > 0)
+            visible: centerIsland.launchMode && Rock.comic
+            x: 20
+            y: -6
+            width: 68
+            height: 16
+            radius: 2
+            color: Rock.a(Rock.yellow, 0.9)
+            border.width: 1
+            border.color: Rock.a(Rock.ink, 0.28)
+            rotation: -7
+            z: 20
+        }
+        Rectangle {
+            visible: centerIsland.launchMode && Rock.comic
+            x: centerIsland.width - 84
+            y: -6
+            width: 64
+            height: 16
+            radius: 2
+            color: Rock.a(Rock.cyan, 0.8)
+            border.width: 1
+            border.color: Rock.a(Rock.ink, 0.28)
+            rotation: 6
+            z: 20
+        }
+
+        // полоска оставшегося времени (для событий)
+        Rectangle {
+            visible: centerIsland.eventMode && UI.eventKind !== "level"
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 2
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.max(0, (centerIsland.width - 56) * centerIsland.ttlFrac)
-            height: 1.5
-            radius: 1
-            color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.55)
+            height: 3
+            radius: 1.5
+            color: centerIsland.cream ? Rock.pink : Rock.yellow
         }
         NumberAnimation {
             id: ttlAnim
             target: centerIsland
             property: "ttlFrac"
             from: 1; to: 0
-            duration: centerIsland.notifMode ? Math.max(1, Notifs.duration) : UI.eventTotal
-            paused: centerIsland.notifMode ? Notifs.hold : UI.eventHold
+            duration: UI.eventTotal
+            paused: UI.eventHold
         }
     }
 
+    // ───────── Уведомление-«фотография» на грифе ─────────
+    NotifToast {
+        id: notifToast
+        notif: Notifs.current
+        x: bar.toastX(notifToast)
+        y: bar.toastY(notifToast)
+        z: 60
+        opacity: Notifs.current !== null ? 1 : 0
+
+        Behavior on opacity { NumberAnimation { duration: 170 } }
+    }
+
     // ───────── Правый остров ─────────
-    Island {
+    BarIsland {
         id: rightIsland
-        anchors.right: parent.right
-        anchors.top: parent.top
+        anchors.left: (bar.v && bar.atLeft) ? parent.left : undefined
+        anchors.right: (!bar.v || bar.atRight) ? parent.right : undefined
+        anchors.top: (!bar.v && !bar.atBottom) ? parent.top : undefined
+        anchors.bottom: (bar.v || bar.atBottom) ? parent.bottom : undefined
+        anchors.topMargin: (!bar.v && !bar.atBottom) ? Theme.islandInset : 0
+        anchors.bottomMargin: (bar.v || bar.atBottom) ? Theme.islandInset : 0
+        fill: Rock.islandFill
+        shadowColor: Rock.cyan
+        tilt: 0
 
         // Трей
         Pill {
-            visible: SystemTray.items.values.length > 0
+            visible: PanelConfig.showTray && SystemTray.items.values.length > 0
             Repeater {
                 model: SystemTray.items
                 delegate: Item {
@@ -906,30 +1431,49 @@ PanelWindow {
             visible: Net.vpn
             interactive: Net.vpnManaged
             onClicked: Net.toggleVpn()
-            Lbl { text: "\uf132"; color: Theme.accent2; font.pixelSize: Theme.iconSize }
+            Lbl { text: "\uf132"; color: Rock.cyan; font.pixelSize: Theme.iconSize }
             Lbl {
+                visible: !bar.v
                 Layout.maximumWidth: 90
                 text: Net.vpnName
-                color: Theme.muted
+                color: Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55)
                 font.pixelSize: 11
                 elide: Text.ElideRight
             }
         }
 
-        // Обои и тема
+        // Обои
         Pill {
+            visible: PanelConfig.showWallpaper
             interactive: true
-            onClicked: { UI.launcher = false; UI.session = false; UI.wallpaper = !UI.wallpaper }
-            Lbl { text: "\uf1fc"; color: Theme.muted; font.pixelSize: Theme.iconSize }
+            onClicked: { UI.launcher = false; UI.session = false; UI.settings = false; UI.wallpaper = !UI.wallpaper }
+            Lbl { text: "\uf1fc"; color: Rock.a(Rock.barText, 0.55); font.pixelSize: Theme.iconSize }
+        }
+
+        // Настройки панели
+        Pill {
+            visible: PanelConfig.showSettings
+            interactive: true
+            onClicked: {
+                UI.launcher = false
+                UI.session = false
+                UI.wallpaper = false
+                UI.settingsTab = "presets"
+                UI.settings = true
+            }
+            Lbl { text: "\uf013"; color: Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55); font.pixelSize: Theme.iconSize }
         }
 
         // Раскладка клавиатуры
         Pill {
+            visible: PanelConfig.showKeyboard
             interactive: true
             onClicked: Kb.next()
             Lbl {
                 text: Kb.layout
-                font.bold: true
+                color: Rock.marisa ? Rock.barText : Rock.cream
+                font.family: Rock.display
+                font.weight: Font.Black
                 font.pixelSize: 11
             }
         }
@@ -941,7 +1485,7 @@ PanelWindow {
             onClicked: mouse => {
                 if (mouse.button === Qt.MiddleButton) {
                     if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
-                } else controlCenter.toggle()
+                } else controlPanel.toggle()
             }
             onScrolled: wheel => {
                 if (bar.sink && bar.sink.audio)
@@ -952,48 +1496,56 @@ PanelWindow {
             Lbl {
                 visible: UI.caffeine
                 text: "\uf0f4"
-                color: Theme.accent
+                color: Rock.yellow
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 visible: Quick.night
                 text: "\uf186"
-                color: Theme.accent2
+                color: Rock.purple
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
+                visible: PanelConfig.modules.net || PanelConfig.modules.wifi
                 text: Net.icon
-                color: Net.connected ? Theme.text : Theme.muted
+                color: Net.connected ? Rock.marisa ? Rock.barText : Rock.cream : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.4)
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
-                visible: bar.btAdapter !== null
+                visible: bar.btAdapter !== null && PanelConfig.modules.bt
                 text: "\uf293"
-                color: Bt.connected.length > 0 ? Theme.accent
-                     : (bar.btAdapter && bar.btAdapter.enabled ? Theme.text : Theme.muted)
+                color: Bt.connected.length > 0 ? Rock.cyan
+                     : (bar.btAdapter && bar.btAdapter.enabled ? Rock.marisa ? Rock.barText : Rock.cream : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.4))
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
+                visible: PanelConfig.showVolume
                 text: bar.volIcon()
-                color: (bar.sink && bar.sink.audio && bar.sink.audio.muted) ? Theme.muted : Theme.text
+                color: (bar.sink && bar.sink.audio && bar.sink.audio.muted) ? Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.4) : Rock.marisa ? Rock.barText : Rock.cream
+                font.pixelSize: Theme.iconSize
+            }
+            Lbl {
+                visible: PanelConfig.showBattery && bar.bat.isLaptopBattery && bar.v
+                text: bar.batIcon()
+                color: bar.bat.percentage < 0.2 ? Rock.pink : Rock.marisa ? Rock.barText : Rock.cream
                 font.pixelSize: Theme.iconSize
             }
             RowLayout {
-                visible: bar.bat.isLaptopBattery
+                visible: PanelConfig.showBattery && bar.bat.isLaptopBattery && !bar.v
                 spacing: 5
                 Lbl {
                     text: bar.batIcon()
-                    color: bar.bat.percentage < 0.2 ? Theme.warn : Theme.text
+                    color: bar.bat.percentage < 0.2 ? Rock.pink : Rock.marisa ? Rock.barText : Rock.cream
                     font.pixelSize: Theme.iconSize
                 }
                 Lbl {
                     text: Math.round(bar.bat.percentage * 100)
-                    color: Theme.muted
+                    color: Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55)
                 }
                 Lbl {
                     visible: text !== ""
                     text: bar.watts()
-                    color: bar.bat.state === UPowerDeviceState.Charging ? Theme.accent2 : Theme.muted
+                    color: bar.bat.state === UPowerDeviceState.Charging ? Rock.cyan : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.55)
                     font.pixelSize: 10
                 }
             }
@@ -1003,22 +1555,26 @@ PanelWindow {
         Pill {
             id: bellPill
             interactive: true
+            visible: PanelConfig.modules.notif
             onClicked: mouse => {
                 if (mouse.button === Qt.RightButton) Notifs.dnd = !Notifs.dnd
                 else if (mouse.button === Qt.MiddleButton) Notifs.clearAll()
-                else notifCenter.toggle()
+                else notifPanel.toggle()
             }
             Lbl {
                 text: Notifs.dnd ? "\uf1f6" : "\uf0f3"
-                color: Notifs.dnd ? Theme.warn : (Notifs.count > 0 ? Theme.accent : Theme.muted)
+                color: Notifs.dnd ? Rock.pink : (Notifs.count > 0 ? Rock.yellow : Rock.a(Rock.marisa ? Rock.barText : Rock.cream, 0.45))
                 font.pixelSize: Theme.iconSize
             }
             Lbl {
                 visible: Notifs.count > 0
                 text: Notifs.count
-                color: Theme.accent
+                color: Rock.yellow
                 font.bold: true
             }
         }
     }
+
+    // попап «Горячие клавиши»
+    HelpPopup { id: helpPopup; barWindow: bar; anchorItem: rightIsland }
 }

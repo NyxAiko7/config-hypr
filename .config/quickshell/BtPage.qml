@@ -45,17 +45,30 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
-            IconBtn { icon: "\uf053"; iconColor: Theme.text; onClicked: page.back() }
-            Lbl { Layout.fillWidth: true; text: "Bluetooth"; font.bold: true; font.pixelSize: 15 }
+            IconBtn { icon: "\uf053"; iconColor: Rock.uiSub; onClicked: page.back() }
+            Lbl {
+                Layout.fillWidth: true
+                text: "Bluetooth"
+                color: Rock.uiText
+                font.family: Rock.display
+                font.weight: Font.Black
+                font.pixelSize: 16
+                font.letterSpacing: 0.4
+            }
             IconBtn {
                 visible: page.adapter !== null && page.adapter.enabled
                 icon: "\uf021"
                 spin: page.adapter ? page.adapter.discovering : false
+                iconColor: Rock.uiSub
+                hoverColor: Rock.a(Rock.uiText, 0.12)
                 onClicked: if (page.adapter) page.adapter.discovering = !page.adapter.discovering
             }
             Toggle {
                 visible: page.adapter !== null
                 checked: page.adapter ? page.adapter.enabled : false
+                uncheckedColor: Rock.uiSurface2
+                borderColor: Rock.uiEdge
+                uncheckedKnob: Rock.uiText
                 onToggled: if (page.adapter) page.adapter.enabled = !page.adapter.enabled
             }
         }
@@ -67,11 +80,11 @@ Item {
             ColumnLayout {
                 anchors.centerIn: parent
                 spacing: 8
-                Lbl { Layout.alignment: Qt.AlignHCenter; text: "\uf293"; color: Theme.muted; font.pixelSize: 30; opacity: 0.5 }
+                Lbl { Layout.alignment: Qt.AlignHCenter; text: "\uf293"; color: Rock.uiSub; font.pixelSize: 30; opacity: 0.5 }
                 Lbl {
                     Layout.alignment: Qt.AlignHCenter
-                    color: Theme.muted
-                    text: page.adapter === null ? "Bluetooth-адаптер не найден" : "Bluetooth выключен"
+                    color: Rock.uiSub
+                    text: page.adapter === null ? I18n.t("Bluetooth-адаптер не найден") : I18n.t("Bluetooth выключен")
                 }
             }
         }
@@ -89,8 +102,8 @@ Item {
             Lbl {
                 anchors.centerIn: parent
                 visible: list.count === 0
-                text: (page.adapter && page.adapter.discovering) ? "Поиск устройств…" : "Устройства не найдены"
-                color: Theme.muted
+                text: (page.adapter && page.adapter.discovering) ? I18n.t("Поиск устройств…") : I18n.t("Устройства не найдены")
+                color: Rock.uiSub
             }
 
             delegate: Rectangle {
@@ -101,9 +114,12 @@ Item {
                 width: list.width
                 height: 56
                 radius: 14
-                color: rowArea.containsMouse ? Theme.surface : "transparent"
-                border.width: modelData.connected ? 1 : 0
-                border.color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.5)
+                color: row.modelData.connected
+                       ? (rowArea.containsMouse ? Qt.lighter(Rock.comic ? Rock.yellow : Rock.uiActive, 1.06)
+                                                : (Rock.comic ? Rock.yellow : Rock.uiActive))
+                       : (rowArea.containsMouse ? Rock.uiHover : Rock.uiSurface2)
+                border.width: Rock.uiBorder
+                border.color: Rock.uiEdge
                 Behavior on color { ColorAnimation { duration: 120 } }
 
                 // после сопряжения сразу подключаемся
@@ -142,7 +158,7 @@ Item {
                         Layout.preferredWidth: 22
                         horizontalAlignment: Text.AlignHCenter
                         text: page.iconFor(row.modelData)
-                        color: row.modelData.connected ? Theme.accent : Theme.text
+                        color: row.modelData.connected ? Rock.pink : Rock.uiText
                         font.pixelSize: 16
                     }
                     ColumnLayout {
@@ -151,6 +167,7 @@ Item {
                         Lbl {
                             Layout.fillWidth: true
                             text: row.modelData.name || row.modelData.deviceName || row.modelData.address
+                            color: Rock.uiText
                             font.bold: row.modelData.connected
                             elide: Text.ElideRight
                         }
@@ -158,19 +175,21 @@ Item {
                             Layout.fillWidth: true
                             font.pixelSize: 10
                             elide: Text.ElideRight
-                            color: (row.modelData.connected || row.connecting) ? Theme.accent : Theme.muted
-                            text: row.connecting ? "Подключение…"
-                                : row.modelData.pairing ? "Сопряжение…"
+                            color: (row.modelData.connected || row.connecting) ? Rock.pink : Rock.uiSub
+                            text: row.connecting ? I18n.t("Подключение…")
+                                : row.modelData.pairing ? I18n.t("Сопряжение…")
                                 : row.modelData.connected
-                                    ? ("Подключено" + (row.modelData.batteryAvailable ? "  ·  " + Bt.percent(row.modelData) + "%" : ""))
-                                : row.modelData.paired ? "Сопряжено"
-                                : "Доступно — нажми для сопряжения"
+                                    ? (I18n.t("Подключено") + (row.modelData.batteryAvailable ? "  ·  " + Bt.percent(row.modelData) + "%" : ""))
+                                : row.modelData.paired ? I18n.t("Сопряжено")
+                                : I18n.t("Доступно — нажми для сопряжения")
                         }
                     }
                     IconBtn {
                         visible: row.modelData.paired
                         size: 30
                         icon: "\uf1f8"
+                        iconColor: Rock.uiSub
+                        hoverColor: Rock.a(Rock.uiText, 0.12)
                         onClicked: row.modelData.forget()
                     }
                 }

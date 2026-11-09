@@ -64,7 +64,7 @@ PanelWindow {
                 }
                 ColumnLayout {
                     spacing: 0
-                    Lbl { text: "Подключение к сети"; color: Theme.muted; font.pixelSize: 11 }
+                    Lbl { text: I18n.t("Подключение к сети"); color: Theme.muted; font.pixelSize: 11 }
                     Lbl { Layout.maximumWidth: 280; text: UI.wifiSsid; font.bold: true; font.pixelSize: 15; elide: Text.ElideRight }
                 }
             }
@@ -99,7 +99,7 @@ PanelWindow {
                         }
                         Lbl {
                             visible: input.text === ""
-                            text: "Пароль"
+                            text: I18n.t("Пароль")
                             color: Theme.muted
                             font.pixelSize: 14
                         }
@@ -119,13 +119,13 @@ PanelWindow {
                 Rectangle {
                     implicitWidth: 96; implicitHeight: 38; radius: 19
                     color: cancelArea.containsMouse ? Theme.surface : "transparent"
-                    Lbl { anchors.centerIn: parent; text: "Отмена"; color: Theme.muted }
+                    Lbl { anchors.centerIn: parent; text: I18n.t("Отмена"); color: Theme.muted }
                     MouseArea { id: cancelArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.cancel() }
                 }
                 Rectangle {
                     implicitWidth: 120; implicitHeight: 38; radius: 19
                     color: okArea.containsMouse ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
-                    Lbl { anchors.centerIn: parent; text: "Подключить"; color: Theme.textOnAccent; font.bold: true }
+                    Lbl { anchors.centerIn: parent; text: I18n.t("Подключить"); color: Theme.textOnAccent; font.bold: true }
                     MouseArea { id: okArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: win.submit() }
                 }
             }

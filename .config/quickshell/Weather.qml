@@ -25,6 +25,13 @@ Singleton {
     property string pressure: ""
     property var days: []
     property var hourly: []
+    readonly property int nextPrecip: {
+        // максимальная вероятность осадков в ближайшие ~6 часов, начиная со «следующей точки»
+        let m = 0
+        for (let i = 1; i < Math.min(3, hourly.length); i++)
+            if (hourly[i].pop > m) m = hourly[i].pop
+        return m
+    }
     property double lastFetch: 0
     property double lastAlert: 0
     property real lat: NaN
@@ -34,13 +41,13 @@ Singleton {
 
     readonly property string cachePath: Quickshell.env("HOME") + "/.cache/quickshell/weather.json"
     readonly property var codeNames: ({
-        0: "Ясно", 1: "Преимущественно ясно", 2: "Переменная облачность", 3: "Пасмурно",
-        45: "Туман", 48: "Изморозь",
-        51: "Лёгкая морось", 53: "Морось", 55: "Сильная морось", 56: "Ледяная морось", 57: "Ледяная морось",
-        61: "Небольшой дождь", 63: "Дождь", 65: "Сильный дождь", 66: "Ледяной дождь", 67: "Ледяной дождь",
-        71: "Небольшой снег", 73: "Снег", 75: "Сильный снег", 77: "Снежная крупа",
-        80: "Ливни", 81: "Ливни", 82: "Сильные ливни", 85: "Снегопад", 86: "Сильный снегопад",
-        95: "Гроза", 96: "Гроза с градом", 99: "Гроза с градом"
+        0: I18n.t("Ясно"), 1: I18n.t("Преимущественно ясно"), 2: I18n.t("Переменная облачность"), 3: I18n.t("Пасмурно"),
+        45: I18n.t("Туман"), 48: I18n.t("Изморозь"),
+        51: I18n.t("Лёгкая морось"), 53: I18n.t("Морось"), 55: I18n.t("Сильная морось"), 56: I18n.t("Ледяная морось"), 57: I18n.t("Ледяная морось"),
+        61: I18n.t("Небольшой дождь"), 63: I18n.t("Дождь"), 65: I18n.t("Сильный дождь"), 66: I18n.t("Ледяной дождь"), 67: I18n.t("Ледяной дождь"),
+        71: I18n.t("Небольшой снег"), 73: I18n.t("Снег"), 75: I18n.t("Сильный снег"), 77: I18n.t("Снежная крупа"),
+        80: I18n.t("Ливни"), 81: I18n.t("Ливни"), 82: I18n.t("Сильные ливни"), 85: I18n.t("Снегопад"), 86: I18n.t("Сильный снегопад"),
+        95: I18n.t("Гроза"), 96: I18n.t("Гроза с градом"), 99: I18n.t("Гроза с градом")
     })
 
     function descFor(code) { return codeNames[Number(code)] || "—" }
@@ -62,7 +69,7 @@ Singleton {
     }
 
     function compass(deg) {
-        const n = ["С", "ССВ", "СВ", "ВСВ", "В", "ВЮВ", "ЮВ", "ЮЮВ", "Ю", "ЮЮЗ", "ЮЗ", "ЗЮЗ", "З", "ЗСЗ", "СЗ", "ССЗ"]
+        const n = [I18n.t("С"), I18n.t("ССВ"), I18n.t("СВ"), I18n.t("ВСВ"), I18n.t("В"), I18n.t("ВЮВ"), I18n.t("ЮВ"), I18n.t("ЮЮВ"), I18n.t("Ю"), I18n.t("ЮЮЗ"), I18n.t("ЮЗ"), I18n.t("ЗЮЗ"), I18n.t("З"), I18n.t("ЗСЗ"), I18n.t("СЗ"), I18n.t("ССЗ")]
         return n[Math.round(Number(deg) / 22.5) % 16]
     }
 
@@ -127,16 +134,16 @@ Singleton {
         humidity = String(Math.round(c.relative_humidity_2m))
         wind = String(Math.round(c.wind_speed_10m))
         windDir = compass(c.wind_direction_10m)
-        pressure = Math.round(c.surface_pressure * 0.75006) + " мм"
+        pressure = Math.round(c.surface_pressure * 0.75006) + I18n.t(" мм")
         desc = descFor(c.weather_code)
         icon = iconFor(c.weather_code, c.is_day === 1)
         uv = String(Math.round(d.uv_index_max[0]))
         sunrise = String(d.sunrise[0]).slice(11, 16)
         sunset = String(d.sunset[0]).slice(11, 16)
 
-        const names = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"]
+        const names = [I18n.t("Вс"), I18n.t("Пн"), I18n.t("Вт"), I18n.t("Ср"), I18n.t("Чт"), I18n.t("Пт"), I18n.t("Сб")]
         days = d.time.map((t, i) => ({
-            label: i === 0 ? "Сегодня" : (i === 1 ? "Завтра" : names[new Date(t + "T12:00:00").getDay()]),
+            label: i === 0 ? I18n.t("Сегодня") : (i === 1 ? I18n.t("Завтра") : names[new Date(t + "T12:00:00").getDay()]),
             hi: Math.round(d.temperature_2m_max[i]),
             lo: Math.round(d.temperature_2m_min[i]),
             icon: iconFor(d.weather_code[i], true),
@@ -154,6 +161,7 @@ Singleton {
                 when: k - start,
                 temp: Math.round(h.temperature_2m[k]),
                 icon: iconFor(h.weather_code[k], hr >= 6 && hr < 21),
+                pop: (h.precipitation_probability ? Math.round(h.precipitation_probability[k] || 0) : 0),
                 label: String(h.time[k]).slice(11, 13)
             })
         }
@@ -165,13 +173,13 @@ Singleton {
             for (let q = 1; q < Math.min(3, pts.length) && what === ""; q++) {
                 const ic = pts[q].icon
                 if (ic === icon) continue
-                if (ic === "\ue31d") what = "Гроза"
-                else if (ic === "\ue318" || ic === "\ue319") what = "Дождь"
-                else if (ic === "\ue31a") what = "Снег"
+                if (ic === "\ue31d") what = I18n.t("Гроза")
+                else if (ic === "\ue318" || ic === "\ue319") what = I18n.t("Дождь")
+                else if (ic === "\ue31a") what = I18n.t("Снег")
             }
             if (what !== "" && Date.now() - lastAlert > 6 * 3600 * 1000) {
                 lastAlert = Date.now()
-                UI.flash(icon, what + " в ближайшие часы", temp + "° сейчас", "", "weather", "weather")
+                UI.flash(icon, what + I18n.t(" в ближайшие часы"), temp + I18n.t("° сейчас"), "", "weather", "weather")
             }
         }
 
@@ -194,6 +202,17 @@ Singleton {
         else locate()
     }
 
+    // Перечитать место из настроек (после смены города/координат)
+    function reload() {
+        located = false
+        refresh(true)
+    }
+
+    Connections {
+        target: Config
+        function onWeatherChanged() { root.reload() }
+    }
+
     // ───────── процессы ─────────
     Process {
         id: geoProc
@@ -201,12 +220,12 @@ Singleton {
             onStreamFinished: {
                 try {
                     const r = JSON.parse(text).results
-                    if (!r || r.length === 0) { root.failed("город не найден"); return }
+                    if (!r || r.length === 0) { root.failed(I18n.t("город не найден")); return }
                     root.gotLocation(r[0].latitude, r[0].longitude, r[0].name)
-                } catch (e) { root.failed("геокодер: " + e) }
+                } catch (e) { root.failed(I18n.t("геокодер: ") + e) }
             }
         }
-        onExited: code => { if (code !== 0) root.failed("геокодер недоступен") }
+        onExited: code => { if (code !== 0) root.failed(I18n.t("геокодер недоступен")) }
     }
     Process {
         id: ipProc
@@ -229,7 +248,7 @@ Singleton {
                     const o = JSON.parse(text)
                     if (!o.success) throw "status"
                     root.gotLocation(o.latitude, o.longitude, o.city)
-                } catch (e) { root.failed("не удалось определить место по IP") }
+                } catch (e) { root.failed(I18n.t("не удалось определить место по IP")) }
             }
         }
     }
@@ -244,10 +263,10 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 try { root.parseForecast(text, false) }
-                catch (e) { root.failed("ответ прогноза: " + e) }
+                catch (e) { root.failed(I18n.t("ответ прогноза: ") + e) }
             }
         }
-        onExited: code => { if (code !== 0) root.failed("Open-Meteo недоступен") }
+        onExited: code => { if (code !== 0) root.failed(I18n.t("Open-Meteo недоступен")) }
     }
 
     // ───────── кэш: показываем сразу, пока идёт запрос ─────────

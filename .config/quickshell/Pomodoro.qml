@@ -27,8 +27,8 @@ Singleton {
         remaining = total
         tick.restart()
         UI.flash(kind === "focus" ? "\uf017" : "\uf0f4",
-                 kind === "focus" ? "Фокус " + focusMin + " мин" : "Перерыв " + breakMin + " мин",
-                 kind === "focus" ? "Удачной работы" : "Отдохни от экрана", "", "info", "")
+                 kind === "focus" ? I18n.t("Фокус ") + focusMin + I18n.t(" мин") : I18n.t("Перерыв ") + breakMin + I18n.t(" мин"),
+                 kind === "focus" ? I18n.t("Удачной работы") : I18n.t("Отдохни от экрана"), "", "info", "")
     }
     function stop() {
         mode = "idle"
@@ -45,12 +45,12 @@ Singleton {
     function finish() {
         if (mode === "focus") {
             sessions++
-            Quickshell.execDetached(["notify-send", "-a", "Фокус",
-                "Фокус завершён", "Сессия " + sessions + " готова. Отдохни " + breakMin + " мин"])
+            Quickshell.execDetached(["notify-send", "-a", I18n.t("Фокус"),
+                I18n.t("Фокус завершён"), I18n.t("Сессия ") + sessions + I18n.t(" готова. Отдохни ") + breakMin + I18n.t(" мин")])
             start("break")
         } else {
-            Quickshell.execDetached(["notify-send", "-a", "Фокус",
-                "Перерыв закончился", "Можно возвращаться к работе"])
+            Quickshell.execDetached(["notify-send", "-a", I18n.t("Фокус"),
+                I18n.t("Перерыв закончился"), I18n.t("Можно возвращаться к работе")])
             stop()
         }
     }

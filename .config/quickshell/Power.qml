@@ -17,7 +17,7 @@ Singleton {
     readonly property real shown: available ? watts : Math.abs(UPower.displayDevice.changeRate || 0)
 
     function text() {
-        return shown.toFixed(1) + " Вт"
+        return shown.toFixed(1) + I18n.t(" Вт")
     }
 
     readonly property string script:

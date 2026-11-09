@@ -23,17 +23,24 @@ Item {
             spacing: 10
             Rectangle {
                 width: 46; height: 3; radius: 1.5
-                color: Rock.yellow
+                color: Rock.marisa ? Rock.pinkDeep : Rock.yellow
                 anchors.verticalCenter: parent.verticalCenter
                 rotation: -2
             }
             Lbl {
-                text: "ЛОКАЛЬНОЕ ВРЕМЯ"
-                color: Rock.pink
+                text: Rock.comic ? I18n.t("ЛОКАЛЬНОЕ ВРЕМЯ") : Rock.marisa ? I18n.t("ЗВЁЗДНОЕ ВРЕМЯ · GRIMOIRE 01") : Rock.sao ? "AINCRAD LOCAL TIME" : "STELLAR TIME"
+                color: Rock.marisa ? Rock.pinkDeep : Rock.pink
                 font.family: Rock.display
                 font.pixelSize: 11
                 font.weight: Font.Black
                 font.letterSpacing: 3
+            }
+            Text {
+                visible: Rock.marisa
+                text: "✦"
+                color: Rock.marisa ? Rock.pinkDeep : Rock.gold
+                font.pixelSize: 11
+                anchors.verticalCenter: parent.verticalCenter
             }
         }
 
@@ -45,7 +52,7 @@ Item {
                 x: 14; y: 14
                 width: mainTime.width; height: mainTime.height
                 text: mainTime.text
-                color: Rock.cyan
+                color: Rock.marisa ? Rock.pink : Rock.cyan
                 font.family: Rock.display
                 font.pixelSize: mainTime.font.pixelSize
                 font.weight: Font.Black
@@ -55,7 +62,7 @@ Item {
                 x: 7; y: 7
                 width: mainTime.width; height: mainTime.height
                 text: mainTime.text
-                color: Rock.pinkDeep
+                color: Rock.marisa ? Rock.gold : Rock.pinkDeep
                 font.family: Rock.display
                 font.pixelSize: mainTime.font.pixelSize
                 font.weight: Font.Black
@@ -64,7 +71,7 @@ Item {
             Text {
                 id: mainTime
                 text: Qt.formatTime(clock.date, "HH:mm")
-                color: Rock.cream
+                color: Rock.marisa ? Rock.ink : Rock.cream
                 font.family: Rock.display
                 font.pixelSize: Math.min(205, Math.round(root.parent ? root.parent.width * 0.115 : 150))
                 font.weight: Font.Black
@@ -94,14 +101,14 @@ Item {
                 spacing: 5
                 Lbl {
                     text: Qt.formatTime(clock.date, "ss")
-                    color: Rock.cream
+                    color: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink
                     font.family: Rock.display
                     font.pixelSize: 12
                     font.weight: Font.Black
                 }
                 Lbl {
-                    text: "СЕК"
-                    color: Rock.cream
+                    text: I18n.t("СЕК")
+                    color: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink
                     font.pixelSize: 8
                     font.weight: Font.Bold
                     opacity: 0.8

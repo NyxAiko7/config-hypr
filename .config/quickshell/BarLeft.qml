@@ -7,7 +7,7 @@ import Quickshell.Hyprland
 // Левый остров: лаунчер, рабочие столы, запись, помодоро, активное окно.
 BarIsland {
     id: leftIsland
-    fill: Rock.cream
+    fill: Rock.islandFill
     shadowColor: Rock.pink
     tilt: -0.8
 
