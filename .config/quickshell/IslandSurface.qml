@@ -11,6 +11,7 @@ Item {
     property color fill: Rock.islandFill
     property color edge: Rock.uiEdge
     property color shadowColor: Rock.uiAccent
+    property color accent: Rock.uiAccent
     property real shadowOffset: 0
     property int borderWidth: Rock.panelBorder
 
@@ -32,8 +33,8 @@ Item {
         radius: surface.radius
         border.width: surface.borderWidth
         border.color: surface.active
-            ? Rock.uiAccent
-            : Rock.a(Rock.uiAccent, 0.30)
+            ? surface.accent
+            : Rock.a(surface.accent, 0.30)
         gradient: Gradient {
             orientation: Gradient.Vertical
             GradientStop { position: 0.0; color: Qt.lighter(surface.fill, 1.14) }
@@ -62,7 +63,7 @@ Item {
         radius: surface.radius
         color: "transparent"
         border.width: surface.borderWidth + 1
-        border.color: Rock.uiAccent
+        border.color: surface.accent
         visible: surface.pulse
         opacity: 0
         SequentialAnimation on opacity {

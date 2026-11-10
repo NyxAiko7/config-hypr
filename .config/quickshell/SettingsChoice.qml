@@ -19,7 +19,7 @@ RowLayout {
             required property var modelData
             readonly property bool on: root.value === modelData.key
 
-            implicitWidth: choiceLbl.implicitWidth + 24
+            implicitWidth: choiceLbl.implicitWidth + 22
             implicitHeight: 30
             radius: Math.max(6, PanelConfig.islandRadius - 6)
             color: on ? Rock.uiAccent
@@ -33,9 +33,9 @@ RowLayout {
                 anchors.centerIn: parent
                 text: opt.modelData.label
                 color: opt.on ? Rock.uiOnActive : Rock.uiSub
-                font.pixelSize: 10
+                font.family: Rock.display
+                font.pixelSize: 11
                 font.bold: true
-                font.letterSpacing: 0.4
             }
 
             MouseArea {

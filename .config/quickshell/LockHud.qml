@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.UPower
 
-// Верхняя HUD-строка локскрина: «ON AIR», юзер, батарея, сеть, температура.
+// Верхняя полоса телеметрии в стиле «Обсерватория».
 RowLayout {
     id: hud
 
@@ -12,110 +12,78 @@ RowLayout {
     property bool charging: false
     property bool lockDirty: false
 
-    height: 30
+    height: 28
+    spacing: 18
     opacity: enterProgress
-    transform: Translate { y: (1 - hud.enterProgress) * -18 }
+    transform: Translate { y: (1 - hud.enterProgress) * -14 }
 
-    RockChip {
-        fill: Rock.yellow
-        shadowColor: Rock.pink
-        spacing: 8
+    component Tag: Row {
+        property string icon: ""
+        property string label: ""
+        property color tint: Theme.text
+        spacing: 6
+        Lbl { text: icon; color: tint; font.pixelSize: 12; opacity: 0.9 }
+        Lbl { text: label; color: Rock.a(Theme.text, 0.8); font.family: Theme.font; font.pixelSize: 10; font.letterSpacing: 1.1 }
+    }
+
+    Row {
+        spacing: 10
+        Layout.alignment: Qt.AlignVCenter
         Rectangle {
-            Layout.preferredWidth: 8
-            Layout.preferredHeight: 8
-            radius: 4
-            color: Rock.pink
+            width: 7; height: 7; radius: 3.5
+            anchors.verticalCenter: parent.verticalCenter
+            color: Theme.accent2
             SequentialAnimation on opacity {
                 loops: Animation.Infinite
                 running: true
-                NumberAnimation { to: 0.25; duration: 850; easing.type: Easing.InOutSine }
-                NumberAnimation { to: 1.0;  duration: 850; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 0.2; duration: 900; easing.type: Easing.InOutSine }
+                NumberAnimation { to: 1.0; duration: 900; easing.type: Easing.InOutSine }
             }
         }
         Lbl {
-            text: Rock.comic ? "ON AIR · BOCCHI MODE" : Rock.marisa ? "SPELL CARD · MARISA MODE" : Rock.sao ? "SYSTEM · AINCRAD MODE" : "STELLAR · ASTRAL MODE"
-            color: Rock.ink
-            font.family: Rock.display
-            font.pixelSize: 11
-            font.weight: Font.Black
-            font.letterSpacing: 1.2
-        }
-    }
-
-    RockChip {
-        fill: Rock.comic ? Rock.cream : Rock.uiSurface2
-        shadowColor: Rock.cyan
-        Lbl {
-            text: Quickshell.env("USER") + "@" + (Quickshell.env("HOSTNAME") || "artix")
-            color: Rock.uiText
+            text: I18n.t("СЕАНС ЗАБЛОКИРОВАН")
+            color: Rock.a(Theme.text, 0.85)
+            font.family: Theme.font
             font.pixelSize: 10
             font.weight: Font.DemiBold
-            font.letterSpacing: 0.4
+            font.letterSpacing: 2.4
+        }
+        Rectangle { width: 40; height: 1; color: Rock.a(Theme.accent, 0.35); anchors.verticalCenter: parent.verticalCenter }
+        Lbl {
+            text: Quickshell.env("USER") + "@" + (Quickshell.env("HOSTNAME") || "host")
+            color: Rock.a(Theme.text, 0.5)
+            font.family: Theme.font
+            font.pixelSize: 10
+            font.letterSpacing: 0.6
         }
     }
 
     Item { Layout.fillWidth: true }
 
-    RockChip {
+    Tag {
         visible: UPower.displayDevice.isLaptopBattery
-        fill: Rock.comic ? Rock.cream : Rock.uiSurface2
-        shadowColor: Rock.yellow
-        spacing: 5
-        Lbl {
-            text: hud.charging ? "\uf583" : "\uf240"
-            color: hud.charging ? Rock.pinkDeep : Rock.uiText
-            font.pixelSize: 12
-        }
-        Lbl {
-            text: hud.batPct >= 0 ? hud.batPct + "%" : "?"
-            color: hud.batPct <= 20 && !hud.charging ? (Rock.sao ? Rock.danger : Rock.pinkDeep) : Rock.uiText
-            font.pixelSize: 11
-            font.weight: Font.Bold
-        }
+        icon: hud.charging ? "\uf583" : "\uf240"
+        label: hud.batPct >= 0 ? hud.batPct + "%" : "?"
+        tint: hud.batPct <= 20 && !hud.charging ? Theme.warn : (hud.charging ? Theme.accent2 : Theme.text)
     }
 
-    RockChip {
-        fill: Rock.comic ? Rock.cream : Rock.uiSurface2
-        shadowColor: Rock.pink
-        spacing: 6
-        Lbl {
-            text: Net.icon
-            color: Net.connected ? Rock.pinkDeep : Rock.uiText
-            font.pixelSize: 12
-        }
-        Lbl {
-            text: Net.connected ? "ONLINE" : "OFFLINE"
-            color: Rock.uiText
-            font.pixelSize: 9
-            font.weight: Font.Bold
-            font.letterSpacing: 1.2
-        }
+    Tag {
+        icon: Net.icon
+        label: Net.connected ? "ONLINE" : "OFFLINE"
+        tint: Net.connected ? Theme.accent2 : Rock.a(Theme.text, 0.5)
     }
 
-    RockChip {
+    Tag {
         visible: SysStats.temp > 0
-        fill: Rock.comic ? Rock.cream : Rock.uiSurface2
-        shadowColor: Rock.cyan
-        spacing: 5
-        Lbl {
-            text: SysStats.temp >= 78 ? "\uf76b" : (SysStats.temp >= 68 ? "\uf76a" : "\uf768")
-            color: SysStats.temp >= 78 ? Rock.pinkDeep : Rock.uiText
-            font.pixelSize: 12
-        }
-        Lbl {
-            text: SysStats.temp + "°C"
-            color: Rock.uiText
-            font.pixelSize: 10
-            font.weight: Font.Bold
-        }
+        icon: SysStats.temp >= 78 ? "\uf76b" : "\uf2c9"
+        label: SysStats.temp + "°C"
+        tint: SysStats.temp >= 78 ? Theme.warn : Theme.text
     }
 
-    RockChip {
+    Tag {
         visible: hud.lockDirty && Notifs.count > 0
-        fill: Rock.pink
-        shadowColor: Rock.yellow
-        spacing: 5
-        Lbl { text: "\uf0f3"; color: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink; font.pixelSize: 12 }
-        Lbl { text: Notifs.count; color: Rock.comic || Rock.marisa ? Rock.cream : Rock.ink; font.pixelSize: 10; font.weight: Font.Black }
+        icon: "\uf0f3"
+        label: String(Notifs.count)
+        tint: Theme.accent
     }
 }

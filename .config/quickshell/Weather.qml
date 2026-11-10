@@ -15,6 +15,8 @@ Singleton {
     property string feels: ""
     property string desc: ""
     property string icon: "\ue30d"
+    property int code: 0
+    property bool isDay: true
     property string humidity: ""
     property string wind: ""
     property string windDir: ""
@@ -137,6 +139,8 @@ Singleton {
         pressure = Math.round(c.surface_pressure * 0.75006) + I18n.t(" мм")
         desc = descFor(c.weather_code)
         icon = iconFor(c.weather_code, c.is_day === 1)
+        code = Number(c.weather_code)
+        isDay = c.is_day === 1
         uv = String(Math.round(d.uv_index_max[0]))
         sunrise = String(d.sunrise[0]).slice(11, 16)
         sunset = String(d.sunset[0]).slice(11, 16)

@@ -26,6 +26,7 @@ Item {
                 Layout.fillWidth: true
                 text: row.title
                 color: Rock.uiText
+                font.family: Rock.display
                 font.pixelSize: 12
                 elide: Text.ElideRight
             }
@@ -35,7 +36,8 @@ Item {
                 visible: row.hint !== ""
                 text: row.hint
                 color: Rock.uiSub
-                font.pixelSize: 9
+                font.family: Rock.display
+                font.pixelSize: 10
                 wrapMode: Text.WordWrap
                 maximumLineCount: 2
                 elide: Text.ElideRight

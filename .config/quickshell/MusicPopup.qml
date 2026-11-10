@@ -3,501 +3,509 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Mpris
 
-// MusicPopup — кассетный плеер/усилитель: катушки, бумажная этикетка, эквалайзер,
-// очередь треков как сет-лист, кнопки-стикеры. Палитра — как погодный постер (Bocchi the Rock!).
-
 BarPopup {
     id: popup
     alignment: "center"
-    property var player: null            // оставлено для совместимости с Bar.qml
+    property var player: null
+
     fill: "transparent"
     accent: "transparent"
     radius: 0
     borderWidth: 0
     decorated: false
 
-    implicitWidth: 432
-    implicitHeight: card.height + 26
+    implicitWidth: 420
+    implicitHeight: card.height + 12
 
-    property int eqFrame: 0
-    Timer {
-        id: eqTimer
-        interval: 150
-        repeat: true
-        running: popup.visible && Media.playing
-        onTriggered: popup.eqFrame += 1
-    }
-
-    function eqH(i) {
-        const base = (Media.playing && Media.player !== null) ? 16 : 5
-        const v = base * (0.35 + 0.65 * Math.abs(Math.sin(eqFrame * 0.55 + i * 1.7)))
-        return Math.max(3, v)
-    }
-    function eqBarColor() {
-        return (Media.playing && Media.player !== null) ? Rock.pink : Rock.a(Rock.uiText, 0.3)
-    }
-    function cycleLoop() {
-        const p = Media.player
-        if (!p) return
-        if (p.loopState === MprisLoopState.None) p.loopState = MprisLoopState.Playlist
-        else if (p.loopState === MprisLoopState.Playlist) p.loopState = MprisLoopState.Track
-        else p.loopState = MprisLoopState.None
-    }
-    readonly property int loopMode: Media.player ? Media.player.loopState : MprisLoopState.None
+    readonly property var p: Media.player
+    readonly property bool hasPlayer: p !== null && p !== undefined
+    readonly property bool playing: hasPlayer && p.playbackState === MprisPlaybackState.Playing
+    readonly property string artUrl: hasPlayer ? String(p.trackArtUrl || "") : ""
+    readonly property real ratio: (hasPlayer && p.length > 0)
+        ? Math.max(0, Math.min(1, (p.position || 0) / p.length)) : 0
+    readonly property string identity: hasPlayer ? String(p.identity || "") : ""
+    readonly property int loopMode: hasPlayer ? p.loopState : MprisLoopState.None
     readonly property bool loopActive: loopMode !== MprisLoopState.None
+
+    property color tint: Rock.uiAccent
+    Behavior on tint { ColorAnimation { duration: 420 } }
+
+    readonly property color artAccent: {
+        if (tint.hslSaturation < 0.12) return Rock.uiAccent
+        const l = Rock.light ? 0.46 : 0.72
+        return Qt.hsla(tint.hslHue, Math.max(0.5, Math.min(0.86, tint.hslSaturation)), l, 1)
+    }
+    readonly property color edge: Rock.a(Rock.uiText, 0.10)
+    readonly property color line: Rock.a(Rock.uiText, 0.14)
+
+    Timer {
+        running: popup.visible && popup.playing
+        interval: 500
+        repeat: true
+        onTriggered: if (popup.hasPlayer) popup.p.positionChanged()
+    }
+
+    WheelHandler {
+        function handleWheel(w) {
+            const dy = w.angleDelta.y
+            if (popup.p && popup.p.volumeSupported && dy !== 0) {
+                w.accepted = true
+                Media.setVol(popup.p.volume + (dy > 0 ? 0.03 : -0.03))
+            }
+        }
+        onWheel: handleWheel(wheel)
+    }
+
+    Canvas {
+        id: sampler
+        width: 16
+        height: 16
+        opacity: 0.01
+        renderTarget: Canvas.Image
+        renderStrategy: Canvas.Immediate
+        property string src: popup.artUrl
+
+        function refresh() {
+            if (src === "") { popup.tint = Rock.uiAccent; return }
+            loadImage(src)
+        }
+        onSrcChanged: refresh()
+        Component.onCompleted: refresh()
+        onImageLoaded: requestPaint()
+
+        onPaint: {
+            if (src === "" || !isImageLoaded(src)) return
+            const ctx = getContext("2d")
+            ctx.clearRect(0, 0, 16, 16)
+            ctx.drawImage(src, 0, 0, 16, 16)
+            const d = ctx.getImageData(0, 0, 16, 16).data
+            let r = 0, g = 0, b = 0, w = 0
+            for (let i = 0; i < d.length; i += 4) {
+                const R = d[i] / 255, G = d[i + 1] / 255, B = d[i + 2] / 255
+                const A = d[i + 3] / 255
+                const mx = Math.max(R, G, B), mn = Math.min(R, G, B)
+                const sat = mx === 0 ? 0 : (mx - mn) / mx
+                const wt = A * (sat * sat + 0.02) * (0.25 + mx) * (mx > 0.15 ? 1 : 0.1)
+                r += R * wt; g += G * wt; b += B * wt; w += wt
+            }
+            popup.tint = w > 0.01 ? Qt.rgba(r / w, g / w, b / w, 1) : Rock.uiAccent
+        }
+    }
+
+    function cycleLoop() {
+        const pl = popup.p
+        if (!pl || !pl.loopSupported) return
+        if (pl.loopState === MprisLoopState.None) pl.loopState = MprisLoopState.Playlist
+        else if (pl.loopState === MprisLoopState.Playlist) pl.loopState = MprisLoopState.Track
+        else pl.loopState = MprisLoopState.None
+    }
+
     function loopBadge() {
         if (loopMode === MprisLoopState.Track) return "1"
-        if (loopMode === MprisLoopState.Playlist) return "A"
         return ""
     }
 
-    // ── сет-лист: текущий трек + недавняя история ──
-    property var recentTracks: []
-    property string lastTrackKey: ""
+    component CtrlBtn: Item {
+        id: btn
+        property string icon: ""
+        property bool active: false
+        property bool primary: false
+        property bool available: true
+        property int size: 34
+        property string badge: ""
+        signal activated()
 
-    function rememberTrack() {
-        const p = Media.player
-        if (!p) return
-        const title = String(p.trackTitle || "")
-        const artist = String(p.trackArtist || "")
-        if (title === "" && artist === "") return
-        const key = artist + "|" + title
-        if (key === lastTrackKey) return
-        lastTrackKey = key
-        const list = recentTracks.slice()
-        for (let i = list.length - 1; i >= 0; i--)
-            if (list[i].key === key) list.splice(i, 1)
-        list.unshift({ key: key, title: title || I18n.t("Без названия"), artist: artist })
-        if (list.length > 4) list.length = 4
-        recentTracks = list
-    }
+        implicitWidth: primary ? 56 : size
+        implicitHeight: implicitWidth
+        opacity: available ? 1 : 0.35
+        Behavior on opacity { NumberAnimation { duration: 140 } }
 
-    readonly property var setlist: {
-        const cur = Media.player
-        const out = []
-        const seen = ({})
-        if (cur) {
-            const title = String(cur.trackTitle || "")
-            const artist = String(cur.trackArtist || "")
-            if (title !== "" || artist !== "") {
-                const key = artist + "|" + title
-                out.push({ key: key, title: title || I18n.t("Без названия"), artist: artist, now: true })
-                seen[key] = true
-            }
-        }
-        const list = recentTracks
-        for (let i = 0; i < list.length && out.length < 4; i++) {
-            const e = list[i]
-            if (seen[e.key]) continue
-            out.push({ key: e.key, title: e.title, artist: e.artist, now: false })
-            seen[e.key] = true
-        }
-        return out
-    }
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: btn.primary
+                ? (btnArea.containsMouse && btn.available ? Qt.lighter(popup.artAccent, 1.08) : popup.artAccent)
+                : (btn.active
+                    ? Rock.a(popup.artAccent, btnArea.containsMouse ? 0.28 : 0.18)
+                    : (btnArea.containsMouse && btn.available ? Rock.a(Rock.uiText, 0.08) : "transparent"))
+            border.width: btn.primary ? 0 : 1
+            border.color: btn.active ? Rock.a(popup.artAccent, 0.55) : Rock.a(Rock.uiText, 0.10)
+            Behavior on color { ColorAnimation { duration: 120 } }
 
-    Timer {
-        id: trackDebounce
-        interval: 200
-        onTriggered: popup.rememberTrack()
-    }
-    Connections {
-        target: Media
-        function onTrackTitleChanged() { trackDebounce.restart() }
-        function onPlayerChanged() { trackDebounce.restart() }
-    }
-    Component.onCompleted: rememberTrack()
-    onVisibleChanged: if (visible) rememberTrack()
-
-    component Reel: Rectangle {
-        id: reel
-        width: 42
-        height: 42
-        radius: 21
-        color: Rock.comic ? Rock.uiSurface2 : Rock.a(Rock.uiActive, 0.9)
-        border.width: Rock.comic ? Rock.uiBorder : 1
-        border.color: Rock.comic ? Rock.uiEdge : Rock.marisa ? Rock.ink : Rock.a(Rock.gold, 0.72)
-
-        NumberAnimation on rotation {
-            running: Media.playing
-            from: 0
-            to: 360
-            duration: 2600
-            loops: Animation.Infinite
-        }
-
-        Repeater {
-            model: Rock.comic ? 3 : 0
             Rectangle {
-                required property int index
-                width: 6
-                height: 6
-                radius: 3
-                color: Rock.pink
-                border.width: 1.5
-                border.color: Rock.uiEdge
-                x: 21 + Math.cos(index * Math.PI * 2 / 3) * 12 - width / 2
-                y: 21 + Math.sin(index * Math.PI * 2 / 3) * 12 - height / 2
+                visible: btn.primary
+                anchors.fill: parent
+                radius: width / 2
+                gradient: Gradient {
+                    orientation: Gradient.Vertical
+                    GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.18) }
+                    GradientStop { position: 0.55; color: Qt.rgba(1, 1, 1, 0.0) }
+                    GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.10) }
+                }
             }
-        }
 
-        Repeater {
-            model: Rock.comic ? 0 : 3
+            Lbl {
+                anchors.centerIn: parent
+                text: btn.icon
+                color: btn.primary ? Rock.uiOnActive : (btn.active ? popup.artAccent : Rock.uiText)
+                font.pixelSize: btn.primary ? 19 : 13
+                opacity: btn.primary ? 1 : (btn.active ? 1 : 0.82)
+                scale: btnArea.pressed ? 0.86 : 1
+                Behavior on scale { NumberAnimation { duration: 90; easing.type: Easing.OutBack } }
+            }
+
             Rectangle {
-                required property int index
-                width: 4
-                height: 4
-                radius: 2
-                color: index === 0 ? (Rock.marisa ? Rock.uiText : Rock.cream) : (Rock.marisa ? Rock.a(Rock.uiText, 0.6) : Rock.gold)
-                x: 21 + Math.cos(index * Math.PI * 2 / 3 + Math.PI / 6) * 16 - width / 2
-                y: 21 + Math.sin(index * Math.PI * 2 / 3 + Math.PI / 6) * 16 - height / 2
+                visible: btn.badge !== ""
+                width: 13
+                height: 13
+                radius: 6.5
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.rightMargin: 1
+                anchors.bottomMargin: 1
+                color: Rock.uiSurface2
+                border.width: 1
+                border.color: Rock.a(popup.artAccent, 0.7)
+                Lbl {
+                    anchors.centerIn: parent
+                    text: btn.badge
+                    color: popup.artAccent
+                    font.pixelSize: 7
+                    font.bold: true
+                }
             }
         }
 
-        Rectangle {
-            visible: Rock.comic
-            anchors.centerIn: parent
-            width: 13
-            height: 13
-            radius: 6.5
-            color: Rock.pink
-            border.width: 2
-            border.color: Rock.uiEdge
-        }
-
-        Rectangle {
-            visible: !Rock.comic
-            anchors.centerIn: parent
-            width: 16
-            height: 16
-            radius: 8
-            color: "transparent"
-            border.width: 1
-            border.color: Rock.a(Rock.gold, 0.55)
-        }
-
-        Rectangle {
-            visible: !Rock.comic
-            anchors.centerIn: parent
-            width: 7
-            height: 7
-            radius: 3.5
-            color: Rock.gold
-            border.width: 1
-            border.color: Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.75)
+        MouseArea {
+            id: btnArea
+            anchors.fill: parent
+            anchors.margins: -2
+            hoverEnabled: true
+            enabled: btn.available
+            cursorShape: btn.available ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: btn.activated()
         }
     }
 
     Item {
         id: stage
         anchors.fill: parent
-        anchors.margins: 8
-
-        Rectangle {
-            visible: Rock.comic
-            x: 9
-            y: 11
-            width: card.width
-            height: card.height
-            radius: 18
-            color: Rock.pink
-            border.width: 3
-            border.color: Rock.uiEdge
-            rotation: -1.1
-            transformOrigin: Item.Center
-        }
+        anchors.margins: 6
 
         Rectangle {
             id: card
-            width: 404
-            height: layout.implicitHeight + 34
-            radius: Rock.comic ? 18 : Rock.marisa ? 8 : Rock.sao ? 4 : 14
+            x: 0
+            y: 0
+            width: stage.width
+            height: layout.implicitHeight + 36
+            radius: 22
             color: Rock.uiSurface
-            border.width: Rock.uiBorder
-            border.color: Rock.uiEdge
+            gradient: Gradient {
+                orientation: Gradient.Vertical
+                GradientStop { position: 0.0; color: Qt.lighter(Rock.uiSurface, 1.05) }
+                GradientStop { position: 1.0; color: Qt.darker(Rock.uiSurface, 1.08) }
+            }
+            border.width: 1
+            border.color: Rock.a(popup.artAccent, 0.34)
             clip: true
             Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
-            MarisaPattern {
-                anchors.fill: parent
-                opacity: 0.48
-            }
-
-            MarisaTrim {
-                visible: Rock.marisa
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                anchors.bottomMargin: 5
-                height: 3
-                cell: 3
-            }
-
-            MarisaFrame {
-                anchors.fill: parent
-                inset: 6
-                frameRadius: Math.max(2, card.radius - 3)
+            Rectangle {
+                width: 300
+                height: 300
+                radius: 150
+                x: card.width / 2 - 150
+                y: -176
+                color: Rock.a(popup.artAccent, 0.10)
             }
 
             Rectangle {
-                visible: !Rock.comic
-                x: 18
-                y: 8
-                width: card.width - 36
-                height: 1
-                color: Rock.a(Rock.gold, 0.45)
+                width: 168
+                height: 168
+                radius: 84
+                x: card.width / 2 - 84
+                y: -76
+                color: Rock.a(popup.artAccent, 0.12)
             }
-            Lbl {
-                visible: !Rock.comic
-                x: card.width / 2 - width / 2
-                y: 1
-                text: "✦"
-                color: Rock.gold
-                font.pixelSize: 11
+
+            Rectangle {
+                x: 18
+                y: 0
+                width: card.width - 36
+                height: 2
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: Qt.rgba(popup.artAccent.r, popup.artAccent.g, popup.artAccent.b, 0.0) }
+                    GradientStop { position: 0.5; color: popup.artAccent }
+                    GradientStop { position: 1.0; color: Qt.rgba(popup.artAccent.r, popup.artAccent.g, popup.artAccent.b, 0.0) }
+                }
             }
 
             ColumnLayout {
                 id: layout
-                x: 17
-                y: 17
-                width: card.width - 34
+                x: 20
+                y: 18
+                width: card.width - 40
                 spacing: 12
 
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    Lbl {
-                        text: Rock.comic ? "BOCCHI BOOMBOX" : Rock.marisa ? "MARISA SPELLBOX" : Rock.sao ? "AINCRAD AUDIO LINK" : "ASTRAL AUDIO LINK"
-                        color: Rock.comic ? Rock.pinkDeep : Rock.gold
-                        font.family: Rock.display
-                        font.weight: Font.Black
-                        font.pixelSize: 10
-                        font.letterSpacing: 1.2
-                    }
                     Rectangle {
-                        Layout.fillWidth: true
-                        height: 1
-                        color: Rock.a(Rock.uiText, 0.2)
+                        width: 6
+                        height: 6
+                        radius: 3
+                        color: popup.playing ? popup.artAccent : Rock.uiSub
+                        SequentialAnimation on opacity {
+                            running: popup.playing
+                            loops: Animation.Infinite
+                            NumberAnimation { from: 1.0; to: 0.3; duration: 900; easing.type: Easing.InOutSine }
+                            NumberAnimation { from: 0.3; to: 1.0; duration: 900; easing.type: Easing.InOutSine }
+                        }
                     }
+
                     Lbl {
-                        text: Rock.comic ? "SIDE A" : Rock.marisa ? "GRIMOIRE SIDE" : Rock.sao ? "LINK CHANNEL" : "ORBITAL LINK"
-                        color: Rock.comic ? Rock.uiSub : Rock.a(Rock.gold, 0.8)
+                        text: I18n.t("СЕЙЧАС ИГРАЕТ")
+                        color: Rock.uiSub
                         font.pixelSize: 8
-                        font.letterSpacing: 0.8
+                        font.weight: Font.DemiBold
+                        font.letterSpacing: 1.5
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    CtrlBtn {
+                        size: 26
+                        icon: Media.isLoved ? "\uf004" : "\uf08a"
+                        active: Media.isLoved
+                        available: popup.hasPlayer
+                        onActivated: Media.toggleLove()
+                    }
+
+                    Rectangle {
+                        id: playerChip
+                        visible: popup.identity !== ""
+                        implicitWidth: Math.min(chipLbl.implicitWidth, 118) + 16
+                        implicitHeight: 21
+                        radius: 10
+                        color: chipArea.containsMouse && Media.players.length > 1
+                            ? Rock.a(popup.artAccent, 0.18) : Rock.a(Rock.uiText, 0.05)
+                        border.width: 1
+                        border.color: Rock.a(Rock.uiText, 0.10)
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        Lbl {
+                            id: chipLbl
+                            anchors.centerIn: parent
+                            width: Math.min(implicitWidth, 118)
+                            text: popup.identity.substring(0, 18).toUpperCase()
+                            color: Rock.uiSub
+                            font.pixelSize: 8
+                            font.weight: Font.DemiBold
+                            font.letterSpacing: 0.8
+                            elide: Text.ElideRight
+                            horizontalAlignment: Text.AlignHCenter
+                        }
+
+                        MouseArea {
+                            id: chipArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Media.players.length > 1 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: if (Media.players.length > 1) Media.nextPlayer()
+                        }
                     }
                 }
 
-                RowLayout {
+                Item {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignCenter
-                    spacing: 16
+                    Layout.preferredHeight: 190
 
-                    Reel {}
+                    Canvas {
+                        id: orbit
+                        anchors.centerIn: parent
+                        width: 184
+                        height: 184
+                        property real prog: popup.ratio
+                        property color accentColor: popup.artAccent
+                        property color baseColor: Rock.a(Rock.uiText, 0.12)
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        spacing: 8
+                        onProgChanged: requestPaint()
+                        onAccentColorChanged: requestPaint()
+                        onBaseColorChanged: requestPaint()
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
 
-                        Item {
-                            Layout.alignment: Qt.AlignCenter
-                            width: 92
-                            height: 92
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.reset()
+                            const cx = width / 2, cy = height / 2
+                            const r = Math.min(width, height) / 2 - 3
 
-                            // Гримуар: вращающийся магический диск вместо обычной обложки.
-                            MarisaDisc {
-                                anchors.fill: parent
-                                playing: Media.playing
-                                artSource: Media.player ? Media.player.trackArtUrl : ""
+                            ctx.lineWidth = 1.5
+                            ctx.strokeStyle = baseColor
+                            ctx.beginPath()
+                            ctx.arc(cx, cy, r, 0, Math.PI * 2)
+                            ctx.stroke()
+
+                            for (let i = 0; i < 16; i++) {
+                                const a = i * Math.PI / 8
+                                ctx.fillStyle = Qt.rgba(baseColor.r, baseColor.g, baseColor.b, 0.55)
+                                ctx.beginPath()
+                                ctx.arc(cx + Math.cos(a) * (r + 6), cy + Math.sin(a) * (r + 6), 1, 0, Math.PI * 2)
+                                ctx.fill()
                             }
 
-                            Rectangle {
-                                visible: !Rock.marisa
-                                anchors.fill: parent
-                                radius: 16
-                                color: Rock.uiSurface2
-                                border.width: Rock.uiBorder
-                                border.color: Rock.uiEdge
-                                Image {
-                                    anchors.fill: parent
-                                    source: Media.player ? Media.player.trackArtUrl : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
-                                    visible: Media.player !== null && Media.player.trackArtUrl !== ""
-                                }
-                                Lbl {
-                                    anchors.centerIn: parent
-                                    visible: Media.player === null || Media.player.trackArtUrl === ""
-                                    text: "\uf001"
-                                    color: Rock.uiSub
-                                    font.pixelSize: 30
-                                }
-                                RoundMask { anchors.fill: parent; radius: 16; maskColor: Rock.uiSurface2 }
+                            if (prog > 0.001) {
+                                const start = -Math.PI / 2
+                                const end = start + prog * Math.PI * 2
+                                ctx.strokeStyle = accentColor
+                                ctx.lineWidth = 3
+                                ctx.lineCap = "round"
+                                ctx.beginPath()
+                                ctx.arc(cx, cy, r, start, end)
+                                ctx.stroke()
+
+                                ctx.fillStyle = accentColor
+                                ctx.beginPath()
+                                ctx.arc(cx + Math.cos(end) * r, cy + Math.sin(end) * r, 3, 0, Math.PI * 2)
+                                ctx.fill()
                             }
+                        }
+                    }
+
+                    Item {
+                        anchors.centerIn: parent
+                        width: 148
+                        height: 148
+                        opacity: popup.playing ? 1 : 0.78
+                        Behavior on opacity { NumberAnimation { duration: 220 } }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 20
+                            color: Rock.uiSurface
+                            border.width: 1
+                            border.color: Rock.a(Rock.uiText, 0.12)
+                        }
+
+                        Image {
+                            id: art
+                            anchors.fill: parent
+                            source: popup.artUrl
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            visible: status === Image.Ready
+                        }
+
+                        Lbl {
+                            anchors.centerIn: parent
+                            visible: !art.visible
+                            text: "\uf001"
+                            color: Rock.uiSub
+                            font.pixelSize: 34
                         }
 
                         Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 42
-                            radius: Rock.comic ? 8 : Rock.marisa ? 4 : Rock.sao ? 3 : 9
-                            color: Rock.uiSurface2
-                            border.width: Rock.uiBorder
-                            border.color: Rock.uiEdge
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 6
-                                spacing: 2
+                            anchors.fill: parent
+                            radius: 20
+                            color: Rock.a(Rock.ink, 0.48)
+                            opacity: artArea.containsMouse ? 1 : (popup.playing ? 0 : 0.55)
+                            Behavior on opacity { NumberAnimation { duration: 160 } }
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 48
+                                height: 48
+                                radius: 24
+                                color: Rock.a(Rock.uiSurface, 0.72)
+                                border.width: 1
+                                border.color: Rock.a(Rock.uiText, 0.22)
+
                                 Lbl {
-                                    Layout.fillWidth: true
-                                    text: Media.player ? (Media.player.trackTitle || I18n.t("Без названия")) : ""
+                                    anchors.centerIn: parent
+                                    text: popup.playing ? "\uf04c" : "\uf04b"
                                     color: Rock.uiText
-                                    font.family: Rock.display
-                                    font.weight: Font.Black
-                                    font.pixelSize: 13
-                                    elide: Text.ElideRight
-                                }
-                                Lbl {
-                                    Layout.fillWidth: true
-                                    text: Media.player ? String(Media.player.trackArtist || "") : ""
-                                    color: Rock.pinkDeep
-                                    font.pixelSize: 10
-                                    font.bold: true
-                                    elide: Text.ElideRight
+                                    font.pixelSize: 18
                                 }
                             }
                         }
 
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignCenter
-                            spacing: 4
-                            Rectangle { width: 4; height: eqH(0); radius: 2; color: eqBarColor() }
-                            Rectangle { width: 4; height: eqH(1); radius: 2; color: eqBarColor() }
-                            Rectangle { width: 4; height: eqH(2); radius: 2; color: eqBarColor() }
-                            Rectangle { width: 4; height: eqH(3); radius: 2; color: eqBarColor() }
-                            Rectangle { width: 4; height: eqH(4); radius: 2; color: eqBarColor() }
+                        RoundMask {
+                            anchors.fill: parent
+                            radius: 20
+                            maskColor: Rock.uiSurface
                         }
-                    }
 
-                    Reel {}
-                }
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 20
+                            color: "transparent"
+                            border.width: 1
+                            border.color: Rock.a(Rock.uiText, 0.16)
+                        }
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.topMargin: 2
-                    spacing: 7
-                    Lbl {
-                        text: Rock.comic ? I18n.t("СЕТ-ЛИСТ") : Rock.marisa ? I18n.t("КНИГА ЗАКЛИНАНИЙ") : I18n.t("АРХИВ ТРЕКОВ")
-                        color: Rock.uiText
-                        font.family: Rock.display
-                        font.weight: Font.Black
-                        font.pixelSize: 13
-                        font.letterSpacing: 1.2
-                    }
-                    Rectangle { Layout.fillWidth: true; height: 2; color: Rock.a(Rock.uiText, 0.2) }
-                    RockChip {
-                        visible: popup.setlist.length > 0
-                        fill: Rock.comic ? Rock.pink : Rock.gold
-                        shadowColor: Rock.comic ? Rock.yellow : "transparent"
-                        offset: Rock.comic ? 2 : 0
-                        radius: 5
-                        padH: 6
-                        padV: 1
-                        Lbl {
-                            text: Rock.comic ? ((popup.setlist.length > 0 && popup.setlist[0].now) ? I18n.t("СЕЙЧАС") : I18n.t("ИГРАЛО"))
-                                             : ((popup.setlist.length > 0 && popup.setlist[0].now) ? (Rock.marisa ? "SPELL" : "SIGNAL") : (Rock.marisa ? "GRIMOIRE" : "ARCHIVE"))
-                            color: Rock.comic ? Rock.cream : Rock.ink
-                            font.family: Rock.display
-                            font.weight: Font.Black
-                            font.pixelSize: 7
-                            font.letterSpacing: 0.8
+                        MouseArea {
+                            id: artArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: if (popup.p && popup.p.canTogglePlaying) popup.p.togglePlaying()
                         }
                     }
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 5
+                    spacing: 3
 
-                    Repeater {
-                        model: popup.setlist
-                        delegate: Rectangle {
-                            id: entry
-                            required property var modelData
-                            required property int index
-                            readonly property bool now: entry.modelData.now === true
+                    Lbl {
+                        Layout.fillWidth: true
+                        text: popup.hasPlayer
+                            ? (popup.p.trackTitle || I18n.t("Без названия"))
+                            : I18n.t("Нет активного плеера")
+                        color: Rock.uiText
+                        font.family: Rock.display
+                        font.weight: Font.Black
+                        font.pixelSize: 19
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                    }
 
-                            Layout.fillWidth: true
-                            implicitHeight: entry.now ? 42 : 32
-                            radius: entry.now ? 10 : 8
-                            color: entry.now ? (Rock.comic ? Rock.yellow : Rock.a(Rock.gold, 0.14)) : Rock.uiSurface2
-                            border.width: Rock.uiBorder
-                            border.color: Rock.uiEdge
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: metaRow.implicitHeight
+
+                        RowLayout {
+                            id: metaRow
+                            anchors.centerIn: parent
+                            spacing: 6
+
+                            Lbl {
+                                Layout.maximumWidth: 220
+                                text: popup.hasPlayer ? String(popup.p.trackArtist || "") : ""
+                                color: popup.artAccent
+                                font.pixelSize: 12
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                            }
 
                             Rectangle {
-                                visible: !Rock.marisa
-                                width: 7
-                                height: parent.height - 10
-                                radius: 3.5
-                                anchors.left: parent.left
-                                anchors.leftMargin: 5
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: entry.now ? (Rock.comic ? Rock.pink : Rock.gold)
-                                                 : (Rock.comic ? (entry.index % 2 === 1 ? Rock.cyan : Rock.purple)
-                                                               : Rock.a(entry.index % 2 === 1 ? Rock.cyan : Rock.gold, 0.55))
+                                visible: popup.hasPlayer && String(popup.p.trackArtist || "") !== ""
+                                           && String(popup.p.trackAlbum || "") !== ""
+                                width: 3
+                                height: 3
+                                radius: 1.5
+                                color: Rock.a(Rock.uiText, 0.35)
                             }
 
-                            Text {
-                                visible: Rock.marisa
-                                anchors.left: parent.left
-                                anchors.leftMargin: 7
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: entry.now ? "✦" : (entry.index % 2 === 1 ? "✧" : "·")
-                                color: entry.now ? Rock.gold : Rock.a(Rock.marisa ? Rock.uiText : Rock.cream, 0.5)
-                                font.pixelSize: entry.now ? 12 : 10
-                            }
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 17
-                                anchors.rightMargin: 10
-                                spacing: 7
-
-                                Lbl {
-                                    Layout.preferredWidth: 20
-                                    text: ("0" + (entry.index + 1)).slice(-2)
-                                    color: entry.now ? (Rock.comic ? Rock.pinkDeep : Rock.gold) : Rock.uiSub
-                                    font.family: Rock.display
-                                    font.weight: Font.Black
-                                    font.pixelSize: 9
-                                }
-                                Lbl {
-                                    Layout.fillWidth: true
-                                    text: entry.modelData.title
-                                    color: Rock.uiText
-                                    font.family: Rock.display
-                                    font.weight: Font.Black
-                                    font.pixelSize: entry.now ? 11 : 10
-                                    elide: Text.ElideRight
-                                }
-                                Lbl {
-                                    visible: entry.modelData.artist !== ""
-                                    Layout.maximumWidth: 132
-                                    text: entry.modelData.artist
-                                    color: Rock.comic ? Rock.pinkDeep : Rock.a(Rock.gold, 0.82)
-                                    font.pixelSize: 9
-                                    elide: Text.ElideRight
-                                }
-                                Lbl {
-                                    visible: entry.now
-                                    Layout.preferredWidth: 46
-                                    horizontalAlignment: Text.AlignRight
-                                    text: Media.player ? Fmt.hms(Media.player.length) : "0:00"
-                                    color: Rock.uiSub
-                                    font.pixelSize: 10
-                                }
+                            Lbl {
+                                Layout.maximumWidth: 150
+                                text: popup.hasPlayer ? String(popup.p.trackAlbum || "") : ""
+                                color: Rock.a(Rock.uiSub, 0.85)
+                                font.pixelSize: 11
+                                elide: Text.ElideRight
                             }
                         }
                     }
@@ -505,193 +513,250 @@ BarPopup {
 
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignCenter
                     spacing: 8
-                    MediaBtn {
-                        big: true
-                        icon: (Media.playing && Media.player !== null) ? "\uf04c" : "\uf04b"
-                        accentColor: Rock.pinkDeep
-                        on: Media.playing
-                        onActivated: if (Media.player && Media.player.canTogglePlaying) Media.player.togglePlaying()
-                    }
-                    MediaBtn {
-                        sticker: true
-                        icon: "\uf048"
-                        on: false
-                        onActivated: if (Media.player && Media.player.canGoNext) Media.player.next()
-                    }
-                    MediaBtn {
-                        sticker: true
-                        icon: "\uf051"
-                        on: false
-                        onActivated: if (Media.player && Media.player.canGoPrevious) Media.player.previous()
-                    }
-                    MediaBtn {
-                        sticker: true
-                        icon: "\uf021"
-                        on: loopActive
-                        badge: loopBadge()
-                        onActivated: cycleLoop()
-                    }
-                }
 
-                // ── перемотка ──
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignCenter
-                    spacing: 8
                     Lbl {
-                        Layout.preferredWidth: 38
-                        text: Fmt.clock(Media.player ? Media.player.position : 0)
+                        Layout.preferredWidth: 34
+                        text: Fmt.clock(popup.hasPlayer ? popup.p.position : 0)
                         color: Rock.uiSub
                         font.pixelSize: 10
                     }
+
                     Item {
-                        id: seekTrack
+                        id: seek
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 12
-                        readonly property real shown: (Media.player && Media.player.length > 0) ? Math.max(0, Math.min(1, (Media.player.position || 0) / Media.player.length)) : 0
-                        property real dragV: -1
-                        readonly property real shownV: dragV >= 0 ? dragV : shown
+                        Layout.preferredHeight: 18
+
+                        readonly property real shown: dragRatio >= 0 ? dragRatio : popup.ratio
+                        readonly property bool hot: seekArea.containsMouse || seekArea.pressed
+                        property real dragRatio: -1
+
                         Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width
-                            height: 6
-                            radius: 3
-                            color: Rock.a(Rock.uiText, 0.16)
-                            Rectangle { width: parent.width * seekTrack.shownV; height: parent.height; radius: 3; color: Rock.marisa ? Rock.gold : Rock.pink }
+                            height: seek.hot ? 5 : 3
+                            radius: height / 2
+                            color: Rock.a(Rock.uiText, 0.14)
+                            border.width: 1
+                            border.color: Rock.a(Rock.uiText, 0.22)
+                            Behavior on height { NumberAnimation { duration: 120 } }
+
+                            Rectangle {
+                                width: parent.width * seek.shown
+                                height: parent.height
+                                radius: height / 2
+                                color: popup.artAccent
+                            }
                         }
+
                         Rectangle {
-                            visible: !Rock.marisa
-                            width: 10; height: 10; radius: 5
+                            width: seek.hot ? 12 : 9
+                            height: width
+                            radius: width / 2
                             anchors.verticalCenter: parent.verticalCenter
-                            x: Math.max(0, Math.min(parent.width - width, parent.width * seekTrack.shownV - width / 2))
+                            x: Math.max(0, Math.min(parent.width - width, parent.width * seek.shown - width / 2))
                             color: Rock.uiText
+                            border.width: 2
+                            border.color: Rock.uiSurface
+                            opacity: seek.hot ? 1 : 0.9
+                            Behavior on width { NumberAnimation { duration: 120 } }
                         }
-                        Text {
-                            visible: Rock.marisa
-                            text: "✦"
-                            color: Rock.gold
-                            font.pixelSize: 13
-                            y: parent.height / 2 - height / 2
-                            x: Math.max(0, Math.min(parent.width - width, parent.width * seekTrack.shownV - width / 2))
-                        }
+
                         MouseArea {
                             id: seekArea
                             anchors.fill: parent
+                            anchors.margins: -4
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            function setV(mx) {
-                                const r = Math.max(0, Math.min(1, mx / width))
-                                seekTrack.dragV = r
-                                if (Media.player && Media.player.canSeek && Media.player.length > 0)
-                                    Media.player.position = r * Media.player.length
+                            function ratioAt(mx) {
+                                return Math.max(0, Math.min(1, (mx - 4) / (width - 8)))
                             }
-                            onPressed: m => setV(m.x)
-                            onPositionChanged: m => { if (pressed) setV(m.x) }
-                            onReleased: { if (seekTrack.dragV >= 0) seekTrack.dragV = -1 }
+                            onPressed: m => seek.dragRatio = ratioAt(m.x)
+                            onPositionChanged: m => { if (pressed) seek.dragRatio = ratioAt(m.x) }
+                            onReleased: {
+                                if (popup.p && popup.p.canSeek && popup.p.length > 0 && seek.dragRatio >= 0)
+                                    popup.p.position = seek.dragRatio * popup.p.length
+                                seek.dragRatio = -1
+                            }
+                            onDoubleClicked: if (popup.p && popup.p.canSeek) popup.p.position = 0
                         }
                     }
+
                     Lbl {
-                        Layout.preferredWidth: 38
+                        Layout.preferredWidth: 36
                         horizontalAlignment: Text.AlignRight
-                        text: Fmt.hms(Media.player ? Media.player.length : 0)
+                        text: Fmt.hms(popup.hasPlayer ? popup.p.length : 0)
                         color: Rock.uiSub
                         font.pixelSize: 10
                     }
                 }
 
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 64
+                    radius: 20
+                    color: Rock.a(Rock.uiSurface2, 0.55)
+                    border.width: 1
+                    border.color: Rock.a(Rock.uiText, 0.08)
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 12
+
+                        CtrlBtn {
+                            size: 32
+                            icon: "\uf074"
+                            active: popup.hasPlayer && popup.p.shuffle
+                            available: popup.hasPlayer && popup.p.shuffleSupported
+                            onActivated: if (popup.p) popup.p.shuffle = !popup.p.shuffle
+                        }
+
+                        CtrlBtn {
+                            size: 38
+                            icon: "\uf048"
+                            available: popup.hasPlayer && popup.p.canGoPrevious
+                            onActivated: if (popup.p && popup.p.canGoPrevious) popup.p.previous()
+                        }
+
+                        CtrlBtn {
+                            primary: true
+                            icon: popup.playing ? "\uf04c" : "\uf04b"
+                            available: popup.hasPlayer && popup.p.canTogglePlaying
+                            onActivated: if (popup.p && popup.p.canTogglePlaying) popup.p.togglePlaying()
+                        }
+
+                        CtrlBtn {
+                            size: 38
+                            icon: "\uf051"
+                            available: popup.hasPlayer && popup.p.canGoNext
+                            onActivated: if (popup.p && popup.p.canGoNext) popup.p.next()
+                        }
+
+                        CtrlBtn {
+                            size: 32
+                            icon: "\uf021"
+                            active: popup.loopActive
+                            badge: popup.loopBadge()
+                            available: popup.hasPlayer && popup.p.loopSupported
+                            onActivated: popup.cycleLoop()
+                        }
+                    }
+                }
+
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignCenter
+                    Layout.leftMargin: 2
                     spacing: 8
+                    visible: popup.hasPlayer && popup.p.volumeSupported
+
                     Lbl {
-                        text: (Media.player && Media.player.volume > 0) ? "\uf028" : "\uf026"
+                        text: popup.hasPlayer && popup.p.volume <= 0
+                            ? "\uf026"
+                            : (popup.hasPlayer && popup.p.volume < 0.5 ? "\uf027" : "\uf028")
                         color: Rock.uiSub
-                        font.pixelSize: 12
+                        font.pixelSize: 11
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: if (popup.p) Media.setVol(popup.p.volume > 0 ? 0 : 0.5)
+                        }
                     }
+
                     Item {
-                        id: volTrack
+                        id: vol
                         Layout.fillWidth: true
                         Layout.preferredHeight: 14
-                        readonly property real shown: (Media.player && Media.player.volumeSupported) ? Math.max(0, Math.min(1, Media.player.volume)) : 0
-                        property real dragV: -1
-                        readonly property real shownV: dragV >= 0 ? dragV : shown
+
+                        readonly property real shown: popup.hasPlayer
+                            ? Math.max(0, Math.min(1, popup.p.volume)) : 0
+                        readonly property bool hot: volArea.containsMouse || volArea.pressed
+
                         Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width
-                            height: 7
-                            radius: 3.5
-                            color: Rock.a(Rock.uiText, 0.16)
-                            Rectangle { width: parent.width * volTrack.shownV; height: parent.height; radius: 3.5; color: Rock.marisa ? Rock.gold : Rock.pink }
+                            height: vol.hot ? 5 : 3
+                            radius: height / 2
+                            color: Rock.a(Rock.uiText, 0.12)
+                            border.width: 1
+                            border.color: Rock.a(Rock.uiText, 0.20)
+                            Behavior on height { NumberAnimation { duration: 120 } }
+
+                            Rectangle {
+                                width: parent.width * vol.shown
+                                height: parent.height
+                                radius: height / 2
+                                color: Rock.a(popup.artAccent, 0.85)
+                            }
                         }
+
                         Rectangle {
-                            visible: !Rock.marisa
-                            width: 12
-                            height: 12
-                            radius: 6
+                            width: 10
+                            height: 10
+                            radius: 5
                             anchors.verticalCenter: parent.verticalCenter
-                            x: Math.max(0, Math.min(parent.width - width, parent.width * volTrack.shownV - width / 2))
+                            x: Math.max(0, Math.min(parent.width - width, parent.width * vol.shown - width / 2))
                             color: Rock.uiText
+                            opacity: vol.hot ? 1 : 0
+                            Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
-                        Text {
-                            visible: Rock.marisa
-                            text: "✦"
-                            color: Rock.gold
-                            font.pixelSize: 14
-                            y: parent.height / 2 - height / 2
-                            x: Math.max(0, Math.min(parent.width - width, parent.width * volTrack.shownV - width / 2))
-                        }
+
                         MouseArea {
                             id: volArea
                             anchors.fill: parent
+                            anchors.margins: -4
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            function setV(mx) {
-                                const r = Math.max(0, Math.min(1, mx / width))
-                                volTrack.dragV = r
-                                Media.setVol(r)
+                            function setVol(mx) {
+                                Media.setVol(Math.max(0, Math.min(1, (mx - 4) / (width - 8))))
                             }
-                            onPressed: m => setV(m.x)
-                            onPositionChanged: m => { if (pressed) setV(m.x) }
-                            onReleased: { if (volTrack.dragV >= 0) Media.setVol(volTrack.dragV); volTrack.dragV = -1 }
+                            onPressed: m => setVol(m.x)
+                            onPositionChanged: m => { if (pressed) setVol(m.x) }
                         }
                     }
+
                     Lbl {
-                        Layout.preferredWidth: 34
+                        Layout.preferredWidth: 30
                         horizontalAlignment: Text.AlignRight
-                        text: Math.round((Media.player ? Media.player.volume : 0) * 100) + "%"
+                        text: Math.round((popup.hasPlayer ? popup.p.volume : 0) * 100) + "%"
                         color: Rock.uiSub
-                        font.pixelSize: 10
+                        font.pixelSize: 9
                     }
                 }
 
                 RowLayout {
-                    visible: Media.players.length > 1
                     Layout.fillWidth: true
                     spacing: 6
+                    visible: Media.players.length > 1
+
                     Repeater {
                         model: Media.players
                         delegate: Rectangle {
                             id: chip
                             required property var modelData
                             readonly property bool current: Media.player === modelData
-                            implicitWidth: chipLbl.implicitWidth + 20
+                            implicitWidth: chipLabel.implicitWidth + 20
                             implicitHeight: 22
                             radius: 11
-                            color: current ? Rock.a(Rock.pink, 0.18) : (chipArea.containsMouse ? Rock.a(Rock.uiText, 0.08) : "transparent")
-                            border.width: current ? 2 : 1
-                            border.color: current ? Rock.pinkDeep : Rock.a(Rock.uiText, 0.35)
+                            color: chip.current
+                                ? Rock.a(popup.artAccent, 0.18)
+                                : (chipMouse.containsMouse ? Rock.a(Rock.uiText, 0.08) : "transparent")
+                            border.width: 1
+                            border.color: chip.current
+                                ? Rock.a(popup.artAccent, 0.6)
+                                : Rock.a(Rock.uiText, 0.12)
+
                             Lbl {
-                                id: chipLbl
+                                id: chipLabel
                                 anchors.centerIn: parent
-                                text: String(chip.modelData.identity).substring(0, 14)
-                                color: chip.current ? Rock.pinkDeep : Rock.uiSub
-                                font.pixelSize: 10
-                                font.bold: chip.current
+                                text: String(chip.modelData.identity || "").substring(0, 14)
+                                color: chip.current ? popup.artAccent : Rock.uiSub
+                                font.pixelSize: 9
+                                font.weight: chip.current ? Font.DemiBold : Font.Normal
                             }
+
                             MouseArea {
-                                id: chipArea
+                                id: chipMouse
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
@@ -699,46 +764,10 @@ BarPopup {
                             }
                         }
                     }
+
                     Item { Layout.fillWidth: true }
                 }
             }
-        }
-
-        Rectangle {
-            visible: Rock.comic
-            x: 22
-            y: -6
-            width: 74
-            height: 18
-            radius: 2
-            color: Rock.a(Rock.yellow, 0.85)
-            border.width: 1
-            border.color: Rock.a(Rock.uiText, 0.25)
-            rotation: -7
-            z: 20
-        }
-        Rectangle {
-            visible: Rock.comic
-            x: card.width - 96
-            y: -6
-            width: 74
-            height: 18
-            radius: 2
-            color: Rock.a(Rock.cyan, 0.7)
-            border.width: 1
-            border.color: Rock.a(Rock.uiText, 0.25)
-            rotation: 6
-            z: 20
-        }
-        Lbl {
-            visible: Rock.comic
-            x: card.width - 24
-            y: card.height - 6
-            text: "\uf005"
-            color: Rock.yellow
-            font.pixelSize: 16
-            rotation: 14
-            z: 20
         }
     }
 }

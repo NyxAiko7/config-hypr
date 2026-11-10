@@ -277,7 +277,7 @@ Scope {
                 NumberAnimation on enterP {
                     id: enterAnim
                     from: 0; to: 1
-                    duration: 900
+                    duration: 1000
                     easing.type: Easing.OutCubic
                     running: UI.locked
                     loops: 1
@@ -299,7 +299,7 @@ Scope {
                 LockHud {
                     anchors {
                         top: parent.top; left: parent.left; right: parent.right
-                        topMargin: 26; leftMargin: 38; rightMargin: 38
+                        topMargin: 22; leftMargin: 42; rightMargin: 42
                     }
                     enterProgress: view.enterP
                     batPct: root.batPct
@@ -310,35 +310,18 @@ Scope {
                 LockClock {
                     anchors {
                         left: parent.left; top: parent.top
-                        leftMargin: Math.max(46, parent.width * 0.055)
-                        topMargin: Math.max(126, parent.height * 0.17)
-                    }
-                    enterProgress: view.enterP
-                }
-
-                LockWeather {
-                    anchors {
-                        left: parent.left; bottom: parent.bottom
-                        leftMargin: Math.max(46, parent.width * 0.055)
-                        bottomMargin: 38
-                    }
-                    enterProgress: view.enterP
-                }
-
-                LockMedia {
-                    anchors {
-                        right: parent.right; bottom: parent.bottom
-                        rightMargin: Math.max(46, parent.width * 0.055)
-                        bottomMargin: 38
+                        leftMargin: Math.max(46, parent.width * 0.06)
+                        topMargin: Math.max(110, parent.height * 0.15)
                     }
                     enterProgress: view.enterP
                 }
 
                 LockAuthPanel {
                     anchors {
-                        right: parent.right; verticalCenter: parent.verticalCenter
-                        rightMargin: Math.max(46, parent.width * 0.055)
-                        verticalCenterOffset: -30
+                        horizontalCenter: parent.horizontalCenter
+                        verticalCenter: parent.verticalCenter
+                        horizontalCenterOffset: parent.width * 0.16
+                        verticalCenterOffset: -10
                     }
                     enterProgress: view.enterP
                     buffer: root.buffer
@@ -352,6 +335,24 @@ Scope {
                     charging: root.charging
                     onSubmitted: root.submit()
                     onRevealRequested: root.reveal = !root.reveal
+                }
+
+                LockWeather {
+                    anchors {
+                        left: parent.left; bottom: parent.bottom
+                        leftMargin: Math.max(42, parent.width * 0.05)
+                        bottomMargin: 34
+                    }
+                    enterProgress: view.enterP
+                }
+
+                LockMedia {
+                    anchors {
+                        right: parent.right; bottom: parent.bottom
+                        rightMargin: Math.max(42, parent.width * 0.05)
+                        bottomMargin: 34
+                    }
+                    enterProgress: view.enterP
                 }
 
                 opacity: view.enterP

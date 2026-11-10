@@ -22,26 +22,27 @@ PanelWindow {
     readonly property color sub: Rock.uiSub
     readonly property color accent: Rock.uiAccent
     readonly property color frameEdge: Rock.uiEdge
+    readonly property color line: Rock.a(Rock.uiText, 0.10)
 
     readonly property var tabOptions: [
-        { key: "presets", label: I18n.t("ПРЕСЕТЫ"), icon: "\uf009" },
-        { key: "bar",     label: I18n.t("ПАНЕЛЬ"),  icon: "\uf2d0" },
-        { key: "modules", label: I18n.t("МОДУЛИ"),  icon: "\uf12e" },
-        { key: "look",    label: I18n.t("ВИД"),     icon: "\uf120" },
-        { key: "more",    label: I18n.t("ЕЩЁ"),     icon: "\uf013" }
+        { key: "presets", label: I18n.t("Пресеты"), icon: "\uf009" },
+        { key: "bar",     label: I18n.t("Панель"),  icon: "\uf2d0" },
+        { key: "modules", label: I18n.t("Модули"),  icon: "\uf12e" },
+        { key: "look",    label: I18n.t("Вид"),     icon: "\uf120" },
+        { key: "more",    label: I18n.t("Ещё"),    icon: "\uf013" }
     ]
 
     readonly property var positionOptions: [
-        { key: "top",    label: I18n.t("СВЕРХУ") },
-        { key: "bottom", label: I18n.t("СНИЗУ") },
-        { key: "left",   label: I18n.t("СЛЕВА") },
-        { key: "right",  label: I18n.t("СПРАВА") }
+        { key: "top",    label: I18n.t("Сверху") },
+        { key: "bottom", label: I18n.t("Снизу") },
+        { key: "left",   label: I18n.t("Слева") },
+        { key: "right",  label: I18n.t("Справа") }
     ]
 
     readonly property var densityOptions: [
-        { key: "compact", label: I18n.t("КОМПАКТНО") },
-        { key: "normal",  label: I18n.t("ОБЫЧНО") },
-        { key: "roomy",   label: I18n.t("ПРОСТОРНО") }
+        { key: "compact", label: I18n.t("Компактно") },
+        { key: "normal",  label: I18n.t("Обычно") },
+        { key: "roomy",   label: I18n.t("Просторно") }
     ]
 
     readonly property var languageOptions: [
@@ -50,13 +51,13 @@ PanelWindow {
     ]
 
     readonly property var presetList: [
-        { key: "minimal",  icon: "\uf068", label: I18n.t("МИНИМАЛ"),
+        { key: "minimal",  icon: "\uf068", label: I18n.t("Минимал"),
           hint: I18n.t("Только часы, сеть и уведомления") },
-        { key: "balanced", icon: "\uf0c9", label: I18n.t("БАЛАНС"),
+        { key: "balanced", icon: "\uf0c9", label: I18n.t("Баланс"),
           hint: I18n.t("Все основные модули и кнопки") },
-        { key: "media",    icon: "\uf001", label: I18n.t("МЕДИА"),
+        { key: "media",    icon: "\uf001", label: I18n.t("Медиа"),
           hint: I18n.t("Музыка, погода и запись под рукой") },
-        { key: "focus",    icon: "\uf017", label: I18n.t("ФОКУС"),
+        { key: "focus",    icon: "\uf017", label: I18n.t("Фокус"),
           hint: I18n.t("Помодоро и минимум отвлечений") }
     ]
 
@@ -137,117 +138,64 @@ PanelWindow {
         }
     }
 
-    // затемнение и клик мимо
+    // затемнение фона
     Rectangle {
         id: dim
         anchors.fill: parent
-        color: Rock.a(Rock.ink, 0.84)
+        color: Rock.a(Rock.ink, 0.55)
         MouseArea { anchors.fill: parent; onClicked: UI.settings = false }
     }
 
-    Canvas {
-        anchors.fill: parent
-        opacity: 0.45
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
-        Component.onCompleted: requestPaint()
-        onPaint: {
-            const ctx = getContext("2d")
-            ctx.reset()
-            const step = Math.max(28, Math.min(width, height) / 46)
-            ctx.fillStyle = Rock.a(Rock.uiAccent, 0.20)
-            for (let y = 0; y < height; y += step)
-                for (let x = 0; x < width; x += step) {
-                    ctx.beginPath()
-                    ctx.arc(x, y, step * 0.09, 0, Math.PI * 2)
-                    ctx.fill()
-                }
-        }
-    }
-
-    // ───────── карточка ─────────
+    // ───────── карточка диалога ─────────
     Item {
         id: frame
         anchors.centerIn: parent
-        width: Math.min(parent.width - 56, 860)
-        height: Math.min(parent.height - 80, 660)
+        width: Math.min(parent.width - 48, 920)
+        height: Math.min(parent.height - 72, 640)
         opacity: 0
-        scale: 0.96
+        scale: 0.97
 
         Rectangle {
             id: card
             width: frame.width
             height: frame.height
-            radius: Math.max(10, Rock.uiRadius)
+            radius: Math.max(12, Rock.uiRadius)
             color: win.cardFill
             border.width: Rock.uiBorder
             border.color: win.frameEdge
 
             MouseArea { anchors.fill: parent }
 
-            SaoGrid { anchors.fill: parent; step: 28 }
-            MarisaPattern { anchors.fill: parent; opacity: 0.5 }
-            MarisaFrame {
-                anchors.fill: parent
-                inset: 7
-                frameRadius: Math.max(2, card.radius - 5)
-            }
-            SaoFrame {
-                anchors.fill: parent
-                inset: 6
-                cut: 12
-                segments: 34
-            }
-
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 22
+                anchors.margins: 18
                 spacing: 12
 
                 // ── шапка ──
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 12
+                    spacing: 10
 
-                    Rectangle {
-                        width: 8
-                        height: 34
-                        radius: 4
-                        color: win.accent
-                    }
-
-                    ColumnLayout {
-                        spacing: 1
-                        Lbl {
-                            text: I18n.t("НАСТРОЙКИ ПАНЕЛИ")
-                            color: win.fg
-                            font.family: Rock.display
-                            font.pixelSize: 26
-                            font.weight: Font.Black
-                            font.letterSpacing: 1.2
-                        }
-                        Lbl {
-                            text: "ASTRAL PANEL · PRESETS"
-                            color: win.accent
-                            font.pixelSize: 9
-                            font.weight: Font.Black
-                            font.letterSpacing: 1.6
-                        }
+                    Lbl {
+                        text: I18n.t("Настройки панели")
+                        color: win.fg
+                        font.family: Rock.display
+                        font.pixelSize: 17
+                        font.weight: Font.DemiBold
                     }
 
                     Item { Layout.fillWidth: true }
 
                     Rectangle {
-                        width: 34; height: 34
-                        radius: 17
-                        color: closeArea.containsMouse ? Rock.a(win.accent, 0.22) : "transparent"
-                        border.width: closeArea.containsMouse ? 1 : 0
-                        border.color: win.accent
+                        width: 30; height: 30
+                        radius: 15
+                        color: closeArea.containsMouse ? Rock.a(win.fg, 0.10) : "transparent"
+                        Behavior on color { ColorAnimation { duration: 120 } }
                         Lbl {
                             anchors.centerIn: parent
                             text: "\uf00d"
-                            color: win.fg
-                            font.pixelSize: 13
+                            color: win.sub
+                            font.pixelSize: 12
                         }
                         MouseArea {
                             id: closeArea
@@ -262,923 +210,942 @@ PanelWindow {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    radius: 1
-                    color: Rock.a(win.fg, 0.14)
+                    color: win.line
                 }
 
-                // ── вкладки ──
+                // ── тело: вкладки слева, страница справа ──
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
-
-                    Repeater {
-                        model: win.tabOptions
-                        delegate: Rectangle {
-                            id: tabBtn
-                            required property var modelData
-                            readonly property bool sel: win.tab === modelData.key
-
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 36
-                            radius: Rock.uiRadiusSm
-                            color: sel ? win.accent
-                                       : (tabArea.containsMouse ? Rock.a(win.accent, 0.14) : Rock.a(win.fg, 0.05))
-                            border.width: sel ? 0 : 1
-                            border.color: Rock.a(win.fg, 0.18)
-                            Behavior on color { ColorAnimation { duration: 120 } }
-
-                            RowLayout {
-                                anchors.centerIn: parent
-                                spacing: 7
-                                Lbl {
-                                    text: tabBtn.modelData.icon
-                                    color: tabBtn.sel ? Rock.uiOnActive : win.sub
-                                    font.pixelSize: 11
-                                }
-                                Lbl {
-                                    text: tabBtn.modelData.label
-                                    color: tabBtn.sel ? Rock.uiOnActive : win.sub
-                                    font.family: Rock.display
-                                    font.pixelSize: 11
-                                    font.weight: Font.Black
-                                    font.letterSpacing: 0.6
-                                }
-                            }
-
-                            MouseArea {
-                                id: tabArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: win.tab = tabBtn.modelData.key
-                            }
-                        }
-                    }
-                }
-
-                // ── страницы ──
-                Item {
-                    Layout.fillWidth: true
                     Layout.fillHeight: true
-                    clip: true
+                    spacing: 0
 
-                    // ═════════ ПРЕСЕТЫ ═════════
-                    Flickable {
-                        id: presetsPage
-                        anchors.fill: parent
-                        visible: win.tab === "presets"
-                        clip: true
-                        contentWidth: width
-                        contentHeight: presetsCol.implicitHeight
-                        boundsBehavior: Flickable.StopAtBounds
+                    ColumnLayout {
+                        id: sideTabs
+                        Layout.preferredWidth: 176
+                        Layout.maximumWidth: 176
+                        Layout.fillHeight: true
+                        Layout.rightMargin: 14
+                        spacing: 2
 
-                        ColumnLayout {
-                            id: presetsCol
-                            width: presetsPage.width
-                            spacing: 12
+                        Repeater {
+                            model: win.tabOptions
+                            delegate: Rectangle {
+                                id: tabBtn
+                                required property var modelData
+                                readonly property bool sel: win.tab === modelData.key
 
-                            RowLayout {
                                 Layout.fillWidth: true
-                                Lbl {
-                                    text: I18n.t("ПРЕСЕТ ПАНЕЛИ")
-                                    color: win.fg
-                                    font.family: Rock.display
-                                    font.weight: Font.Black
-                                    font.pixelSize: 13
-                                    font.letterSpacing: 0.8
-                                }
-                                Item { Layout.fillWidth: true }
-                                Rectangle {
-                                    visible: PanelConfig.preset === "custom"
-                                    implicitWidth: customLbl.implicitWidth + 18
-                                    implicitHeight: 24
-                                    radius: 12
-                                    color: Rock.a(win.accent, 0.16)
-                                    border.width: 1
-                                    border.color: Rock.a(win.accent, 0.5)
+                                Layout.preferredHeight: 34
+                                radius: Rock.uiRadiusSm
+                                color: tabBtn.sel ? Rock.uiActive
+                                     : (tabArea.containsMouse ? Rock.a(win.fg, 0.06) : "transparent")
+                                Behavior on color { ColorAnimation { duration: 120 } }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 12
+                                    anchors.rightMargin: 10
+                                    spacing: 9
+
                                     Lbl {
-                                        id: customLbl
-                                        anchors.centerIn: parent
-                                        text: I18n.t("СВОЙ")
-                                        color: win.accent
-                                        font.pixelSize: 9
-                                        font.weight: Font.Black
-                                        font.letterSpacing: 0.6
+                                        text: tabBtn.modelData.icon
+                                        color: tabBtn.sel ? win.accent : win.sub
+                                        font.pixelSize: 12
+                                    }
+
+                                    Lbl {
+                                        Layout.fillWidth: true
+                                        text: tabBtn.modelData.label
+                                        color: tabBtn.sel ? win.accent : win.sub
+                                        font.family: Rock.display
+                                        font.pixelSize: 12
+                                        font.weight: tabBtn.sel ? Font.DemiBold : Font.Normal
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: tabArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        win.tab = tabBtn.modelData.key
+                                        UI.settingsTab = tabBtn.modelData.key
                                     }
                                 }
                             }
+                        }
 
-                            Lbl {
-                                Layout.fillWidth: true
-                                text: I18n.t("Готовые наборы панели — выбери подходящий и настрой детали во вкладках")
-                                color: win.sub
-                                font.pixelSize: 10
-                                wrapMode: Text.WordWrap
-                            }
+                        Item { Layout.fillHeight: true }
+                    }
 
-                            GridLayout {
-                                Layout.fillWidth: true
-                                columns: 2
-                                columnSpacing: 10
-                                rowSpacing: 10
+                    Rectangle {
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 1
+                        color: win.line
+                    }
 
-                                Repeater {
-                                    model: win.presetList
-                                    delegate: Rectangle {
-                                        id: presetCard
-                                        required property var modelData
-                                        readonly property bool sel: PanelConfig.preset === modelData.key
+                    // ── страницы ──
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.leftMargin: 16
+                        clip: true
 
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: 106
-                                        radius: Rock.uiRadius
-                                        color: sel ? Rock.a(win.accent, 0.16)
-                                                   : (presetArea.containsMouse ? Rock.a(win.accent, 0.08) : Rock.a(win.fg, 0.04))
-                                        border.width: sel ? 2 : 1
-                                        border.color: sel ? win.accent : Rock.a(win.fg, 0.16)
-                                        Behavior on color { ColorAnimation { duration: 120 } }
+                        // ═════════ ПРЕСЕТЫ ═════════
+                        Flickable {
+                            id: presetsPage
+                            anchors.fill: parent
+                            visible: win.tab === "presets"
+                            clip: true
+                            contentWidth: width
+                            contentHeight: presetsCol.implicitHeight
+                            boundsBehavior: Flickable.StopAtBounds
 
-                                        ColumnLayout {
-                                            anchors.fill: parent
-                                            anchors.margins: 12
-                                            spacing: 5
+                            ColumnLayout {
+                                id: presetsCol
+                                width: presetsPage.width
+                                spacing: 12
 
-                                            RowLayout {
-                                                Layout.fillWidth: true
-                                                spacing: 9
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+                                    Lbl {
+                                        text: I18n.t("Пресет панели")
+                                        color: win.fg
+                                        font.family: Rock.display
+                                        font.weight: Font.DemiBold
+                                        font.pixelSize: 13
+                                    }
+                                    Item { Layout.fillWidth: true }
+                                    Rectangle {
+                                        visible: PanelConfig.preset === "custom"
+                                        implicitWidth: customLbl.implicitWidth + 16
+                                        implicitHeight: 20
+                                        radius: 10
+                                        color: Rock.a(win.accent, 0.14)
+                                        Lbl {
+                                            id: customLbl
+                                            anchors.centerIn: parent
+                                            text: I18n.t("Свой")
+                                            color: win.accent
+                                            font.family: Rock.display
+                                            font.pixelSize: 10
+                                            font.weight: Font.DemiBold
+                                        }
+                                    }
+                                }
 
-                                                Rectangle {
-                                                    width: 30; height: 30
-                                                    radius: Math.max(6, Rock.uiRadiusSm - 2)
-                                                    color: presetCard.sel ? win.accent : Rock.a(win.fg, 0.08)
+                                Lbl {
+                                    Layout.fillWidth: true
+                                    text: I18n.t("Готовые наборы панели — выбери подходящий и настрой детали во вкладках")
+                                    color: win.sub
+                                    font.pixelSize: 11
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                GridLayout {
+                                    Layout.fillWidth: true
+                                    columns: 2
+                                    columnSpacing: 10
+                                    rowSpacing: 10
+
+                                    Repeater {
+                                        model: win.presetList
+                                        delegate: Rectangle {
+                                            id: presetCard
+                                            required property var modelData
+                                            readonly property bool sel: PanelConfig.preset === modelData.key
+
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 96
+                                            radius: Rock.uiRadius
+                                            color: sel ? Rock.a(win.accent, 0.12)
+                                                       : (presetArea.containsMouse ? Rock.a(win.accent, 0.07) : Rock.a(win.fg, 0.04))
+                                            border.width: 1
+                                            border.color: sel ? win.accent : Rock.a(win.fg, 0.16)
+                                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                                            ColumnLayout {
+                                                anchors.fill: parent
+                                                anchors.margins: 12
+                                                spacing: 5
+
+                                                RowLayout {
+                                                    Layout.fillWidth: true
+                                                    spacing: 9
+
+                                                    Rectangle {
+                                                        width: 28; height: 28
+                                                        radius: Math.max(6, Rock.uiRadiusSm - 2)
+                                                        color: presetCard.sel ? win.accent : Rock.a(win.fg, 0.08)
+                                                        Lbl {
+                                                            anchors.centerIn: parent
+                                                            text: presetCard.modelData.icon
+                                                            color: presetCard.sel ? Rock.uiOnActive : win.sub
+                                                            font.pixelSize: 12
+                                                        }
+                                                    }
+
                                                     Lbl {
-                                                        anchors.centerIn: parent
-                                                        text: presetCard.modelData.icon
-                                                        color: presetCard.sel ? Rock.uiOnActive : win.sub
+                                                        Layout.fillWidth: true
+                                                        text: presetCard.modelData.label
+                                                        color: presetCard.sel ? win.accent : win.fg
+                                                        font.family: Rock.display
                                                         font.pixelSize: 13
+                                                        font.weight: Font.DemiBold
+                                                    }
+
+                                                    Rectangle {
+                                                        visible: presetCard.sel
+                                                        width: 16; height: 16
+                                                        radius: 8
+                                                        color: win.accent
+                                                        Lbl {
+                                                            anchors.centerIn: parent
+                                                            text: "\uf00c"
+                                                            color: Rock.uiOnActive
+                                                            font.pixelSize: 8
+                                                            font.weight: Font.Bold
+                                                        }
                                                     }
                                                 }
 
                                                 Lbl {
                                                     Layout.fillWidth: true
-                                                    text: presetCard.modelData.label
-                                                    color: presetCard.sel ? win.accent : win.fg
-                                                    font.family: Rock.display
-                                                    font.pixelSize: 14
-                                                    font.weight: Font.Black
-                                                    font.letterSpacing: 0.6
-                                                }
-
-                                                Rectangle {
-                                                    visible: presetCard.sel
-                                                    width: 18; height: 18
-                                                    radius: 9
-                                                    color: win.accent
-                                                    Lbl {
-                                                        anchors.centerIn: parent
-                                                        text: "\uf00c"
-                                                        color: Rock.uiOnActive
-                                                        font.pixelSize: 8
-                                                        font.weight: Font.Black
-                                                    }
+                                                    Layout.fillHeight: true
+                                                    text: presetCard.modelData.hint
+                                                    color: win.sub
+                                                    font.pixelSize: 11
+                                                    wrapMode: Text.WordWrap
+                                                    verticalAlignment: Text.AlignTop
                                                 }
                                             }
 
-                                            Lbl {
-                                                Layout.fillWidth: true
-                                                Layout.fillHeight: true
-                                                text: presetCard.modelData.hint
-                                                color: win.sub
-                                                font.pixelSize: 10
-                                                wrapMode: Text.WordWrap
-                                                verticalAlignment: Text.AlignTop
+                                            MouseArea {
+                                                id: presetArea
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: PanelConfig.setPreset(presetCard.modelData.key)
                                             }
                                         }
-
-                                        MouseArea {
-                                            id: presetArea
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: PanelConfig.setPreset(presetCard.modelData.key)
-                                        }
                                     }
                                 }
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 10
-                                Lbl {
-                                    Layout.fillWidth: true
-                                    text: I18n.t("Любое изменение ниже переключает панель в режим «Свой»")
-                                    color: win.sub
-                                    font.pixelSize: 9
-                                    wrapMode: Text.WordWrap
-                                }
-                                Rectangle {
-                                    implicitWidth: resetLbl.implicitWidth + 26
-                                    implicitHeight: 30
-                                    radius: Rock.uiRadiusSm
-                                    color: resetArea.containsMouse ? Rock.a(win.accent, 0.14) : "transparent"
-                                    border.width: 1
-                                    border.color: Rock.a(win.fg, 0.22)
-                                    Lbl {
-                                        id: resetLbl
-                                        anchors.centerIn: parent
-                                        text: I18n.t("СБРОСИТЬ")
-                                        color: win.sub
-                                        font.family: Rock.display
-                                        font.pixelSize: 10
-                                        font.weight: Font.Black
-                                        font.letterSpacing: 0.6
-                                    }
-                                    MouseArea {
-                                        id: resetArea
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: PanelConfig.setPreset("balanced")
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // ═════════ ПАНЕЛЬ ═════════
-                    Flickable {
-                        id: barPage
-                        anchors.fill: parent
-                        visible: win.tab === "bar"
-                        clip: true
-                        contentWidth: width
-                        contentHeight: barCol.implicitHeight
-                        boundsBehavior: Flickable.StopAtBounds
-
-                        ColumnLayout {
-                            id: barCol
-                            width: barPage.width
-                            spacing: 12
-
-                            Lbl {
-                                text: I18n.t("РАСПОЛОЖЕНИЕ ПАНЕЛИ")
-                                color: win.fg
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 13
-                                font.letterSpacing: 0.8
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 10
-
-                                Repeater {
-                                    model: win.positionOptions
-                                    delegate: Rectangle {
-                                        id: opt
-                                        required property var modelData
-                                        readonly property bool sel: PanelConfig.position === modelData.key
-
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: 92
-                                        radius: Rock.uiRadiusSm
-                                        color: sel ? Rock.a(win.accent, 0.14)
-                                                   : (optArea.containsMouse ? Rock.a(win.accent, 0.08) : "transparent")
-                                        border.width: sel ? 2 : 1
-                                        border.color: sel ? win.accent : Rock.a(win.fg, 0.18)
-                                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                                        ColumnLayout {
-                                            anchors.fill: parent
-                                            anchors.margins: 8
-                                            spacing: 5
-
-                                            Item {
-                                                Layout.fillWidth: true
-                                                Layout.fillHeight: true
-
-                                                Rectangle {
-                                                    anchors.fill: parent
-                                                    radius: 7
-                                                    color: Rock.a(win.fg, 0.05)
-                                                    border.width: 1
-                                                    border.color: Rock.a(win.fg, 0.12)
-                                                }
-
-                                                Rectangle {
-                                                    readonly property string k: opt.modelData.key
-                                                    x: k === "right" ? parent.width - width - 5 : 5
-                                                    y: k === "bottom" ? parent.height - height - 5 : 5
-                                                    width: (k === "left" || k === "right") ? 5 : parent.width - 10
-                                                    height: (k === "top" || k === "bottom") ? 5 : parent.height - 10
-                                                    radius: 2
-                                                    color: opt.sel ? win.accent : Rock.a(win.fg, 0.45)
-                                                }
-                                            }
-
-                                            Lbl {
-                                                Layout.alignment: Qt.AlignHCenter
-                                                text: opt.modelData.label
-                                                color: opt.sel ? win.accent : win.sub
-                                                font.family: Rock.display
-                                                font.pixelSize: 10
-                                                font.weight: Font.Black
-                                                font.letterSpacing: 0.5
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            id: optArea
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: PanelConfig.setPosition(opt.modelData.key)
-                                        }
-                                    }
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                height: 1
-                                color: Rock.a(win.fg, 0.12)
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Плотность")
-                                hint: I18n.t("Высота панели и размер островов")
-                                SettingsChoice {
-                                    options: win.densityOptions
-                                    value: PanelConfig.density
-                                    onPicked: key => PanelConfig.setDensity(key)
-                                }
-                            }
-
-                            Lbl {
-                                Layout.topMargin: 4
-                                text: I18n.t("ЭЛЕМЕНТЫ ПАНЕЛИ")
-                                color: win.fg
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 13
-                                font.letterSpacing: 0.8
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Рабочие столы")
-                                Toggle {
-                                    checked: PanelConfig.showWorkspaces
-                                    onToggled: PanelConfig.setShow("showWorkspaces", !PanelConfig.showWorkspaces)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Заголовок окна")
-                                Toggle {
-                                    checked: PanelConfig.showTitle
-                                    onToggled: PanelConfig.setShow("showTitle", !PanelConfig.showTitle)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Системный трей")
-                                Toggle {
-                                    checked: PanelConfig.showTray
-                                    onToggled: PanelConfig.setShow("showTray", !PanelConfig.showTray)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Кнопка обоев")
-                                Toggle {
-                                    checked: PanelConfig.showWallpaper
-                                    onToggled: PanelConfig.setShow("showWallpaper", !PanelConfig.showWallpaper)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Кнопка настроек")
-                                Toggle {
-                                    checked: PanelConfig.showSettings
-                                    onToggled: PanelConfig.setShow("showSettings", !PanelConfig.showSettings)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Раскладка клавиатуры")
-                                Toggle {
-                                    checked: PanelConfig.showKeyboard
-                                    onToggled: PanelConfig.setShow("showKeyboard", !PanelConfig.showKeyboard)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Громкость")
-                                Toggle {
-                                    checked: PanelConfig.showVolume
-                                    onToggled: PanelConfig.setShow("showVolume", !PanelConfig.showVolume)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Батарея")
-                                Toggle {
-                                    checked: PanelConfig.showBattery
-                                    onToggled: PanelConfig.setShow("showBattery", !PanelConfig.showBattery)
-                                }
-                            }
-                        }
-                    }
-
-                    // ═════════ МОДУЛИ ═════════
-                    Flickable {
-                        id: modulesPage
-                        anchors.fill: parent
-                        visible: win.tab === "modules"
-                        clip: true
-                        contentWidth: width
-                        contentHeight: modulesCol.implicitHeight
-                        boundsBehavior: Flickable.StopAtBounds
-
-                        ColumnLayout {
-                            id: modulesCol
-                            width: modulesPage.width
-                            spacing: 8
-
-                            Lbl {
-                                text: I18n.t("МОДУЛИ")
-                                color: win.fg
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 13
-                                font.letterSpacing: 0.8
-                            }
-
-                            Lbl {
-                                Layout.fillWidth: true
-                                text: I18n.t("Какие модули показывать в панели и островах")
-                                color: win.sub
-                                font.pixelSize: 10
-                                wrapMode: Text.WordWrap
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.topMargin: 6
-                                height: 1
-                                color: Rock.a(win.fg, 0.12)
-                            }
-
-                            Lbl {
-                                Layout.topMargin: 4
-                                text: I18n.t("ВИДЖЕТЫ РАБОЧЕГО СТОЛА")
-                                color: win.fg
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 13
-                                font.letterSpacing: 0.8
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Включить виджеты")
-                                hint: I18n.t("Часы и плеер на свободном месте рабочего стола")
-                                Toggle {
-                                    checked: PanelConfig.widgetsEnabled
-                                    onToggled: PanelConfig.setWidgets(!PanelConfig.widgetsEnabled)
-                                }
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Часы и нагрузка")
-                                hint: I18n.t("Время, дата и загрузка системы")
-                                Toggle {
-                                    checked: PanelConfig.widgetClock
-                                    enabled: PanelConfig.widgetsEnabled
-                                    opacity: PanelConfig.widgetsEnabled ? 1 : 0.4
-                                    onToggled: PanelConfig.setWidget("widgetClock", !PanelConfig.widgetClock)
-                                }
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Плеер")
-                                hint: I18n.t("Обложка, трек и управление")
-                                Toggle {
-                                    checked: PanelConfig.widgetPlayer
-                                    enabled: PanelConfig.widgetsEnabled
-                                    opacity: PanelConfig.widgetsEnabled ? 1 : 0.4
-                                    onToggled: PanelConfig.setWidget("widgetPlayer", !PanelConfig.widgetPlayer)
-                                }
-                            }
-
-                            SettingsRow {
-                                title: "Bluetooth"
-                                hint: I18n.t("Значок и подключённые устройства")
-                                Toggle {
-                                    checked: PanelConfig.modules.bt
-                                    onToggled: PanelConfig.setModule("bt", !PanelConfig.modules.bt)
-                                }
-                            }
-                            SettingsRow {
-                                title: "Wi-Fi"
-                                hint: I18n.t("Индикатор беспроводной сети")
-                                Toggle {
-                                    checked: PanelConfig.modules.wifi
-                                    onToggled: PanelConfig.setModule("wifi", !PanelConfig.modules.wifi)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Сеть / скорость")
-                                hint: I18n.t("Значок сети и скорость передачи")
-                                Toggle {
-                                    checked: PanelConfig.modules.net
-                                    onToggled: PanelConfig.setModule("net", !PanelConfig.modules.net)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Уведомления")
-                                hint: I18n.t("Колокольчик и счётчик")
-                                Toggle {
-                                    checked: PanelConfig.modules.notif
-                                    onToggled: PanelConfig.setModule("notif", !PanelConfig.modules.notif)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Медиа")
-                                hint: I18n.t("Текущий трек в центральном острове")
-                                Toggle {
-                                    checked: PanelConfig.modules.music
-                                    onToggled: PanelConfig.setModule("music", !PanelConfig.modules.music)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Погода")
-                                hint: I18n.t("Температура и осадки")
-                                Toggle {
-                                    checked: PanelConfig.modules.weather
-                                    onToggled: PanelConfig.setModule("weather", !PanelConfig.modules.weather)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Помодоро")
-                                hint: I18n.t("Таймер фокуса")
-                                Toggle {
-                                    checked: PanelConfig.modules.pomodoro
-                                    onToggled: PanelConfig.setModule("pomodoro", !PanelConfig.modules.pomodoro)
-                                }
-                            }
-                            SettingsRow {
-                                title: I18n.t("Запись экрана")
-                                hint: I18n.t("Индикатор записи")
-                                Toggle {
-                                    checked: PanelConfig.modules.record
-                                    onToggled: PanelConfig.setModule("record", !PanelConfig.modules.record)
-                                }
-                            }
-                        }
-                    }
-
-                    // ═════════ ВИД ═════════
-                    Flickable {
-                        id: lookPage
-                        anchors.fill: parent
-                        visible: win.tab === "look"
-                        clip: true
-                        contentWidth: width
-                        contentHeight: lookCol.implicitHeight
-                        boundsBehavior: Flickable.StopAtBounds
-
-                        ColumnLayout {
-                            id: lookCol
-                            width: lookPage.width
-                            spacing: 10
-
-                            Lbl {
-                                text: I18n.t("ВИД")
-                                color: win.fg
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 13
-                                font.letterSpacing: 0.8
-                            }
-
-                            Lbl {
-                                Layout.fillWidth: true
-                                text: I18n.t("Цвета берутся из текущих обоев автоматически")
-                                color: win.sub
-                                font.pixelSize: 10
-                                wrapMode: Text.WordWrap
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Размер шрифта")
-                                SettingsSlider {
-                                    from: 8
-                                    to: 24
-                                    value: PanelConfig.fontSize
-                                    onMoved: v => PanelConfig.setFontSize(v)
-                                }
-                                Lbl {
-                                    Layout.preferredWidth: 26
-                                    horizontalAlignment: Text.AlignRight
-                                    text: PanelConfig.fontSize
-                                    color: win.accent
-                                    font.family: Rock.mono
-                                    font.pixelSize: 11
-                                }
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Скругление островов")
-                                SettingsSlider {
-                                    from: 0
-                                    to: 30
-                                    value: PanelConfig.islandRadius
-                                    onMoved: v => PanelConfig.setIslandRadius(v)
-                                }
-                                Lbl {
-                                    Layout.preferredWidth: 26
-                                    horizontalAlignment: Text.AlignRight
-                                    text: PanelConfig.islandRadius
-                                    color: win.accent
-                                    font.family: Rock.mono
-                                    font.pixelSize: 11
-                                }
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Прозрачность стекла")
-                                SettingsSlider {
-                                    from: 30
-                                    to: 100
-                                    value: PanelConfig.surfaceOpacity
-                                    onMoved: v => PanelConfig.setSurfaceOpacity(v)
-                                }
-                                Lbl {
-                                    Layout.preferredWidth: 36
-                                    horizontalAlignment: Text.AlignRight
-                                    text: PanelConfig.surfaceOpacity + "%"
-                                    color: win.accent
-                                    font.family: Rock.mono
-                                    font.pixelSize: 11
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 74
-                                Layout.topMargin: 6
-                                radius: PanelConfig.islandRadius
-                                color: Theme.islandBg
-                                border.width: 1
-                                border.color: Rock.a(win.fg, 0.16)
 
                                 RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 10
-                                    Rectangle {
-                                        width: 74; height: 22; radius: Math.max(4, PanelConfig.islandRadius - 8)
-                                        color: Rock.a(win.accent, 0.18)
-                                    }
-                                    Rectangle {
-                                        width: 130; height: 22; radius: Math.max(4, PanelConfig.islandRadius - 8)
-                                        color: Rock.a(win.fg, 0.08)
-                                    }
-                                    Rectangle {
-                                        width: 74; height: 22; radius: Math.max(4, PanelConfig.islandRadius - 8)
-                                        color: Rock.a(win.accent, 0.18)
-                                    }
-                                }
-                            }
-
-                            Lbl {
-                                Layout.fillWidth: true
-                                text: I18n.t("Палитра, прозрачность и форма применяются сразу")
-                                color: win.sub
-                                font.pixelSize: 9
-                            }
-
-                        }
-                    }
-
-                    // ═════════ ЕЩЁ ═════════
-                    Flickable {
-                        id: morePage
-                        anchors.fill: parent
-                        visible: win.tab === "more"
-                        clip: true
-                        contentWidth: width
-                        contentHeight: moreCol.implicitHeight
-                        boundsBehavior: Flickable.StopAtBounds
-
-                        ColumnLayout {
-                            id: moreCol
-                            width: morePage.width
-                            spacing: 12
-
-                            Lbl {
-                                text: I18n.t("ПОВЕДЕНИЕ")
-                                color: win.fg
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 13
-                                font.letterSpacing: 0.8
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Язык")
-                                SettingsChoice {
-                                    options: win.languageOptions
-                                    value: PanelConfig.language
-                                    onPicked: key => PanelConfig.setLanguage(key)
-                                }
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Не засыпать")
-                                hint: I18n.t("Пока включено — экран не гаснет")
-                                Toggle {
-                                    checked: UI.caffeine
-                                    checkedColor: Rock.uiAccent
-                                    uncheckedColor: Rock.a(Rock.uiText, 0.12)
-                                    onToggled: UI.caffeine = !UI.caffeine
-                                }
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Авто-блокировка")
-                                hint: I18n.t("Минут бездействия до блокировки")
-                                SettingsInput {
-                                    fieldWidth: 84
-                                    text: PanelConfig.lockAfterMin
-                                    onEdited: v => PanelConfig.setLockAfterMin(v)
-                                }
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Автозасыпание")
-                                hint: I18n.t("Минут бездействия до сна")
-                                SettingsInput {
-                                    fieldWidth: 84
-                                    text: PanelConfig.sleepAfterMin
-                                    onEdited: v => PanelConfig.setSleepAfterMin(v)
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                height: 1
-                                color: Rock.a(win.fg, 0.12)
-                            }
-
-                            Lbl {
-                                text: I18n.t("АВАТАР ПОЛЬЗОВАТЕЛЯ")
-                                color: win.fg
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 13
-                                font.letterSpacing: 0.8
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 14
-
-                                Avatar {
-                                    Layout.alignment: Qt.AlignTop
-                                    Layout.preferredWidth: 72
-                                    Layout.preferredHeight: 72
-                                    source: PanelConfig.avatarUrl
-                                    letter: (Quickshell.env("USER") || "user").charAt(0).toUpperCase()
-                                    bg: win.accent
-                                    fg: Rock.uiOnActive
-                                    borderWidth: 1
-                                    borderColor: win.frameEdge
-                                    fontFamily: Rock.display
-                                    fontSize: 30
-                                    fontWeight: Font.Black
-                                }
-
-                                ColumnLayout {
                                     Layout.fillWidth: true
-                                    spacing: 8
-
+                                    spacing: 10
                                     Lbl {
                                         Layout.fillWidth: true
-                                        text: PanelConfig.hasAvatar
-                                            ? I18n.t("Картинка выбрана. Она показывается вместо первой буквы имени в центре управления.")
-                                            : I18n.t("Сейчас показывается первая буква имени. Выберите картинку — она заменит букву в центре управления.")
+                                        text: I18n.t("Любое изменение ниже переключает панель в режим «Свой»")
                                         color: win.sub
                                         font.pixelSize: 10
                                         wrapMode: Text.WordWrap
                                     }
-
-                                    RowLayout {
-                                        spacing: 8
-                                        Rectangle {
-                                            implicitWidth: pickLbl.implicitWidth + 26
-                                            implicitHeight: 30
-                                            radius: Rock.uiRadiusSm
-                                            color: pickArea.containsMouse ? Rock.a(win.accent, 0.85) : win.accent
-                                            Behavior on color { ColorAnimation { duration: 120 } }
-                                            Lbl {
-                                                id: pickLbl
-                                                anchors.centerIn: parent
-                                                text: I18n.t("ВЫБРАТЬ ФАЙЛ")
-                                                color: Rock.uiOnActive
-                                                font.family: Rock.display
-                                                font.pixelSize: 10
-                                                font.weight: Font.Black
-                                                font.letterSpacing: 0.6
-                                            }
-                                            MouseArea {
-                                                id: pickArea
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: win.startPick()
-                                            }
+                                    Rectangle {
+                                        implicitWidth: resetLbl.implicitWidth + 24
+                                        implicitHeight: 28
+                                        radius: Rock.uiRadiusSm
+                                        color: resetArea.containsMouse ? Rock.a(win.accent, 0.14) : Rock.a(win.fg, 0.05)
+                                        border.width: 1
+                                        border.color: Rock.a(win.fg, 0.18)
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                        Lbl {
+                                            id: resetLbl
+                                            anchors.centerIn: parent
+                                            text: I18n.t("Сбросить")
+                                            color: win.sub
+                                            font.family: Rock.display
+                                            font.pixelSize: 11
+                                            font.weight: Font.DemiBold
                                         }
-                                        Rectangle {
-                                            visible: PanelConfig.hasAvatar
-                                            implicitWidth: resetAvatarLbl.implicitWidth + 24
-                                            implicitHeight: 30
-                                            radius: Rock.uiRadiusSm
-                                            color: resetAvatarArea.containsMouse ? Rock.a(win.fg, 0.14) : "transparent"
-                                            border.width: 1
-                                            border.color: Rock.a(win.fg, 0.24)
-                                            Lbl {
-                                                id: resetAvatarLbl
-                                                anchors.centerIn: parent
-                                                text: I18n.t("СБРОСИТЬ")
-                                                color: win.sub
-                                                font.family: Rock.display
-                                                font.pixelSize: 9
-                                                font.weight: Font.Black
-                                                font.letterSpacing: 0.6
-                                            }
-                                            MouseArea {
-                                                id: resetAvatarArea
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: PanelConfig.clearAvatar()
-                                            }
+                                        MouseArea {
+                                            id: resetArea
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: PanelConfig.setPreset("balanced")
                                         }
                                     }
                                 }
                             }
+                        }
 
-                            Rectangle {
-                                Layout.fillWidth: true
-                                height: 1
-                                color: Rock.a(win.fg, 0.12)
-                            }
+                        // ═════════ ПАНЕЛЬ ═════════
+                        Flickable {
+                            id: barPage
+                            anchors.fill: parent
+                            visible: win.tab === "bar"
+                            clip: true
+                            contentWidth: width
+                            contentHeight: barCol.implicitHeight
+                            boundsBehavior: Flickable.StopAtBounds
 
-                            Lbl {
-                                text: I18n.t("ПОГОДА")
-                                color: win.fg
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 13
-                                font.letterSpacing: 0.8
-                            }
-
-                            SettingsRow {
-                                title: I18n.t("Город")
-                                hint: I18n.t("Пусто — определить по IP")
-                                SettingsInput {
-                                    fieldWidth: 200
-                                    text: Config.weatherCity
-                                    onEdited: v => Config.setWeatherCity(v)
-                                }
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
+                            ColumnLayout {
+                                id: barCol
+                                width: barPage.width
                                 spacing: 12
 
-                                ColumnLayout {
+                                Lbl {
+                                    text: I18n.t("Расположение панели")
+                                    color: win.fg
+                                    font.family: Rock.display
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: 13
+                                }
+
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 2
-                                    Lbl { text: I18n.t("Широта"); color: win.fg; font.pixelSize: 11 }
-                                    SettingsInput {
-                                        Layout.fillWidth: true
-                                        text: Config.weatherLat
-                                        onEdited: v => Config.setWeatherLat(v)
+                                    spacing: 10
+
+                                    Repeater {
+                                        model: win.positionOptions
+                                        delegate: Rectangle {
+                                            id: opt
+                                            required property var modelData
+                                            readonly property bool sel: PanelConfig.position === modelData.key
+
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 88
+                                            radius: Rock.uiRadiusSm
+                                            color: sel ? Rock.a(win.accent, 0.12)
+                                                       : (optArea.containsMouse ? Rock.a(win.accent, 0.07) : "transparent")
+                                            border.width: 1
+                                            border.color: sel ? win.accent : Rock.a(win.fg, 0.18)
+                                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                                            ColumnLayout {
+                                                anchors.fill: parent
+                                                anchors.margins: 8
+                                                spacing: 5
+
+                                                Item {
+                                                    Layout.fillWidth: true
+                                                    Layout.fillHeight: true
+
+                                                    Rectangle {
+                                                        anchors.fill: parent
+                                                        radius: 7
+                                                        color: Rock.a(win.fg, 0.05)
+                                                        border.width: 1
+                                                        border.color: Rock.a(win.fg, 0.12)
+                                                    }
+
+                                                    Rectangle {
+                                                        readonly property string k: opt.modelData.key
+                                                        x: k === "right" ? parent.width - width - 5 : 5
+                                                        y: k === "bottom" ? parent.height - height - 5 : 5
+                                                        width: (k === "left" || k === "right") ? 5 : parent.width - 10
+                                                        height: (k === "top" || k === "bottom") ? 5 : parent.height - 10
+                                                        radius: 2
+                                                        color: opt.sel ? win.accent : Rock.a(win.fg, 0.45)
+                                                    }
+                                                }
+
+                                                Lbl {
+                                                    Layout.alignment: Qt.AlignHCenter
+                                                    text: opt.modelData.label
+                                                    color: opt.sel ? win.accent : win.sub
+                                                    font.family: Rock.display
+                                                    font.pixelSize: 11
+                                                    font.weight: Font.DemiBold
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: optArea
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: PanelConfig.setPosition(opt.modelData.key)
+                                            }
+                                        }
                                     }
                                 }
-                                ColumnLayout {
+
+                                Rectangle {
                                     Layout.fillWidth: true
-                                    spacing: 2
-                                    Lbl { text: I18n.t("Долгота"); color: win.fg; font.pixelSize: 11 }
-                                    SettingsInput {
-                                        Layout.fillWidth: true
-                                        text: Config.weatherLon
-                                        onEdited: v => Config.setWeatherLon(v)
+                                    height: 1
+                                    color: win.line
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Плотность")
+                                    hint: I18n.t("Высота панели и размер островов")
+                                    SettingsChoice {
+                                        options: win.densityOptions
+                                        value: PanelConfig.density
+                                        onPicked: key => PanelConfig.setDensity(key)
                                     }
                                 }
-                                ColumnLayout {
+
+                                Lbl {
+                                    Layout.topMargin: 4
+                                    text: I18n.t("Элементы панели")
+                                    color: win.fg
+                                    font.family: Rock.display
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: 13
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Рабочие столы")
+                                    Toggle {
+                                        checked: PanelConfig.showWorkspaces
+                                        onToggled: PanelConfig.setShow("showWorkspaces", !PanelConfig.showWorkspaces)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Заголовок окна")
+                                    Toggle {
+                                        checked: PanelConfig.showTitle
+                                        onToggled: PanelConfig.setShow("showTitle", !PanelConfig.showTitle)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Системный трей")
+                                    Toggle {
+                                        checked: PanelConfig.showTray
+                                        onToggled: PanelConfig.setShow("showTray", !PanelConfig.showTray)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Кнопка обоев")
+                                    Toggle {
+                                        checked: PanelConfig.showWallpaper
+                                        onToggled: PanelConfig.setShow("showWallpaper", !PanelConfig.showWallpaper)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Кнопка настроек")
+                                    Toggle {
+                                        checked: PanelConfig.showSettings
+                                        onToggled: PanelConfig.setShow("showSettings", !PanelConfig.showSettings)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Раскладка клавиатуры")
+                                    Toggle {
+                                        checked: PanelConfig.showKeyboard
+                                        onToggled: PanelConfig.setShow("showKeyboard", !PanelConfig.showKeyboard)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Громкость")
+                                    Toggle {
+                                        checked: PanelConfig.showVolume
+                                        onToggled: PanelConfig.setShow("showVolume", !PanelConfig.showVolume)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Батарея")
+                                    Toggle {
+                                        checked: PanelConfig.showBattery
+                                        onToggled: PanelConfig.setShow("showBattery", !PanelConfig.showBattery)
+                                    }
+                                }
+                            }
+                        }
+
+                        // ═════════ МОДУЛИ ═════════
+                        Flickable {
+                            id: modulesPage
+                            anchors.fill: parent
+                            visible: win.tab === "modules"
+                            clip: true
+                            contentWidth: width
+                            contentHeight: modulesCol.implicitHeight
+                            boundsBehavior: Flickable.StopAtBounds
+
+                            ColumnLayout {
+                                id: modulesCol
+                                width: modulesPage.width
+                                spacing: 10
+
+                                Lbl {
+                                    text: I18n.t("Модули")
+                                    color: win.fg
+                                    font.family: Rock.display
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: 13
+                                }
+
+                                Lbl {
                                     Layout.fillWidth: true
-                                    spacing: 2
-                                    Lbl { text: I18n.t("Обновление"); color: win.fg; font.pixelSize: 11 }
+                                    text: I18n.t("Какие модули показывать в панели и островах")
+                                    color: win.sub
+                                    font.pixelSize: 11
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 4
+                                    height: 1
+                                    color: win.line
+                                }
+
+                                Lbl {
+                                    Layout.topMargin: 4
+                                    text: I18n.t("Виджеты рабочего стола")
+                                    color: win.fg
+                                    font.family: Rock.display
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: 13
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Включить виджеты")
+                                    hint: I18n.t("Часы и плеер на свободном месте рабочего стола")
+                                    Toggle {
+                                        checked: PanelConfig.widgetsEnabled
+                                        onToggled: PanelConfig.setWidgets(!PanelConfig.widgetsEnabled)
+                                    }
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Часы и нагрузка")
+                                    hint: I18n.t("Время, дата и загрузка системы")
+                                    Toggle {
+                                        checked: PanelConfig.widgetClock
+                                        onToggled: {
+                                            if (!PanelConfig.widgetsEnabled) PanelConfig.setWidgets(true)
+                                            PanelConfig.setWidget("widgetClock", !PanelConfig.widgetClock)
+                                        }
+                                    }
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Плеер")
+                                    hint: I18n.t("Обложка, трек и управление")
+                                    Toggle {
+                                        checked: PanelConfig.widgetPlayer
+                                        onToggled: {
+                                            if (!PanelConfig.widgetsEnabled) PanelConfig.setWidgets(true)
+                                            PanelConfig.setWidget("widgetPlayer", !PanelConfig.widgetPlayer)
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 4
+                                    height: 1
+                                    color: win.line
+                                }
+
+                                SettingsRow {
+                                    title: "Bluetooth"
+                                    hint: I18n.t("Значок и подключённые устройства")
+                                    Toggle {
+                                        checked: PanelConfig.modules.bt
+                                        onToggled: PanelConfig.setModule("bt", !PanelConfig.modules.bt)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: "Wi-Fi"
+                                    hint: I18n.t("Индикатор беспроводной сети")
+                                    Toggle {
+                                        checked: PanelConfig.modules.wifi
+                                        onToggled: PanelConfig.setModule("wifi", !PanelConfig.modules.wifi)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Сеть / скорость")
+                                    hint: I18n.t("Значок сети и скорость передачи")
+                                    Toggle {
+                                        checked: PanelConfig.modules.net
+                                        onToggled: PanelConfig.setModule("net", !PanelConfig.modules.net)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Уведомления")
+                                    hint: I18n.t("Колокольчик и счётчик")
+                                    Toggle {
+                                        checked: PanelConfig.modules.notif
+                                        onToggled: PanelConfig.setModule("notif", !PanelConfig.modules.notif)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Медиа")
+                                    hint: I18n.t("Текущий трек в центральном острове")
+                                    Toggle {
+                                        checked: PanelConfig.modules.music
+                                        onToggled: PanelConfig.setModule("music", !PanelConfig.modules.music)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Погода")
+                                    hint: I18n.t("Температура и осадки")
+                                    Toggle {
+                                        checked: PanelConfig.modules.weather
+                                        onToggled: PanelConfig.setModule("weather", !PanelConfig.modules.weather)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Помодоро")
+                                    hint: I18n.t("Таймер фокуса")
+                                    Toggle {
+                                        checked: PanelConfig.modules.pomodoro
+                                        onToggled: PanelConfig.setModule("pomodoro", !PanelConfig.modules.pomodoro)
+                                    }
+                                }
+                                SettingsRow {
+                                    title: I18n.t("Запись экрана")
+                                    hint: I18n.t("Индикатор записи")
+                                    Toggle {
+                                        checked: PanelConfig.modules.record
+                                        onToggled: PanelConfig.setModule("record", !PanelConfig.modules.record)
+                                    }
+                                }
+                            }
+                        }
+
+                        // ═════════ ВИД ═════════
+                        Flickable {
+                            id: lookPage
+                            anchors.fill: parent
+                            visible: win.tab === "look"
+                            clip: true
+                            contentWidth: width
+                            contentHeight: lookCol.implicitHeight
+                            boundsBehavior: Flickable.StopAtBounds
+
+                            ColumnLayout {
+                                id: lookCol
+                                width: lookPage.width
+                                spacing: 10
+
+                                Lbl {
+                                    text: I18n.t("Вид")
+                                    color: win.fg
+                                    font.family: Rock.display
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: 13
+                                }
+
+                                Lbl {
+                                    Layout.fillWidth: true
+                                    text: I18n.t("Цвета берутся из текущих обоев автоматически")
+                                    color: win.sub
+                                    font.pixelSize: 11
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Размер шрифта")
+                                    SettingsSlider {
+                                        from: 8
+                                        to: 24
+                                        value: PanelConfig.fontSize
+                                        onMoved: v => PanelConfig.setFontSize(v)
+                                    }
+                                    Lbl {
+                                        Layout.preferredWidth: 26
+                                        horizontalAlignment: Text.AlignRight
+                                        text: PanelConfig.fontSize
+                                        color: win.accent
+                                        font.family: Rock.mono
+                                        font.pixelSize: 11
+                                    }
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Скругление островов")
+                                    SettingsSlider {
+                                        from: 0
+                                        to: 30
+                                        value: PanelConfig.islandRadius
+                                        onMoved: v => PanelConfig.setIslandRadius(v)
+                                    }
+                                    Lbl {
+                                        Layout.preferredWidth: 26
+                                        horizontalAlignment: Text.AlignRight
+                                        text: PanelConfig.islandRadius
+                                        color: win.accent
+                                        font.family: Rock.mono
+                                        font.pixelSize: 11
+                                    }
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Прозрачность стекла")
+                                    SettingsSlider {
+                                        from: 30
+                                        to: 100
+                                        value: PanelConfig.surfaceOpacity
+                                        onMoved: v => PanelConfig.setSurfaceOpacity(v)
+                                    }
+                                    Lbl {
+                                        Layout.preferredWidth: 36
+                                        horizontalAlignment: Text.AlignRight
+                                        text: PanelConfig.surfaceOpacity + "%"
+                                        color: win.accent
+                                        font.family: Rock.mono
+                                        font.pixelSize: 11
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 70
+                                    Layout.topMargin: 6
+                                    radius: PanelConfig.islandRadius
+                                    color: Theme.islandBg
+                                    border.width: 1
+                                    border.color: Rock.a(win.fg, 0.16)
+
+                                    RowLayout {
+                                        anchors.centerIn: parent
+                                        spacing: 10
+                                        Rectangle {
+                                            width: 70; height: 22; radius: Math.max(4, PanelConfig.islandRadius - 8)
+                                            color: Rock.a(win.accent, 0.18)
+                                        }
+                                        Rectangle {
+                                            width: 126; height: 22; radius: Math.max(4, PanelConfig.islandRadius - 8)
+                                            color: Rock.a(win.fg, 0.08)
+                                        }
+                                        Rectangle {
+                                            width: 70; height: 22; radius: Math.max(4, PanelConfig.islandRadius - 8)
+                                            color: Rock.a(win.accent, 0.18)
+                                        }
+                                    }
+                                }
+
+                                Lbl {
+                                    Layout.fillWidth: true
+                                    text: I18n.t("Палитра, прозрачность и форма применяются сразу")
+                                    color: win.sub
+                                    font.pixelSize: 10
+                                }
+
+                            }
+                        }
+
+                        // ═════════ ЕЩЁ ═════════
+                        Flickable {
+                            id: morePage
+                            anchors.fill: parent
+                            visible: win.tab === "more"
+                            clip: true
+                            contentWidth: width
+                            contentHeight: moreCol.implicitHeight
+                            boundsBehavior: Flickable.StopAtBounds
+
+                            ColumnLayout {
+                                id: moreCol
+                                width: morePage.width
+                                spacing: 12
+
+                                Lbl {
+                                    text: I18n.t("Поведение")
+                                    color: win.fg
+                                    font.family: Rock.display
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: 13
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Язык")
+                                    SettingsChoice {
+                                        options: win.languageOptions
+                                        value: PanelConfig.language
+                                        onPicked: key => PanelConfig.setLanguage(key)
+                                    }
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Не засыпать")
+                                    hint: I18n.t("Пока включено — экран не гаснет")
+                                    Toggle {
+                                        checked: UI.caffeine
+                                        checkedColor: Rock.uiAccent
+                                        uncheckedColor: Rock.a(Rock.uiText, 0.12)
+                                        onToggled: UI.caffeine = !UI.caffeine
+                                    }
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Авто-блокировка")
+                                    hint: I18n.t("Минут бездействия до блокировки")
                                     SettingsInput {
+                                        fieldWidth: 84
+                                        text: PanelConfig.lockAfterMin
+                                        onEdited: v => PanelConfig.setLockAfterMin(v)
+                                    }
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Автозасыпание")
+                                    hint: I18n.t("Минут бездействия до сна")
+                                    SettingsInput {
+                                        fieldWidth: 84
+                                        text: PanelConfig.sleepAfterMin
+                                        onEdited: v => PanelConfig.setSleepAfterMin(v)
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: win.line
+                                }
+
+                                Lbl {
+                                    text: I18n.t("Аватар пользователя")
+                                    color: win.fg
+                                    font.family: Rock.display
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: 13
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 14
+
+                                    Avatar {
+                                        Layout.alignment: Qt.AlignTop
+                                        Layout.preferredWidth: 72
+                                        Layout.preferredHeight: 72
+                                        source: PanelConfig.avatarUrl
+                                        letter: (Quickshell.env("USER") || "user").charAt(0).toUpperCase()
+                                        bg: win.accent
+                                        fg: Rock.uiOnActive
+                                        borderWidth: 1
+                                        borderColor: win.frameEdge
+                                        fontFamily: Rock.display
+                                        fontSize: 30
+                                        fontWeight: Font.DemiBold
+                                    }
+
+                                    ColumnLayout {
                                         Layout.fillWidth: true
-                                        text: Config.weatherRefreshMin
-                                        onEdited: v => Config.setWeatherRefreshMin(v)
+                                        spacing: 8
+
+                                        Lbl {
+                                            Layout.fillWidth: true
+                                            text: PanelConfig.hasAvatar
+                                                ? I18n.t("Картинка выбрана. Она показывается вместо первой буквы имени в центре управления.")
+                                                : I18n.t("Сейчас показывается первая буква имени. Выберите картинку — она заменит букву в центре управления.")
+                                            color: win.sub
+                                            font.pixelSize: 11
+                                            wrapMode: Text.WordWrap
+                                        }
+
+                                        RowLayout {
+                                            spacing: 8
+                                            Rectangle {
+                                                implicitWidth: pickLbl.implicitWidth + 26
+                                                implicitHeight: 30
+                                                radius: Rock.uiRadiusSm
+                                                color: pickArea.containsMouse ? Rock.a(win.accent, 0.85) : win.accent
+                                                Behavior on color { ColorAnimation { duration: 120 } }
+                                                Lbl {
+                                                    id: pickLbl
+                                                    anchors.centerIn: parent
+                                                    text: I18n.t("Выбрать файл")
+                                                    color: Rock.uiOnActive
+                                                    font.family: Rock.display
+                                                    font.pixelSize: 11
+                                                    font.weight: Font.DemiBold
+                                                }
+                                                MouseArea {
+                                                    id: pickArea
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: win.startPick()
+                                                }
+                                            }
+                                            Rectangle {
+                                                visible: PanelConfig.hasAvatar
+                                                implicitWidth: resetAvatarLbl.implicitWidth + 22
+                                                implicitHeight: 30
+                                                radius: Rock.uiRadiusSm
+                                                color: resetAvatarArea.containsMouse ? Rock.a(win.fg, 0.12) : Rock.a(win.fg, 0.05)
+                                                border.width: 1
+                                                border.color: Rock.a(win.fg, 0.20)
+                                                Behavior on color { ColorAnimation { duration: 120 } }
+                                                Lbl {
+                                                    id: resetAvatarLbl
+                                                    anchors.centerIn: parent
+                                                    text: I18n.t("Сбросить")
+                                                    color: win.sub
+                                                    font.family: Rock.display
+                                                    font.pixelSize: 11
+                                                    font.weight: Font.DemiBold
+                                                }
+                                                MouseArea {
+                                                    id: resetAvatarArea
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: PanelConfig.clearAvatar()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 1
+                                    color: win.line
+                                }
+
+                                Lbl {
+                                    text: I18n.t("Погода")
+                                    color: win.fg
+                                    font.family: Rock.display
+                                    font.weight: Font.DemiBold
+                                    font.pixelSize: 13
+                                }
+
+                                SettingsRow {
+                                    title: I18n.t("Город")
+                                    hint: I18n.t("Пусто — определить по IP")
+                                    SettingsInput {
+                                        fieldWidth: 200
+                                        text: Config.weatherCity
+                                        onEdited: v => Config.setWeatherCity(v)
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 12
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 2
+                                        Lbl { text: I18n.t("Широта"); color: win.fg; font.family: Rock.display; font.pixelSize: 11 }
+                                        SettingsInput {
+                                            Layout.fillWidth: true
+                                            text: Config.weatherLat
+                                            onEdited: v => Config.setWeatherLat(v)
+                                        }
+                                    }
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 2
+                                        Lbl { text: I18n.t("Долгота"); color: win.fg; font.family: Rock.display; font.pixelSize: 11 }
+                                        SettingsInput {
+                                            Layout.fillWidth: true
+                                            text: Config.weatherLon
+                                            onEdited: v => Config.setWeatherLon(v)
+                                        }
+                                    }
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 2
+                                        Lbl { text: I18n.t("Обновление"); color: win.fg; font.family: Rock.display; font.pixelSize: 11 }
+                                        SettingsInput {
+                                            Layout.fillWidth: true
+                                            text: Config.weatherRefreshMin
+                                            onEdited: v => Config.setWeatherRefreshMin(v)
+                                        }
                                     }
                                 }
                             }
@@ -1186,31 +1153,46 @@ PanelWindow {
                     }
                 }
 
-                // ── подсказка ──
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: win.line
+                }
+
+                // ── подсказка снизу ──
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 6
-                    Lbl {
-                        text: "\uf0eb"
-                        color: win.accent
-                        font.pixelSize: 10
-                    }
+                    spacing: 8
+
                     Lbl {
                         Layout.fillWidth: true
                         text: I18n.t("Изменения применяются сразу и сохраняются в panel.json")
                         color: win.sub
+                        font.family: Rock.display
                         font.pixelSize: 10
                     }
-                    Lbl {
-                        text: "esc"
-                        color: win.accent
-                        font.pixelSize: 9
-                        font.weight: Font.Black
+
+                    Rectangle {
+                        implicitWidth: escLbl.implicitWidth + 14
+                        implicitHeight: 20
+                        radius: 5
+                        color: Rock.a(win.fg, 0.06)
+                        border.width: 1
+                        border.color: Rock.a(win.fg, 0.16)
+                        Lbl {
+                            id: escLbl
+                            anchors.centerIn: parent
+                            text: "Esc"
+                            color: win.sub
+                            font.pixelSize: 9
+                            font.bold: true
+                        }
                     }
                     Lbl {
                         text: I18n.t("закрыть")
                         color: win.sub
-                        font.pixelSize: 9
+                        font.family: Rock.display
+                        font.pixelSize: 10
                     }
                 }
             }
@@ -1226,58 +1208,37 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            color: Rock.a(Rock.ink, 0.62)
+            color: Rock.a(Rock.ink, 0.5)
             MouseArea { anchors.fill: parent; onClicked: win.picking = false }
         }
 
         Rectangle {
             id: pickCard
             anchors.centerIn: parent
-            width: Math.min(parent.width - 90, 900)
-            height: Math.min(parent.height - 90, 560)
-            radius: Math.max(10, Rock.uiRadius)
+            width: Math.min(parent.width - 80, 880)
+            height: Math.min(parent.height - 80, 540)
+            radius: Math.max(12, Rock.uiRadius)
             color: win.cardFill
             border.width: Rock.uiBorder
             border.color: win.frameEdge
 
             MouseArea { anchors.fill: parent }
 
-            SaoGrid { anchors.fill: parent; step: 28 }
-            MarisaPattern { anchors.fill: parent; opacity: 0.5 }
-            MarisaFrame {
-                anchors.fill: parent
-                inset: 7
-                frameRadius: Math.max(2, pickCard.radius - 5)
-            }
-            SaoFrame {
-                anchors.fill: parent
-                inset: 6
-                cut: 12
-                segments: 34
-            }
-
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 20
+                anchors.margins: 18
                 spacing: 12
 
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
 
-                    Rectangle {
-                        width: 7; height: 26
-                        radius: 4
-                        color: win.accent
-                    }
-
                     Lbl {
-                        text: I18n.t("ВЫБОР АВАТАРА")
+                        text: I18n.t("Выбор аватара")
                         color: win.fg
                         font.family: Rock.display
-                        font.pixelSize: 18
-                        font.weight: Font.Black
-                        font.letterSpacing: 1
+                        font.pixelSize: 16
+                        font.weight: Font.DemiBold
                     }
 
                     Item { Layout.fillWidth: true }
@@ -1285,13 +1246,12 @@ PanelWindow {
                     Rectangle {
                         width: 30; height: 30
                         radius: 15
-                        color: pickCloseArea.containsMouse ? Rock.a(win.accent, 0.22) : "transparent"
-                        border.width: pickCloseArea.containsMouse ? 1 : 0
-                        border.color: win.accent
+                        color: pickCloseArea.containsMouse ? Rock.a(win.fg, 0.10) : "transparent"
+                        Behavior on color { ColorAnimation { duration: 120 } }
                         Lbl {
                             anchors.centerIn: parent
                             text: "\uf00d"
-                            color: win.fg
+                            color: win.sub
                             font.pixelSize: 12
                         }
                         MouseArea {
@@ -1307,7 +1267,7 @@ PanelWindow {
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: Rock.a(win.fg, 0.14)
+                    color: win.line
                 }
 
                 RowLayout {
@@ -1315,16 +1275,16 @@ PanelWindow {
                     spacing: 8
 
                     Rectangle {
-                        width: 36; height: 34
+                        width: 32; height: 32
                         radius: Rock.uiRadiusSm
-                        color: upArea.containsMouse ? Rock.a(win.accent, 0.8) : Rock.a(win.fg, 0.05)
+                        color: upArea.containsMouse ? Rock.a(win.fg, 0.12) : Rock.a(win.fg, 0.05)
                         border.width: 1
                         border.color: Rock.a(win.fg, 0.18)
                         Behavior on color { ColorAnimation { duration: 100 } }
                         Lbl {
                             anchors.centerIn: parent
                             text: "\uf060"
-                            color: upArea.containsMouse ? Rock.uiOnActive : win.fg
+                            color: win.sub
                             font.pixelSize: 11
                         }
                         MouseArea {
@@ -1338,7 +1298,7 @@ PanelWindow {
 
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 34
+                        height: 32
                         radius: Rock.uiRadiusSm
                         color: Rock.a(win.fg, 0.05)
                         border.width: 1
@@ -1350,33 +1310,34 @@ PanelWindow {
                             text: win.browsePath
                             elide: Text.ElideMiddle
                             color: win.fg
-                            font.pixelSize: 10
-                            font.weight: Font.DemiBold
+                            font.family: Rock.display
+                            font.pixelSize: 11
                         }
                     }
 
                     Repeater {
                         model: [
-                            { t: I18n.t("ДОМ"),  p: Quickshell.env("HOME") },
-                            { t: I18n.t("ФОТО"), p: Quickshell.env("HOME") + "/Pictures" }
+                            { t: I18n.t("Дом"), p: Quickshell.env("HOME") },
+                            { t: I18n.t("Фото"), p: Quickshell.env("HOME") + "/Pictures" }
                         ]
                         delegate: Rectangle {
                             id: navBtn
                             required property var modelData
-                            width: 64; height: 34
+                            implicitWidth: navLbl.implicitWidth + 22
+                            height: 32
                             radius: Rock.uiRadiusSm
-                            color: navArea.containsMouse ? Rock.a(win.accent, 0.8) : Rock.a(win.fg, 0.05)
+                            color: navArea.containsMouse ? Rock.a(win.fg, 0.12) : Rock.a(win.fg, 0.05)
                             border.width: 1
                             border.color: Rock.a(win.fg, 0.18)
                             Behavior on color { ColorAnimation { duration: 100 } }
                             Lbl {
+                                id: navLbl
                                 anchors.centerIn: parent
                                 text: navBtn.modelData.t
-                                color: navArea.containsMouse ? Rock.uiOnActive : win.sub
+                                color: win.sub
                                 font.family: Rock.display
-                                font.pixelSize: 9
-                                font.weight: Font.Black
-                                font.letterSpacing: 0.6
+                                font.pixelSize: 11
+                                font.weight: Font.DemiBold
                             }
                             MouseArea {
                                 id: navArea
@@ -1396,10 +1357,10 @@ PanelWindow {
 
                     ListView {
                         id: pickDirs
-                        Layout.preferredWidth: 220
+                        Layout.preferredWidth: 210
                         Layout.fillHeight: true
                         clip: true
-                        spacing: 5
+                        spacing: 4
                         boundsBehavior: Flickable.StopAtBounds
                         model: win.browseDirs
 
@@ -1409,19 +1370,18 @@ PanelWindow {
                             text: I18n.t("Папок нет")
                             color: Rock.a(win.fg, 0.45)
                             font.family: Rock.display
-                            font.pixelSize: 12
-                            font.weight: Font.Black
+                            font.pixelSize: 11
                         }
 
                         delegate: Rectangle {
                             id: pickDirRow
                             required property string modelData
                             width: pickDirs.width
-                            height: 40
+                            height: 36
                             radius: Rock.uiRadiusSm
-                            color: pickDirArea.containsMouse ? Rock.a(win.accent, 0.8) : Rock.a(win.fg, 0.05)
-                            border.width: 1
-                            border.color: Rock.a(win.fg, 0.15)
+                            color: pickDirArea.containsMouse ? Rock.a(win.accent, 0.12) : "transparent"
+                            border.width: pickDirArea.containsMouse ? 1 : 0
+                            border.color: Rock.a(win.accent, 0.4)
                             Behavior on color { ColorAnimation { duration: 100 } }
 
                             RowLayout {
@@ -1431,18 +1391,18 @@ PanelWindow {
                                 spacing: 8
                                 Lbl {
                                     text: "\uf07b"
-                                    color: pickDirArea.containsMouse ? Rock.uiOnActive : win.accent
+                                    color: win.sub
                                     font.pixelSize: 12
                                 }
                                 Lbl {
                                     Layout.fillWidth: true
                                     text: pickDirRow.modelData
                                     elide: Text.ElideRight
-                                    color: pickDirArea.containsMouse ? Rock.uiOnActive : win.fg
+                                    color: win.fg
+                                    font.family: Rock.display
                                     font.pixelSize: 11
-                                    font.weight: Font.DemiBold
                                 }
-                                Lbl { text: "\uf054"; color: Rock.a(win.fg, 0.4); font.pixelSize: 9 }
+                                Lbl { text: "\uf054"; color: Rock.a(win.fg, 0.35); font.pixelSize: 9 }
                             }
 
                             MouseArea {
@@ -1455,6 +1415,12 @@ PanelWindow {
                                     : win.browsePath + "/" + pickDirRow.modelData)
                             }
                         }
+                    }
+
+                    Rectangle {
+                        Layout.preferredWidth: 1
+                        Layout.fillHeight: true
+                        color: win.line
                     }
 
                     GridView {
@@ -1471,21 +1437,19 @@ PanelWindow {
                         ColumnLayout {
                             anchors.centerIn: parent
                             visible: pickGrid.count === 0
-                            spacing: 4
+                            spacing: 6
                             Lbl {
                                 Layout.alignment: Qt.AlignHCenter
                                 text: "\uf03e"
-                                color: win.accent
-                                font.pixelSize: 26
+                                color: Rock.a(win.fg, 0.4)
+                                font.pixelSize: 24
                             }
                             Lbl {
                                 Layout.alignment: Qt.AlignHCenter
-                                text: I18n.t("НЕТ ИЗОБРАЖЕНИЙ")
-                                color: win.fg
+                                text: I18n.t("Нет изображений")
+                                color: win.sub
                                 font.family: Rock.display
-                                font.pixelSize: 13
-                                font.weight: Font.Black
-                                font.letterSpacing: 0.8
+                                font.pixelSize: 12
                             }
                         }
 
@@ -1500,10 +1464,8 @@ PanelWindow {
                                 anchors.margins: 6
                                 radius: Rock.uiRadiusSm
                                 color: Rock.a(win.fg, 0.05)
-                                border.width: pickFileArea.containsMouse ? 2 : 1
+                                border.width: 1
                                 border.color: pickFileArea.containsMouse ? win.accent : Rock.a(win.fg, 0.16)
-                                scale: pickFileArea.containsMouse ? 1.03 : 1
-                                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
                                 Behavior on border.color { ColorAnimation { duration: 100 } }
 
                                 ColumnLayout {
@@ -1532,8 +1494,9 @@ PanelWindow {
                                         text: pickCell.modelData.split("/").pop()
                                         elide: Text.ElideMiddle
                                         horizontalAlignment: Text.AlignHCenter
-                                        color: win.fg
-                                        font.pixelSize: 9
+                                        color: win.sub
+                                        font.family: Rock.display
+                                        font.pixelSize: 10
                                     }
                                 }
 
@@ -1557,24 +1520,26 @@ PanelWindow {
                         Layout.fillWidth: true
                         text: win.browseFiles.length + I18n.t(" изображений · нажми на картинку, чтобы выбрать")
                         color: win.sub
+                        font.family: Rock.display
                         font.pixelSize: 10
                     }
 
                     Rectangle {
-                        width: 100; height: 34
+                        implicitWidth: cancelLbl.implicitWidth + 24
+                        height: 30
                         radius: Rock.uiRadiusSm
-                        color: pickCancelArea.containsMouse ? Rock.a(win.fg, 0.14) : "transparent"
+                        color: pickCancelArea.containsMouse ? Rock.a(win.fg, 0.12) : Rock.a(win.fg, 0.05)
                         border.width: 1
-                        border.color: Rock.a(win.fg, 0.28)
+                        border.color: Rock.a(win.fg, 0.20)
                         Behavior on color { ColorAnimation { duration: 100 } }
                         Lbl {
+                            id: cancelLbl
                             anchors.centerIn: parent
-                            text: I18n.t("ОТМЕНА")
+                            text: I18n.t("Отмена")
                             color: win.sub
                             font.family: Rock.display
-                            font.pixelSize: 10
-                            font.weight: Font.Black
-                            font.letterSpacing: 0.7
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
                         }
                         MouseArea {
                             id: pickCancelArea
@@ -1591,8 +1556,8 @@ PanelWindow {
 
     ParallelAnimation {
         id: fade
-        NumberAnimation { target: dim;   property: "opacity"; from: 0; to: 1; duration: 160 }
-        NumberAnimation { target: frame; property: "opacity"; from: 0; to: 1; duration: 180 }
-        NumberAnimation { target: frame; property: "scale";   from: 0.96; to: 1; duration: 200; easing.type: Easing.OutCubic }
+        NumberAnimation { target: dim;   property: "opacity"; from: 0; to: 1; duration: 140 }
+        NumberAnimation { target: frame; property: "opacity"; from: 0; to: 1; duration: 160 }
+        NumberAnimation { target: frame; property: "scale";   from: 0.97; to: 1; duration: 180; easing.type: Easing.OutCubic }
     }
 }

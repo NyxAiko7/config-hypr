@@ -361,6 +361,20 @@ PanelWindow {
         readonly property bool launchMode: bar.launcherHere
         readonly property bool eventMode: !launchMode && UI.eventActive
         readonly property color eventAccent: Rock.uiAccent
+        readonly property color eventTone: {
+            switch (UI.eventKind) {
+            case "media":     return Rock.accent2
+            case "battery":   return Rock.orange
+            case "rec":       return Rock.orange
+            case "net":
+            case "wifi":
+            case "bt":
+            case "weather":   return Rock.cyan
+            case "theme":
+            case "wallpaper": return Rock.accent
+            default:          return Rock.accent
+            }
+        }
         readonly property string eventCategory: {
             switch (UI.eventKind) {
             case "media":     return I18n.t("СЕЙЧАС ИГРАЕТ")
@@ -410,7 +424,8 @@ PanelWindow {
             anchors.fill: parent
             radius: centerIsland.radiusNow
             fill: centerIsland.launchMode ? Rock.uiSurface : Rock.islandFill
-            shadowColor: Rock.gold
+            shadowColor: centerIsland.eventMode ? centerIsland.eventTone : Rock.gold
+            accent: centerIsland.eventMode ? centerIsland.eventTone : Rock.uiAccent
             shadowOffset: 0
             active: centerIsland.launchMode || centerIsland.eventMode
             pulse: centerIsland.eventMode
@@ -722,34 +737,126 @@ PanelWindow {
         ColumnLayout {
             id: eventRow
             anchors.centerIn: parent
-            width: Math.min(400, Math.max(320, bar.screen ? bar.screen.width * 0.24 : 360))
-            spacing: 9
+            width: Math.min(440, Math.max(334, (bar.screen ? bar.screen.width : 860) * 0.27))
+            spacing: 10
             opacity: centerIsland.eventMode ? 1 : 0
             visible: opacity > 0.01
             Behavior on opacity { NumberAnimation { duration: 220 } }
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 12
+                spacing: 14
 
                 Item {
-                    Layout.preferredWidth: 42
-                    Layout.preferredHeight: 42
-                    Layout.alignment: Qt.AlignTop
+                    Layout.preferredWidth: 56
+                    Layout.preferredHeight: 56
+                    Layout.alignment: Qt.AlignVCenter
 
                     Rectangle {
-                        anchors.fill: parent
-                        radius: Rock.comic ? 10 : Rock.marisa ? 4 : 14
-                        color: Rock.comic ? Rock.yellow : Rock.a(Rock.gold, 0.10)
-                        border.width: Rock.comic ? 2 : 1
-                        border.color: Rock.comic ? Rock.ink : Rock.marisa ? Rock.cream : Rock.a(Rock.gold, 0.55)
+                        anchors.centerIn: parent
+                        width: 52
+                        height: 52
+                        radius: 26
+                        color: Rock.a(centerIsland.eventTone, 0.10)
+                        border.width: 1
+                        border.color: Rock.a(centerIsland.eventTone, 0.18)
+                    }
+
+                    Canvas {
+                        id: outerScanner
+                        anchors.centerIn: parent
+                        width: 54
+                        height: 54
+                        property color tone: centerIsland.eventTone
+                        onToneChanged: requestPaint()
+
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+                            const cx = width / 2
+                            const cy = height / 2
+                            ctx.strokeStyle = tone
+                            ctx.lineWidth = 2
+                            ctx.lineCap = "round"
+                            for (let i = 0; i < 12; i++) {
+                                const a0 = i * Math.PI / 6
+                                ctx.beginPath()
+                                ctx.arc(cx, cy, 24, a0, a0 + Math.PI / 12)
+                                ctx.stroke()
+                            }
+                        }
+
+                        RotationAnimation on rotation {
+                            running: centerIsland.eventMode
+                            from: 0
+                            to: 360
+                            duration: 12000
+                            loops: Animation.Infinite
+                        }
+                    }
+
+                    Canvas {
+                        id: innerScanner
+                        anchors.centerIn: parent
+                        width: 46
+                        height: 46
+                        property color tone: centerIsland.eventTone
+                        onToneChanged: requestPaint()
+
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+                            const cx = width / 2
+                            const cy = height / 2
+                            ctx.strokeStyle = tone
+                            ctx.globalAlpha = 0.55
+                            ctx.lineWidth = 1.5
+                            ctx.lineCap = "round"
+                            for (let i = 0; i < 8; i++) {
+                                const a0 = i * Math.PI / 4
+                                ctx.beginPath()
+                                ctx.arc(cx, cy, 19, a0, a0 + Math.PI / 10)
+                                ctx.stroke()
+                            }
+                        }
+
+                        RotationAnimation on rotation {
+                            running: centerIsland.eventMode
+                            from: 360
+                            to: 0
+                            duration: 8500
+                            loops: Animation.Infinite
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 36
+                        height: 36
+                        radius: 18
+                        color: Rock.uiSurface2
+                        border.width: 1
+                        border.color: Rock.a(centerIsland.eventTone, 0.55)
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: Rock.a(centerIsland.eventTone, 0.30) }
+                            GradientStop { position: 1.0; color: Rock.a(Rock.uiSurface2, 0.75) }
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 32
+                        height: 32
+                        radius: 16
+                        color: Rock.uiSurface2
                         visible: evArt.status !== Image.Ready || UI.eventKind === "level"
                     }
 
                     Image {
                         id: evArt
-                        anchors.fill: parent
-                        anchors.margins: 2
+                        anchors.centerIn: parent
+                        width: 24
+                        height: 24
                         source: UI.eventArt
                         fillMode: Image.PreserveAspectCrop
                         visible: status === Image.Ready && UI.eventKind !== "level"
@@ -759,21 +866,20 @@ PanelWindow {
                         anchors.centerIn: parent
                         visible: evArt.status !== Image.Ready || UI.eventKind === "level"
                         text: UI.eventIcon
-                        color: Rock.comic ? Rock.ink : Rock.marisa ? Rock.cream : Rock.gold
-                        font.pixelSize: 18
+                        color: centerIsland.eventTone
+                        font.pixelSize: 15
                     }
 
                     Rectangle {
-                        visible: !Rock.comic
-                        width: 7
-                        height: 7
+                        width: 8
+                        height: 8
                         radius: 1.5
                         rotation: 45
-                        color: Rock.marisa ? Rock.yellow : Rock.gold
                         anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.topMargin: -3
-                        anchors.leftMargin: -3
+                        anchors.right: parent.right
+                        anchors.topMargin: 1
+                        anchors.rightMargin: 2
+                        color: centerIsland.eventTone
                         border.width: 1
                         border.color: Rock.a(Rock.cream, 0.7)
                     }
@@ -784,14 +890,40 @@ PanelWindow {
                     Layout.minimumWidth: 0
                     spacing: 1
 
-                    Lbl {
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: centerIsland.eventCategory
-                        color: centerIsland.eventAccent
-                        font.pixelSize: 8
-                        font.bold: true
-                        font.letterSpacing: 1.2
-                        elide: Text.ElideRight
+                        spacing: 6
+
+                        Rectangle {
+                            width: 5
+                            height: 5
+                            radius: 2.5
+                            color: centerIsland.eventTone
+                            SequentialAnimation on opacity {
+                                running: centerIsland.eventMode
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.25; duration: 620 }
+                                NumberAnimation { to: 1; duration: 620 }
+                            }
+                        }
+
+                        Lbl {
+                            Layout.fillWidth: true
+                            text: centerIsland.eventCategory
+                            color: centerIsland.eventTone
+                            font.pixelSize: 8
+                            font.bold: true
+                            font.letterSpacing: 1.4
+                            elide: Text.ElideRight
+                        }
+
+                        Rectangle {
+                            width: 4
+                            height: 4
+                            radius: 1
+                            rotation: 45
+                            color: Rock.a(centerIsland.eventTone, 0.6)
+                        }
                     }
 
                     Lbl {
@@ -800,7 +932,7 @@ PanelWindow {
                         color: Rock.cream
                         font.family: Rock.display
                         font.weight: Font.Black
-                        font.pixelSize: 14
+                        font.pixelSize: 15
                         elide: Text.ElideRight
                         maximumLineCount: 1
                     }
@@ -820,47 +952,54 @@ PanelWindow {
                     Layout.alignment: Qt.AlignVCenter
                     spacing: 2
 
-                    Lbl {
+                    ColumnLayout {
                         visible: UI.eventKind === "level"
-                        Layout.alignment: Qt.AlignRight
-                        text: Levels.muted ? "—" : Math.round(Levels.value * 100)
-                        color: centerIsland.eventAccent
-                        font.family: Rock.display
-                        font.weight: Font.Black
-                        font.pixelSize: 22
-                    }
+                        spacing: -3
 
-                    Lbl {
-                        visible: UI.eventKind === "level"
-                        Layout.alignment: Qt.AlignRight
-                        text: "%"
-                        color: Rock.a(Rock.cream, 0.4)
-                        font.pixelSize: 8
-                        font.bold: true
+                        Lbl {
+                            Layout.alignment: Qt.AlignRight
+                            text: Levels.muted ? "—" : Math.round(Levels.value * 100)
+                            color: centerIsland.eventTone
+                            font.family: Rock.display
+                            font.weight: Font.Black
+                            font.pixelSize: 24
+                        }
+
+                        Lbl {
+                            Layout.alignment: Qt.AlignRight
+                            text: Levels.kind === "brightness" ? "LUX" : "VOL"
+                            color: Rock.a(Rock.cream, 0.35)
+                            font.pixelSize: 7
+                            font.bold: true
+                            font.letterSpacing: 1.5
+                        }
                     }
 
                     Row {
-                        visible: UI.eventKind === "media"
+                        visible: UI.eventKind !== "level"
                         Layout.alignment: Qt.AlignRight
                         spacing: 3
+
                         Repeater {
-                            model: 4
+                            model: 5
                             delegate: Item {
                                 id: eq
                                 required property int index
                                 width: 3
-                                height: 16
+                                height: 18
+
                                 Rectangle {
                                     anchors.bottom: parent.bottom
                                     width: 3
                                     radius: 1.5
-                                    height: 5
-                                    color: Rock.yellow
+                                    height: 4 + ((eq.index * 5 + 3) % 12)
+                                    color: centerIsland.eventTone
+                                    opacity: 0.45 + (eq.index % 3) * 0.22
                                     SequentialAnimation on height {
                                         loops: Animation.Infinite
                                         running: centerIsland.eventMode && UI.eventKind === "media"
-                                        NumberAnimation { to: 15; duration: 260 + eq.index * 70; easing.type: Easing.InOutSine }
-                                        NumberAnimation { to: 4;  duration: 300 + eq.index * 60; easing.type: Easing.InOutSine }
+                                        NumberAnimation { to: 16; duration: 240 + eq.index * 80; easing.type: Easing.InOutSine }
+                                        NumberAnimation { to: 4;  duration: 280 + eq.index * 65; easing.type: Easing.InOutSine }
                                     }
                                 }
                             }
@@ -872,94 +1011,80 @@ PanelWindow {
                         Layout.alignment: Qt.AlignRight
                         text: bar.fmtTime(Media.player ? Media.player.position : 0) + " / " + bar.fmtTime(Media.player ? Media.player.length : 0)
                         color: Rock.a(Rock.cream, 0.55)
-                        font.pixelSize: 9
+                        font.pixelSize: 8
+                    }
+
+                    Row {
+                        visible: UI.eventKind !== "level" && UI.eventKind !== "media"
+                        Layout.alignment: Qt.AlignRight
+                        spacing: 4
+
+                        Lbl {
+                            text: "LINK"
+                            color: Rock.a(centerIsland.eventTone, 0.55)
+                            font.pixelSize: 7
+                            font.bold: true
+                            font.letterSpacing: 1.2
+                        }
+
+                        Item {
+                            width: 4
+                            height: 10
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 4
+                                height: 4
+                                radius: 2
+                                color: centerIsland.eventTone
+                                SequentialAnimation on opacity {
+                                    running: centerIsland.eventMode
+                                    loops: Animation.Infinite
+                                    NumberAnimation { to: 0.2; duration: 700 }
+                                    NumberAnimation { to: 1; duration: 700 }
+                                }
+                            }
+                        }
                     }
                 }
             }
 
             Item {
-                visible: UI.eventKind === "level"
+                id: timeline
                 Layout.fillWidth: true
-                Layout.preferredHeight: 11
+                Layout.preferredHeight: 8
 
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 5.5
-                    color: Rock.a(Rock.cream, 0.10)
-                    border.width: 1
-                    border.color: Rock.a(Rock.cream, 0.20)
-                }
-
-                Rectangle {
-                    visible: !Rock.sao
-                    width: Math.max(0, parent.width * Math.min(1, Levels.muted ? 0 : Levels.value))
-                    height: parent.height
-                    radius: 5.5
-                    opacity: Levels.muted ? 0.45 : 1
-                    gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop {
-                            position: 0.0
-                            color: Rock.comic ? Rock.pink : Rock.marisa ? Rock.yellow : Rock.a(Rock.gold, 0.72)
-                        }
-                        GradientStop {
-                            position: 1.0
-                            color: Rock.comic ? Rock.yellow : Rock.marisa ? Rock.gold : Rock.gold
-                        }
-                    }
-                    Behavior on width { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                }
+                readonly property int n: 36
 
                 Repeater {
-                    model: 9
-                    visible: !Rock.sao
+                    model: timeline.n
                     delegate: Rectangle {
                         required property int index
-                        x: parent.width * (index + 1) / 10 - width / 2
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 1
-                        height: 5
-                        color: Rock.a(Rock.cream, 0.18)
+                        readonly property real step: (timeline.width + 2) / timeline.n
+                        x: index * step
+                        width: Math.max(2, step - 2)
+                        height: index % 6 === 0 ? 6 : 3
+                        y: (timeline.height - height) / 2
+                        radius: 1.5
+                        color: index / (timeline.n - 1) <= centerIsland.ttlFrac
+                            ? (index % 6 === 0 ? centerIsland.eventTone
+                                               : Rock.a(centerIsland.eventTone, 0.72))
+                            : Rock.a(centerIsland.cream, 0.10)
+                        Behavior on color { ColorAnimation { duration: 140 } }
                     }
-                }
-            }
-
-            Item {
-                visible: UI.eventKind === "media" && Media.player !== null
-                Layout.fillWidth: true
-                Layout.preferredHeight: 3
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 1.5
-                    color: Rock.a(Rock.cream, 0.12)
                 }
 
                 Rectangle {
-                    width: Math.max(0, parent.width * (Media.player && Media.player.length > 0
-                        ? Math.min(1, Media.player.position / Media.player.length) : 0))
-                    height: parent.height
+                    width: 8
+                    height: 8
                     radius: 1.5
-                    color: centerIsland.eventAccent
-                    Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-                }
-            }
-
-            Row {
-                visible: UI.eventKind === "theme"
-                Layout.alignment: Qt.AlignLeft
-                spacing: 4
-                Repeater {
-                    model: [Rock.pink, Rock.cyan, Rock.yellow, Rock.cream]
-                    delegate: Rectangle {
-                        required property var modelData
-                        width: 14
-                        height: 14
-                        radius: Rock.marisa ? 2 : 7
-                        color: modelData
-                        border.width: 2
-                        border.color: Rock.ink
-                    }
+                    rotation: 45
+                    x: Math.max(0, Math.min(timeline.width - width,
+                                            centerIsland.ttlFrac * timeline.width - width / 2))
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: centerIsland.eventTone
+                    border.width: 1
+                    border.color: Rock.a(centerIsland.cream, 0.35)
                 }
             }
         }
@@ -978,12 +1103,6 @@ PanelWindow {
 
             readonly property string mode: UI.launcherMode
             readonly property string glyph: mode === "clip" ? "\uf0ea" : (mode === "windows" ? "\uf2d0" : "\uf303")
-            readonly property string title: Rock.marisa
-                ? (mode === "clip" ? I18n.t("СВИТОК") : (mode === "windows" ? I18n.t("ОКНА") : I18n.t("ЗАКЛИНАНИЯ")))
-                : Rock.sao
-                ? (mode === "clip" ? I18n.t("АРХИВ") : (mode === "windows" ? I18n.t("ОКНА") : I18n.t("ЗАПУСК")))
-                : (mode === "clip" ? I18n.t("БУФЕР") : (mode === "windows" ? I18n.t("ОКНА") : I18n.t("ЗАПУСК")))
-            readonly property string subtitle: (Rock.marisa ? "SPELL " : Rock.sao ? "LINK " : "KESSOKU ") + (mode === "clip" ? "CLIP" : (mode === "windows" ? "WINDOWS" : "LAUNCHER"))
             readonly property var results: mode === "clip" ? Clip.search(searchInput.text)
                                          : (mode === "windows" ? Wins.search(searchInput.text)
                                                                : Apps.search(searchInput.text))
@@ -993,6 +1112,23 @@ PanelWindow {
                 if (e.kind === "clip") Clip.paste(e)
                 else if (e.kind === "window") Wins.focus(e)
                 else Apps.launch(e)
+            }
+
+            // переключить режим на месте, не закрывая лаунчер
+            function setMode(m) {
+                if (UI.launcherMode === m) return
+                UI.launcherMode = m
+                if (m === "clip") Clip.reload()
+                searchInput.text = ""
+                resultList.currentIndex = 0
+                Qt.callLater(() => searchInput.forceActiveFocus())
+            }
+
+            // ctrl+tab листает режимы по кругу
+            function cycleMode(back) {
+                const order = ["apps", "windows", "clip"]
+                const i = order.indexOf(UI.launcherMode)
+                setMode(order[(i + (back ? order.length - 1 : 1)) % order.length])
             }
 
             Connections {
@@ -1007,55 +1143,66 @@ PanelWindow {
                 }
             }
 
+            // переключатель режимов: запуск · окна · буфер
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 6
 
+                Repeater {
+                    model: [
+                        { key: "apps", label: I18n.t("ЗАПУСК"), glyph: "\uf303" },
+                        { key: "windows", label: I18n.t("ОКНА"), glyph: "\uf2d0" },
+                        { key: "clip", label: I18n.t("БУФЕР"), glyph: "\uf0ea" }
+                    ]
+                    delegate: Rectangle {
+                        id: modeTab
+                        required property var modelData
+                        readonly property bool active: launchBox.mode === modeTab.modelData.key
+
+                        Layout.fillWidth: true
+                        implicitHeight: 24
+                        radius: Rock.uiRadiusSm
+                        color: modeTab.active ? Rock.uiActive
+                                              : (tabArea.containsMouse ? Rock.uiHover : Rock.a(Rock.uiSurface2, 0.55))
+                        border.width: Rock.uiBorder
+                        border.color: modeTab.active ? Rock.uiAccent : Rock.a(Rock.uiText, 0.16)
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        RowLayout {
+                            anchors.centerIn: parent
+                            spacing: 5
+                            Lbl {
+                                text: modeTab.modelData.glyph
+                                color: modeTab.active ? Rock.uiAccent : Rock.a(Rock.uiText, 0.5)
+                                font.pixelSize: 9
+                            }
+                            Lbl {
+                                text: modeTab.modelData.label
+                                color: modeTab.active ? Rock.uiText : Rock.a(Rock.uiText, 0.55)
+                                font.family: Rock.display
+                                font.weight: Font.Black
+                                font.pixelSize: 9
+                                font.letterSpacing: 0.6
+                            }
+                        }
+
+                        MouseArea {
+                            id: tabArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: launchBox.setMode(modeTab.modelData.key)
+                        }
+                    }
+                }
+
+                // сколько найдено прямо сейчас
                 Lbl {
-                    text: launchBox.glyph
-                    color: Rock.pinkDeep
-                    font.pixelSize: 16
-                    rotation: Rock.comic ? -8 : 0
-                    Layout.leftMargin: 4
-                }
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: -2
-                    Lbl {
-                        Layout.fillWidth: true
-                        text: launchBox.title
-                        color: Rock.uiText
-                        font.family: Rock.display
-                        font.weight: Font.Black
-                        font.pixelSize: 18
-                        font.letterSpacing: 0.4
-                        elide: Text.ElideRight
-                    }
-                    Lbl {
-                        Layout.fillWidth: true
-                        text: launchBox.subtitle
-                        color: Rock.pinkDeep
-                        font.pixelSize: 8
-                        font.weight: Font.Black
-                        font.letterSpacing: 1.8
-                        elide: Text.ElideRight
-                    }
-                }
-                RockChip {
-                    fill: Rock.yellow
-                    shadowColor: Rock.pink
-                    offset: 2
-                    radius: 5
-                    padH: 6
-                    padV: 2
-                    Lbl {
-                        text: Rock.comic ? "BOCCHI MODE" : Rock.marisa ? "GRIMOIRE MODE" : Rock.sao ? "LINK START" : "ASTRAL MODE"
-                        color: Rock.ink
-                        font.family: Rock.display
-                        font.weight: Font.Black
-                        font.pixelSize: 7
-                        font.letterSpacing: 0.6
-                    }
+                    visible: launchBox.results.length > 0
+                    text: "× " + launchBox.results.length
+                    color: Rock.a(Rock.uiText, 0.4)
+                    font.family: Rock.mono
+                    font.pixelSize: 9
                 }
             }
 
@@ -1125,6 +1272,10 @@ PanelWindow {
                                 const n = launchBox.results.length
                                 if (event.key === Qt.Key_Escape) {
                                     UI.launcher = false; event.accepted = true
+                                } else if (ctrl && event.key === Qt.Key_Tab) {
+                                    launchBox.cycleMode(false); event.accepted = true
+                                } else if (ctrl && event.key === Qt.Key_Backtab) {
+                                    launchBox.cycleMode(true); event.accepted = true
                                 } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab
                                            || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
                                     resultList.currentIndex = Math.min(n - 1, resultList.currentIndex + 1); event.accepted = true
@@ -1190,6 +1341,10 @@ PanelWindow {
 
                     width: resultList.width
                     height: 44
+
+                    // сколько раз запускали это приложение (для звёздочки)
+                    readonly property int freq: launchBox.mode === "apps" && row.modelData.id !== undefined
+                        ? (Apps.counts[row.modelData.id] || 0) : 0
 
                     Rectangle {
                         visible: Rock.comic
@@ -1275,13 +1430,11 @@ PanelWindow {
                                 elide: Text.ElideRight
                             }
                             Lbl {
-                                Layout.preferredWidth: 18
-                                horizontalAlignment: Text.AlignRight
-                                text: ("0" + (row.index + 1)).slice(-2)
-                                color: row.current ? Rock.pinkDeep : Rock.a(Rock.uiText, 0.32)
-                                font.family: Rock.display
-                                font.weight: Font.Black
-                                font.pixelSize: 8
+                                // частые приложения помечены звездой
+                                visible: row.freq >= 3
+                                text: "\uf005"
+                                color: Rock.yellow
+                                font.pixelSize: 9
                             }
                         }
                     }
@@ -1304,6 +1457,9 @@ PanelWindow {
 
                 Lbl { text: "↑↓"; color: Rock.pinkDeep; font.pixelSize: 9; font.weight: Font.Black }
                 Lbl { text: I18n.t("выбор"); color: Rock.a(Rock.uiText, 0.5); font.pixelSize: 9 }
+                Lbl { text: "·"; color: Rock.a(Rock.uiText, 0.3); font.pixelSize: 9 }
+                Lbl { text: "ctrl tab"; color: Rock.pinkDeep; font.pixelSize: 8; font.weight: Font.Black }
+                Lbl { text: I18n.t("режим"); color: Rock.a(Rock.uiText, 0.5); font.pixelSize: 9 }
                 Item { Layout.fillWidth: true }
                 Lbl { text: "↵"; color: Rock.pinkDeep; font.pixelSize: 9; font.weight: Font.Black }
                 Lbl { text: I18n.t("запуск"); color: Rock.a(Rock.uiText, 0.5); font.pixelSize: 9 }
@@ -1340,17 +1496,6 @@ PanelWindow {
             z: 20
         }
 
-        // полоска оставшегося времени (для событий)
-        Rectangle {
-            visible: centerIsland.eventMode && UI.eventKind !== "level"
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 2
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.max(0, (centerIsland.width - 56) * centerIsland.ttlFrac)
-            height: 3
-            radius: 1.5
-            color: centerIsland.cream ? Rock.pink : Rock.yellow
-        }
         NumberAnimation {
             id: ttlAnim
             target: centerIsland

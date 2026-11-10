@@ -1,8 +1,8 @@
 {
   "position": "top",
   "language": "ru",
-  "preset": "custom",
-  "density": "compact",
+  "preset": "balanced",
+  "density": "normal",
   "modules": {
     "bt": true,
     "wifi": true,
@@ -10,24 +10,24 @@
     "notif": true,
     "music": true,
     "weather": true,
-    "pomodoro": false,
-    "record": false
+    "pomodoro": true,
+    "record": true
   },
   "showWorkspaces": true,
-  "showTitle": false,
+  "showTitle": true,
   "showTray": true,
   "showWallpaper": true,
   "showSettings": true,
   "showKeyboard": true,
   "showVolume": true,
   "showBattery": true,
-  "widgetsEnabled": true,
+  "widgetsEnabled": false,
   "widgetClock": true,
   "widgetPlayer": true,
-  "islandRadius": 21,
-  "surfaceOpacity": 90,
+  "islandRadius": 16,
+  "surfaceOpacity": 92,
   "fontSize": 12,
-  "avatar": "/home/aiko/jpy89vq2r8rh1.jpeg",
+  "avatar": "/home/aiko/fa3ef18c1e06470a59cfabd68a6da71b.gif",
   "lockAfterMin": 300,
   "sleepAfterMin": 600
 }

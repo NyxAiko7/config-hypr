@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Effects
 
-// Фон локскрина: обои + «manga»-полутон, сцена световых лучей,
-// потёк слёз и летящие ноты.
+// «Обсерватория»: глубокий космос, размытые обои, пульсирующее затмение,
+// орбитальные кольца и редкие метеоры.
 Item {
     id: bg
 
@@ -12,65 +12,10 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        visible: !Rock.marisa
         gradient: Gradient {
-            GradientStop { position: 0.0; color: Rock.comic ? Rock.a(Rock.pink, 0.85) : Rock.sao ? "#030610" : "#060a14" }
-            GradientStop { position: 0.55; color: Rock.comic ? Rock.a(Rock.purple, 0.8) : Rock.sao ? "#071a2b" : "#0d1730" }
-            GradientStop { position: 1.0; color: Rock.comic ? Rock.a(Rock.cyan, 0.85) : Rock.sao ? "#0e3350" : "#1a2a4d" }
-        }
-    }
-
-    // Aincrad: голографическая сетка поверх ночного неба
-    SaoGrid {
-        anchors.fill: parent
-        step: 34
-        animated: true
-        opacity: 0.9
-    }
-
-    // Гримуар: локскрин — раскрытая пергаментная страница, а не звёздная ночь.
-    Rectangle {
-        anchors.fill: parent
-        visible: Rock.marisa
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#fbf5e6" }
-            GradientStop { position: 0.45; color: "#f6eed9" }
-            GradientStop { position: 1.0; color: "#e7d5ad" }
-        }
-    }
-
-    // старение бумаги и чернильные разводы
-    Canvas {
-        anchors.fill: parent
-        visible: Rock.marisa
-        opacity: 0.55
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
-        Component.onCompleted: requestPaint()
-        onPaint: {
-            const ctx = getContext("2d")
-            ctx.reset()
-            const w = width, h = height
-            const stains = [
-                [w * 0.08, h * 0.14, Math.min(w, h) * 0.22, 0.10],
-                [w * 0.88, h * 0.78, Math.min(w, h) * 0.34, 0.12],
-                [w * 0.72, h * 0.18, Math.min(w, h) * 0.16, 0.08]
-            ]
-            for (const s of stains) {
-                const g = ctx.createRadialGradient(s[0], s[1], 0, s[0], s[1], s[2])
-                g.addColorStop(0, Rock.a(Rock.ink, s[3]))
-                g.addColorStop(0.55, Rock.a(Rock.ink, s[3] * 0.45))
-                g.addColorStop(1, Rock.a(Rock.ink, 0))
-                ctx.fillStyle = g
-                ctx.fillRect(0, 0, w, h)
-            }
-            const v = ctx.createRadialGradient(w * 0.5, h * 0.46, Math.min(w, h) * 0.18,
-                                               w * 0.5, h * 0.46, Math.max(w, h) * 0.72)
-            v.addColorStop(0, "transparent")
-            v.addColorStop(0.75, Rock.a(Rock.ink, 0.03))
-            v.addColorStop(1, Rock.a(Rock.ink, 0.12))
-            ctx.fillStyle = v
-            ctx.fillRect(0, 0, w, h)
+            GradientStop { position: 0.0; color: Theme.light ? "#dfe7f2" : "#05070d" }
+            GradientStop { position: 0.45; color: Theme.light ? "#c9d8eb" : "#091223" }
+            GradientStop { position: 1.0; color: Theme.light ? "#b7c8de" : "#03050a" }
         }
     }
 
@@ -87,371 +32,276 @@ Item {
     MultiEffect {
         anchors.fill: parent
         source: wall
-        visible: !Rock.marisa && wall.status === Image.Ready
+        visible: wall.status === Image.Ready
         blurEnabled: true
-        blur: 0.7
-        blurMax: 80
-        brightness: Rock.comic ? -0.42 : Rock.marisa ? -0.52 : -0.62
-        saturation: Rock.comic ? -0.55 : Rock.marisa ? -0.38 : -0.78
+        blur: 0.85
+        blurMax: 96
+        brightness: Theme.light ? -0.18 : -0.58
+        saturation: -0.35
+        contrast: 0.08
     }
 
-    // сцена световых лучей сверху — концертная подсветка
     Rectangle {
-        visible: !Rock.marisa
-        width: parent.width * 0.62; height: parent.height * 1.8
-        x: -parent.width * 0.2; y: -parent.height * 0.8
-        color: Rock.a(Rock.comic ? Rock.pink : Rock.gold, Rock.comic ? 0.10 : 0.07)
-        rotation: -14
-    }
-    Rectangle {
-        visible: !Rock.marisa
-        width: parent.width * 0.46; height: parent.height * 1.8
-        x: parent.width * 0.32; y: -parent.height * 0.8
-        color: Rock.a(Rock.comic ? Rock.cyan : Rock.starlight, Rock.comic ? 0.08 : 0.06)
-        rotation: 13
-    }
-
-    // «manga»-полутон: сетка точек
-    Canvas {
         anchors.fill: parent
-        visible: !Rock.marisa
-        opacity: 0.5 * (0.35 + bg.enterProgress * 0.65)
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
-        onPaint: {
-            const ctx = getContext("2d")
-            ctx.reset()
-            const step = Math.max(16, Math.min(width, height) / 42)
-            ctx.fillStyle = Rock.comic ? Rock.a(Rock.ink2, 0.6) : Rock.a(Rock.starlight, 0.22)
-            for (let y = 0; y < height; y += step) {
-                for (let x = 0; x < width; x += step) {
-                    ctx.beginPath()
-                    ctx.arc(x, y, step * 0.16, 0, Math.PI * 2)
-                    ctx.fill()
-                }
-            }
-        }
+        color: Theme.light ? "#10ffffff" : "#5002060f"
     }
 
-    // гравюрная штриховка и звёздная пыль гримуара
-    MarisaPattern {
-        anchors.fill: parent
-        opacity: 0.55
-        onPaper: true
-    }
-
-    // луна и звёздный свет гримуара
-    MarisaMoon {
-        moonSize: Math.min(bg.width, bg.height) * 0.44
-        moonColor: Rock.ink
-        onPaper: true
-        anchors {
-            top: parent.top
-            right: parent.right
-            topMargin: Math.max(56, parent.height * 0.07)
-            rightMargin: Math.max(72, parent.width * 0.07)
-        }
-        opacity: 0.5
-    }
-
-    // падающие звёзды
-    Repeater {
-        model: Rock.marisa ? 6 : 0
-        delegate: Text {
-            required property int index
-            text: index % 2 === 0 ? "✦" : "✧"
-            color: index % 2 === 0 ? Rock.a(Rock.ink, 0.32) : Rock.a(Rock.pinkDeep, 0.55)
-            font.pixelSize: 7 + (index % 3) * 3
-            opacity: 0.18 + (index % 3) * 0.12
-            x: bg.width * (0.35 + (index % 5) * 0.14)
-            y: -40
-
-            SequentialAnimation on y {
-                loops: Animation.Infinite
-                running: Rock.marisa
-                PauseAnimation { duration: index * 1400 }
-                NumberAnimation { from: -40; to: bg.height + 40; duration: 5200 + index * 700 }
-            }
-            SequentialAnimation on x {
-                loops: Animation.Infinite
-                running: Rock.marisa
-                PauseAnimation { duration: index * 1400 }
-                NumberAnimation {
-                    from: bg.width * (0.35 + (index % 5) * 0.14)
-                    to: bg.width * (0.12 + (index % 5) * 0.14)
-                    duration: 5200 + index * 700
-                }
-            }
-            SequentialAnimation on rotation {
-                loops: Animation.Infinite
-                running: Rock.marisa
-                NumberAnimation { from: 0; to: 360; duration: 7000 + index * 500 }
-            }
-        }
-    }
-
-    // большой магический круг Марисы
+    // туманность вокруг центра
     Canvas {
-        visible: Rock.marisa
-        width: Math.min(parent.width, parent.height) * 0.82
+        width: Math.min(parent.width, parent.height) * 1.1
         height: width
         anchors.centerIn: parent
-        opacity: 0.26
+        anchors.verticalCenterOffset: -height * 0.05
+        opacity: Theme.light ? 0.7 : 1.0
         onWidthChanged: requestPaint()
-
-        NumberAnimation on rotation {
-            running: Rock.marisa
-            from: 0
-            to: 360
-            duration: 90000
-            loops: Animation.Infinite
-        }
-
+        onHeightChanged: requestPaint()
+        Component.onCompleted: requestPaint()
         onPaint: {
             const ctx = getContext("2d")
             ctx.reset()
-            const cx = width / 2
-            const cy = height / 2
-            const r = width * 0.46
+            const cx = width / 2, cy = height / 2
+            const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, width / 2)
+            g.addColorStop(0, Rock.a(Theme.accent, Theme.light ? 0.16 : 0.22))
+            g.addColorStop(0.45, Rock.a(Theme.accent2, Theme.light ? 0.08 : 0.12))
+            g.addColorStop(1, "transparent")
+            ctx.fillStyle = g
+            ctx.fillRect(0, 0, width, height)
+        }
+        SequentialAnimation on scale {
+            loops: Animation.Infinite
+            running: true
+            NumberAnimation { from: 0.96; to: 1.06; duration: 5200; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 1.06; to: 0.96; duration: 5200; easing.type: Easing.InOutSine }
+        }
+    }
 
-            ctx.strokeStyle = Rock.a(Rock.ink, 0.55)
-            ctx.lineWidth = Math.max(1, width * 0.0015)
-            for (const k of [1.0, 0.82, 0.62]) {
-                ctx.beginPath()
-                ctx.arc(cx, cy, r * k, 0, Math.PI * 2)
-                ctx.stroke()
+    // затмение за панелью авторизации
+    Item {
+        id: eclipse
+        width: Math.min(bg.width, bg.height) * 0.62
+        height: width
+        x: bg.width * 0.58 - width / 2
+        y: bg.height * 0.46 - height / 2
+        opacity: 0.35 + bg.enterProgress * 0.65
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width * 0.72
+            height: width
+            radius: width / 2
+            color: Rock.a(Theme.accent, Theme.light ? 0.10 : 0.18)
+            scale: 1.0
+            SequentialAnimation on scale {
+                loops: Animation.Infinite
+                running: true
+                NumberAnimation { from: 0.97; to: 1.05; duration: 3400; easing.type: Easing.InOutSine }
+                NumberAnimation { from: 1.05; to: 0.97; duration: 3400; easing.type: Easing.InOutSine }
             }
+        }
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width * 0.54
+            height: width
+            radius: width / 2
+            color: Rock.a(Theme.bg, Theme.light ? 0.55 : 0.82)
+            border.width: 1
+            border.color: Rock.a(Theme.accent2, 0.35)
+        }
 
-            ctx.beginPath()
-            for (let i = 0; i < 6; i++) {
-                const a = -Math.PI / 2 + i * Math.PI / 3
-                const x = cx + Math.cos(a) * r * 0.62
-                const y = cy + Math.sin(a) * r * 0.62
-                if (i === 0) ctx.moveTo(x, y)
-                else ctx.lineTo(x, y)
+        Repeater {
+            model: 3
+            delegate: Canvas {
+                required property int index
+                anchors.centerIn: parent
+                width: eclipse.width * (0.66 + index * 0.16)
+                height: width
+                opacity: 0.55 - index * 0.12
+                antialiasing: true
+                property real sweep: index === 1 ? 210 : 140
+                property real startA: index * 70
+                onWidthChanged: requestPaint()
+                onPaint: {
+                    const ctx = getContext("2d")
+                    ctx.reset()
+                    const cx = width / 2, cy = height / 2, r = width / 2 - 2
+                    ctx.lineCap = "round"
+                    ctx.lineWidth = index === 1 ? 2 : 1.5
+                    ctx.strokeStyle = Rock.a(index % 2 === 0 ? Theme.accent : Theme.accent2, 0.9)
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2 * (sweep / 360))
+                    ctx.stroke()
+                    if (index !== 1) {
+                        ctx.fillStyle = Rock.a(Theme.text, 0.5)
+                        const a = Math.PI * 2 * (sweep / 360)
+                        ctx.beginPath()
+                        ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 2.5, 0, Math.PI * 2)
+                        ctx.fill()
+                    }
+                }
+                NumberAnimation on rotation {
+                    loops: Animation.Infinite
+                    running: true
+                    from: startA
+                    to: startA + (index % 2 === 0 ? 360 : -360)
+                    duration: 24000 + index * 9000
+                }
             }
-            ctx.closePath()
-            ctx.strokeStyle = Rock.a(Rock.pinkDeep, 0.7)
-            ctx.stroke()
+        }
+    }
 
-            ctx.strokeStyle = Rock.a(Rock.ink, 0.34)
-            for (let i = 0; i < 48; i++) {
-                const a = i * Math.PI * 2 / 48
-                const r2 = r * (i % 4 === 0 ? 0.94 : 0.97)
+    // звёздное поле
+    Canvas {
+        id: stars
+        anchors.fill: parent
+        opacity: Theme.light ? 0.22 : 0.55
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+        Component.onCompleted: requestPaint()
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.reset()
+            const n = 120
+            for (let i = 0; i < n; i++) {
+                const x = ((i * 928371) % 10000) / 10000 * width
+                const y = ((i * 193877) % 10000) / 10000 * height
+                const s = 0.6 + ((i * 77) % 17) / 10
+                const a = 0.18 + ((i * 37) % 50) / 100
+                ctx.fillStyle = Rock.a(i % 7 === 0 ? Theme.accent2 : Theme.text, a)
                 ctx.beginPath()
-                ctx.moveTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2)
-                ctx.lineTo(cx + Math.cos(a) * r * 1.0, cy + Math.sin(a) * r * 1.0)
-                ctx.stroke()
-            }
-
-            ctx.fillStyle = Rock.a(Rock.gold, 0.9)
-            for (let i = 0; i < 12; i++) {
-                const a = i * Math.PI / 6
-                const x = cx + Math.cos(a) * r * 1.03
-                const y = cy + Math.sin(a) * r * 1.03
-                ctx.beginPath()
-                ctx.arc(x, y, Math.max(1.5, width * 0.004), 0, Math.PI * 2)
+                ctx.arc(x, y, s, 0, Math.PI * 2)
                 ctx.fill()
             }
         }
     }
 
-    // потёк слёз — фирменный приём Bocchi перед гитарой
+    // мерцающие звёзды
     Repeater {
-        model: Rock.comic ? 6 : 0
+        model: 22
         delegate: Rectangle {
-            id: drop
             required property int index
-            width: 2 * (2.5 + (index % 3) * 1.5)
+            width: 1.5 + (index % 3)
             height: width
             radius: width / 2
-            x: (index * 173 + 90) % Math.max(1, bg.width - 60)
-            y: bg.height + 60
-            color: [Rock.pink, Rock.cyan, Rock.yellow, Rock.cream, Rock.purple][index % 5]
-            opacity: 0.25 + (index % 3) * 0.07
-            NumberAnimation on y {
-                from: bg.height + 60
-                to: -40
-                duration: 9000 + index * 1200
+            x: ((index * 733) % 1000) / 1000 * bg.width
+            y: ((index * 419) % 1000) / 1000 * bg.height
+            color: index % 3 === 0 ? Theme.accent2 : Theme.text
+            opacity: 0.2
+            SequentialAnimation on opacity {
                 loops: Animation.Infinite
                 running: true
-            }
-            NumberAnimation on x {
-                from: (index * 173 + 90) % Math.max(1, bg.width - 60)
-                to: (index * 173 + 90) % Math.max(1, bg.width - 60) + 30 - (index % 2) * 60
-                duration: 6000 + index * 700
-                loops: Animation.Infinite
-                running: true
-                easing.type: Easing.InOutSine
+                PauseAnimation { duration: (index * 311) % 3200 }
+                NumberAnimation { from: 0.15; to: 0.9; duration: 900 + (index % 4) * 300; easing.type: Easing.InOutSine }
+                NumberAnimation { from: 0.9; to: 0.15; duration: 900 + (index % 4) * 300; easing.type: Easing.InOutSine }
             }
         }
     }
 
-    // летящие ноты
+    // метеоры
     Repeater {
-        model: Rock.comic ? 9 : 0
-        delegate: Text {
+        model: 4
+        delegate: Rectangle {
+            id: meteor
             required property int index
-            x: (index * 211 + 60) % Math.max(1, bg.width)
-            y: bg.height + 50
-            text: ["\uf001", "\uf005", "\uf004", "\uf008"][index % 4]
-            color: [Rock.pink, Rock.cyan, Rock.yellow, Rock.cream][index % 4]
-            opacity: 0.10 + (index % 3) * 0.05
-            font.family: Theme.font
-            font.pixelSize: 14 + (index % 4) * 7
-            NumberAnimation on y {
-                from: bg.height + 50
-                to: -60
-                duration: 8000 + index * 850
-                loops: Animation.Infinite
-                running: true
+            width: 90 + index * 25
+            height: 1.5
+            rotation: -24
+            radius: 1
+            x: -width; y: -20
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 1.0; color: Rock.a(Theme.accent2, 0.85) }
             }
-            NumberAnimation on rotation {
-                from: -18; to: 18
-                duration: 3600 + index * 320
+            opacity: 0
+            SequentialAnimation {
                 loops: Animation.Infinite
                 running: true
-                easing.type: Easing.InOutSine
+                PauseAnimation { duration: 1800 + index * 2600 }
+                ParallelAnimation {
+                    NumberAnimation { target: meteor; property: "x"; from: bg.width * (0.15 + index * 0.18); to: bg.width * (0.55 + index * 0.18); duration: 900 }
+                    NumberAnimation { target: meteor; property: "y"; from: bg.height * (0.05 + index * 0.08); to: bg.height * (0.28 + index * 0.08); duration: 900 }
+                    SequentialAnimation {
+                        NumberAnimation { target: meteor; property: "opacity"; from: 0; to: 0.9; duration: 120 }
+                        PauseAnimation { duration: 500 }
+                        NumberAnimation { target: meteor; property: "opacity"; from: 0.9; to: 0; duration: 280 }
+                    }
+                }
+                PauseAnimation { duration: 4000 }
             }
         }
     }
 
-    // экслибрис и вертикальный корешок страницы
-    Text {
-        visible: Rock.marisa
-        text: "GRIMOIRE"
-        rotation: -90
-        x: 16
-        y: bg.height * 0.72
-        font.family: Rock.display
-        font.pixelSize: 62
-        font.weight: Font.Black
-        font.letterSpacing: 14
-        color: Rock.a(Rock.ink, 0.055)
-    }
-
-    Text {
-        visible: Rock.marisa
-        text: "M"
-        x: bg.width - 386
-        y: bg.height - 430
-        font.family: Rock.display
-        font.pixelSize: 430
-        font.weight: Font.Black
-        color: Rock.a(Rock.ink, 0.045)
-    }
-
-    // шашечная кромка страницы
-    MarisaTrim {
-        visible: Rock.marisa
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: 14
-        anchors.rightMargin: 14
-        anchors.topMargin: 14
-        height: 5
-        cell: 5
-        opacity: 0.55
-    }
-    MarisaTrim {
-        visible: Rock.marisa
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 14
-        anchors.rightMargin: 14
-        anchors.bottomMargin: 14
-        height: 5
-        cell: 5
-        opacity: 0.55
-    }
-
-    // гексагональное кольцо Aincrad
+    // горизонтальная разметка-сканер
     Canvas {
-        visible: Rock.sao
-        width: Math.min(parent.width, parent.height) * 0.72
-        height: width
-        anchors.centerIn: parent
+        anchors.fill: parent
         opacity: 0.22
         onWidthChanged: requestPaint()
-
-        NumberAnimation on rotation {
-            running: Rock.sao
-            from: 0
-            to: 360
-            duration: 120000
-            loops: Animation.Infinite
-        }
-
+        onHeightChanged: requestPaint()
+        Component.onCompleted: requestPaint()
         onPaint: {
             const ctx = getContext("2d")
             ctx.reset()
-            const cx = width / 2
-            const cy = height / 2
-            const r = width * 0.46
-
-            ctx.strokeStyle = Rock.a(Rock.gold, 0.7)
-            ctx.lineWidth = Math.max(1, width * 0.0016)
-            for (const k of [1.0, 0.72, 0.46]) {
+            ctx.strokeStyle = Rock.a(Theme.text, 0.05)
+            ctx.lineWidth = 1
+            for (let y = 0; y < height; y += 48) {
                 ctx.beginPath()
-                for (let i = 0; i < 6; i++) {
-                    const a = -Math.PI / 2 + i * Math.PI / 3
-                    const x = cx + Math.cos(a) * r * k
-                    const y = cy + Math.sin(a) * r * k
-                    if (i === 0) ctx.moveTo(x, y)
-                    else ctx.lineTo(x, y)
-                }
-                ctx.closePath()
+                ctx.moveTo(0, y)
+                ctx.lineTo(width, y)
                 ctx.stroke()
             }
-
-            ctx.strokeStyle = Rock.a(Rock.starlight, 0.5)
-            for (let i = 0; i < 48; i++) {
-                const a = i * Math.PI * 2 / 48
-                const r2 = r * (i % 4 === 0 ? 0.94 : 0.98)
+            ctx.strokeStyle = Rock.a(Theme.accent, 0.08)
+            for (let x = 0; x < width; x += 160) {
                 ctx.beginPath()
-                ctx.moveTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2)
-                ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r)
+                ctx.moveTo(x, 0)
+                ctx.lineTo(x, height)
                 ctx.stroke()
             }
         }
     }
 
-    Text {
-        visible: Rock.sao
-        text: "LINK START"
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Math.max(28, parent.height * 0.06)
-        color: Rock.a(Rock.gold, 0.10)
-        font.family: Rock.display
-        font.pixelSize: Math.min(52, parent.width * 0.034)
-        font.weight: Font.Black
-        font.letterSpacing: 16
+    // сканирующая линия
+    Rectangle {
+        width: parent.width
+        height: 120
+        y: -height
+        opacity: Theme.light ? 0.08 : 0.16
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "transparent" }
+            GradientStop { position: 0.5; color: Rock.a(Theme.accent2, 0.55) }
+            GradientStop { position: 1.0; color: "transparent" }
+        }
+        SequentialAnimation on y {
+            loops: Animation.Infinite
+            running: true
+            NumberAnimation { from: -120; to: bg.height + 120; duration: 9000; easing.type: Easing.InOutSine }
+            PauseAnimation { duration: 1500 }
+        }
     }
 
-    Text {
-        visible: Rock.sao
-        text: "SWORD ART ONLINE"
-        rotation: -90
-        x: 18
-        y: bg.height * 0.7
-        font.family: Rock.display
-        font.pixelSize: 54
-        font.weight: Font.Black
-        font.letterSpacing: 12
-        color: Rock.a(Rock.gold, 0.055)
-    }
-
-    // вспышка при неверном пароля
+    // виньетка
     Rectangle {
         anchors.fill: parent
-        color: "transparent"
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: Rock.a(Theme.bg, Theme.light ? 0.18 : 0.55) }
+            GradientStop { position: 0.35; color: "transparent" }
+            GradientStop { position: 0.7; color: "transparent" }
+            GradientStop { position: 1.0; color: Rock.a(Theme.bg, Theme.light ? 0.22 : 0.6) }
+        }
+    }
+
+    // вспышка при неверном пароле
+    Rectangle {
+        anchors.fill: parent
+        color: Rock.a(Theme.warn, 0.12)
         visible: bg.flash
-        border.width: 5
-        border.color: Rock.sao ? Rock.danger : Rock.pink
-        opacity: bg.flash ? 0.9 : 0
+        opacity: bg.flash ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 120 } }
+        Rectangle {
+            anchors.fill: parent
+            color: "transparent"
+            border.width: 2
+            border.color: Rock.a(Theme.warn, 0.9)
+        }
     }
 }
